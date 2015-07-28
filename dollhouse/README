@@ -1,0 +1,37 @@
+To add a function callback, simply implement the javascript function that matches 
+the name of the Sketchup node plus the event type. 
+
+If the node name contains special characters, you will need to declare the function as follows:
+
+window["this-is-_a Special name_click"] = function(intersect) {
+}
+
+Currently supported events:
+
+_mouseout
+_mousein
+_mousemove
+_click
+_mouseup
+_mousedown
+
+
+NOTE: For mesh object naming to work, you can not use the default ColladaLoader.js (r71)
+The following change was made from the default ColladaLoader:
+
+...
+                    } else {
+
+					if ( geom.isLineStrip === true ) {
+
+						mesh = new THREE.Line( geom );
+
+					} else {
+
+						mesh = new THREE.Mesh( geom, material );
+
+					}
+                    
+                    mesh.name = node.name;
+				}
+...                

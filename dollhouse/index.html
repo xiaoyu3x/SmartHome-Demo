@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Smart House</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #444444;
+				padding: 0px;
+                margin: 0px;
+				overflow: hidden;
+			}
+
+            .loading {
+                display: inline;
+                position: absolute;
+                padding: 0.5rem 1rem;
+                border: 1px solid black;
+                border-radius: 0.5rem;
+                color: white;
+                background-color: black;
+                opacity: 0.8;
+                z-index: 100;
+                font-weight: bold;
+                box-sizing: border-box;
+            }
+            
+            #container {
+                width: 520px;
+                display: inline-block;
+                box-sizing: padding-box;
+            }
+
+            #controls {
+                padding: 0.5rem;
+                position: absolute;
+                display: inline-block;
+                box-sizing: border-box;
+                overflow: hidden;
+                border: 1px solid #444;
+                border-radius: 0.5rem;
+                background-color: #f0f0f0;
+            }
+        </style>
+		<script src="js/three.min.js"></script>
+		<script src="js/loaders/ColladaLoader.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+
+		<script>
+            var controlBox;
+            var dae;
+            
+
+            function _445CTmine_click(intersection) {
+                controlLine('Smoke alarm clicked');
+            }
+            
+            /* Box fan 'click' handler */
+            var spinningBoxFan = false, boxFan = null;
+            /* boxFan is initialized in the init() function
+             * Animation occurs in the animate() functions. 
+             * If you want an animation to be time based, set the
+             * variable to Date.now() when clicked and then use that
+             * timestamp as input to an alpha function in animate() */
+            window['Component_36_click'] = 
+            window['Component_35_click'] = 
+            window['Component_33_click'] = function(intersect) {
+                spinningBoxFan = !spinningBoxFan;
+                controlLine('boxFan is now ' + (spinningBoxFan ? 'ON' : 'OFF'));
+            }
+
+            /* Kind of a hack function to find all objects matching a given node
+             * name and return them as an array. */
+            function findObjectsById(name) {
+                var matched = [];
+                
+                dae.traverse(function(child) {
+                    if (child.name == name) {
+                        matched.push(child);
+                    }
+                });
+                
+                return matched;
+            }
+            
+            function controlLine(txt) {
+                var lines = controlBox.innerText.split('<br>'),
+                    content = txt + "\n";
+                for (var i = 0; i < 50 && i < lines.length; i++) {
+                    content += lines[i];
+                }
+                controlBox.innerText = content;
+            }
+            
+        document.addEventListener('DOMContentLoaded', function() {
+			if (! Detector.webgl) Detector.addGetWebGLMessage();
+            
+            var showWireframe = false;
+
+			var container, stats;
+
+			var camera, scene, renderer, objects, controls;
+			var particleLight;
+
+            
+            var raycaster = new THREE.Raycaster(),
+                mouse = new THREE.Vector2();
+            
+            var first = true;
+        
+            container = document.getElementById('container');
+            controlBox = document.getElementById('controls');
+                
+            var loading = document.createElement('div');
+            loading.classList.add('loading');
+            loading.innerText = 'Loading...';
+            document.body.appendChild(loading);
+            
+            onWindowResize();
+
+			var loader = new THREE.ColladaLoader(), box;
+			loader.options.convertUpAxis = true;
+			loader.load('./model/SmartHouseSketchResized.dae', function (collada) {
+                loading.parentElement.removeChild(loading);
+                loading = null;
+				dae = collada.scene;
+                
+                /* Set the scale back to 1:1 */
+                dae.scale.x = dae.scale.y = dae.scale.z = 1;
+                
+                /* Align the model to the center of the scene and on the ground plane */
+                box = new THREE.Box3().setFromObject(dae);
+                dae.position.x = -(box.max.x - box.min.x) * 0.5;
+                dae.position.z = (box.max.z - box.min.z) * 0.5;
+                dae.position.y = box.min.y;
+				dae.updateMatrix();
+
+				init();
+				animate();
+			});
+            
+            function updateCamera() {
+                /* Update the camera position and/or FOV based on the width and height
+                 * of the scene's rendering window. */
+                var dist,
+                    width = box.max.x - box.min.x,
+                    height = box.max.y - box.min.y,
+                    depth = box.max.z - box.min.z;
+                camera.aspect = container.offsetWidth / container.offsetHeight;
+
+                if (camera.aspect > 1) { /* Landscape mode */
+                    camera.fov = 45;
+                    dist = 1.25 * width / 2 / Math.tan(Math.PI * camera.fov / 360);
+                } else { /* Portrait mode */
+                    dist = width + depth;
+				    camera.fov = 2 * Math.atan((1.25 * width / camera.aspect) / (2 * dist)) * (180 / Math.PI);
+                }
+                camera.near = 1;
+                camera.far = 2000;
+                camera.position.set(0, 0.75 * height, dist);
+                camera.updateProjectionMatrix();
+            }
+
+			function init() {
+                /* Set up the camera based on the size of the model. Distance is set to 125% since
+                 * the target of the orbit control is ~25% off the axis. */
+
+                camera = new THREE.PerspectiveCamera();
+                updateCamera();
+
+                // Set up the Orbit Control
+                controls = new THREE.OrbitControls(camera);
+                controls.target = new THREE.Vector3(0, 0.5 * (box.max.y - box.min.y), 0);
+				controls.damping = 0.2;
+				controls.addEventListener('change', render);
+                controls.noPan = true;
+                controls.noZoom = true;
+                /* Start with the control disabled until the first render pass so we can
+                 * lock the vertical rotation angle */
+                controls.enabled = false;
+
+				scene = new THREE.Scene();
+
+                // Add the COLLADA
+				scene.add(dae);
+
+                // Hack to translate the fan blades into their own group (fan) so they can be
+                // rotated as one item
+                var blades = findObjectsById('Component_33');
+                boxFan = new THREE.Group();
+                blades.forEach(function(blade, i) {
+                    scene.remove(blade);
+                    blade.rotateOnAxis(new THREE.Vector3(0, 1, 0), 2 * Math.PI * i / blades.length);
+                    blade.updateMatrix();
+                    boxFan.add(blade);
+                });
+                scene.add(boxFan);
+                boxFan.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI * 0.5);
+                boxFan.scale.x = boxFan.scale.y = boxFan.scale.z = 0.18;
+                boxFan.position.x = -3.9;
+                boxFan.position.y = 1.4;
+                boxFan.position.z = -1;
+                boxFan.updateMatrix();
+                
+				// Lights
+				scene.add(new THREE.AmbientLight(0xaaaaaa));
+
+                // Add a directional light
+				var directionalLight = new THREE.DirectionalLight(0xeeeeee);
+				directionalLight.position.x = 1;
+				directionalLight.position.y = 2;
+				directionalLight.position.z = 1;
+				directionalLight.position.normalize();
+				scene.add(directionalLight);
+
+				renderer = new THREE.WebGLRenderer();
+                renderer.setClearColor(0x444444, 1);
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(container.offsetWidth, container.offsetHeight);
+				container.appendChild(renderer.domElement);
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild(stats.domElement);
+
+				window.addEventListener('resize', onWindowResize, false);
+                container.addEventListener('mousemove', onMouseMove, false);
+                container.addEventListener('click', onClick, false);
+                container.addEventListener('mouseup', onMouseUp, false);
+                container.addEventListener('mousedown', onMouseDown, false);
+			}
+
+            function onMouseMove(event) {
+                mouse.x = (event.clientX / container.offsetWidth) * 2 - 1;
+                mouse.y = -((event.clientY / container.offsetHeight) * 2 - 1);
+                hover(intersecting);
+            }
+
+            function onClick(event) {
+                click(intersecting);
+            }
+            
+            function onMouseDown(event) {
+                down(intersecting);
+            }
+            
+            function onMouseUp(event) {
+                up(intersecting);
+            }
+            
+			function onWindowResize() {
+                container.style.height = window.innerHeight + 'px';
+                controlBox.style.height =  window.innerHeight + 'px';
+                controlBox.style.top = '0px';
+                controlBox.style.left = container.offsetWidth + 'px';
+                controlBox.style.width = window.innerWidth - container.offsetWidth + 'px';
+                
+                if (loading) {
+                    loading.style.left = (container.offsetWidth - loading.offsetWidth) * 0.5 + 'px';
+                    loading.style.top = (container.offsetHeight - loading.offsetHeight) * 0.5 + 'px';
+                }
+
+                if (camera) {
+                    updateCamera();
+                }
+
+                if (renderer) {
+                    renderer.setSize(container.offsetWidth, container.offsetHeight);
+                }
+			}
+
+            var last = 0;
+			function animate() {
+				requestAnimationFrame(animate);
+
+                var now = Date.now();
+                
+                if (spinningBoxFan) {
+                    boxFan.rotateOnAxis(new THREE.Vector3(0, 1, 0), (last - now) * Math.PI / 1000);
+                }
+                
+                last = now;
+                
+				render();
+				stats.update();
+                controls.update();
+                
+                // Lock vertical rotation to a range based on the initial camera position
+                if (first) {
+                    controls.minPolarAngle = controls.getPolarAngle();
+                    controls.maxPolarAngle = Math.PI - controls.minPolarAngle;
+                    controls.enabled = true;
+                    first = false;
+                }
+			}
+
+            function hoverOut(intersect) {
+                if (!hovering || (intersect && hovering.object == intersect.object)) {
+                    return;
+                }
+                
+                if (((hovering.object.name + '_mouseout') in window) && 
+                     (window[hovering.object.name + '_mouseout'] instanceof Function)) {
+                    window[hovering.object.name + '_mouseout'](hovering, intersect);
+                } else {
+//                    controlLine('No handler: ' + hovering.object.name + '_mouseout');
+                }
+                
+                hovering = null;
+            }
+
+            function hoverIn(intersect) {
+                if (hovering && hovering.object == intersect.object) {
+                    return;
+                }
+                
+                if (((intersect.object.name + '_mousein') in window) && 
+                     (window[intersect.object.name + '_mousein'] instanceof Function)) {
+                    window[intersect.object.name + '_mousein'](intersect, hovering);
+                } else {
+//                    controlLine('No handler: ' + intersect.object.name + '_mousein');
+                }
+                
+                hovering = intersect;
+            }
+
+            function generic(intersect, name) {
+                if (!hovering || !intersect || hovering.object != intersect.object) {
+                    return true;
+                }
+                
+                if (((hovering.object.name + name) in window) && 
+                    (window[hovering.object.name + name] instanceof Function)) {
+                    window[hovering.object.name + name](intersect);
+                    return true;
+                }
+//              controlLine('No handler: ' + hovering.object.name + name);
+                return false;
+            }
+            
+            function hover(intersect) {
+                generic(intersect, '_mousemove');
+            }
+
+            function click(intersect) {
+                if (!generic(intersect, '_click')) {
+                    controlLine('No _click handler: ' + hovering.object.name);
+                }
+            }
+
+            function down(intersect) {
+                generic(intersect, '_down');
+            }
+
+            function up(intersect) {
+                generic(intersect, '_up');
+            }
+
+
+            var intersecting = null, hovering = null;
+			function render() {
+                if (mouse.x != 0 && mouse.y != 0) {
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    var intersects = raycaster.intersectObjects(scene.children, true),
+                        intersect;
+
+                    for (var i = 0; i < intersects.length; i++) {
+                        intersect = intersects[i];
+                        
+                        /* Skip any empty nodes */
+                        if (!intersect) {
+                            continue;
+                        }
+                        
+                        if (intersecting && intersecting.object == intersect.object) {
+                            break;
+                        }
+
+                        if (showWireframe && intersecting) {
+                            if (intersecting.object.material.materials) {
+                                intersecting.object.material.materials.forEach(function(m) {
+                                    m.wireframe = false;
+                                });
+                            } else {
+                                intersecting.object.material.wireframe = false;
+                            }
+                        }
+
+                        // object name is only set if ColladaLoader has been patched to name the mesh based on the
+                        // node name
+
+                        hoverOut(intersect);
+                        hoverIn(intersect);
+                        intersecting = intersect;
+                        
+                        if (showWireframe) {
+                            if (intersect.object.material.materials) {
+                                intersect.object.material.materials.forEach(function(m) {
+                                    m.wireframe = true;
+                                });
+                            } else {
+                                intersect.object.material.wireframe = true;
+                            }
+                        }
+                        
+                        /* Only pick the closest item...*/
+                        break;
+                    }
+                    
+                    if (!intersect) {
+                        if (showWireframe && intersecting) {
+                            if (intersecting.object.material.materials) {
+                                intersecting.object.material.materials.forEach(function(m) {
+                                    m.wireframe = false;
+                                });
+                            } else {
+                                intersecting.object.material.wireframe = false;
+                            }
+                        }
+
+                        hoverOut(intersecting);
+                        intersecting = null;
+                    }
+                }
+                
+				renderer.render(scene, camera);
+			}
+        });
+		</script>
+	  <script src="js/underscore-min.js"></script>
+  	  <script src="node.js"></script>
+  	  <script src="fan.js"></script>
+	</head>
+	<body>
+	  Status: <span id="status"></span><br />
+	  URL: <input id="url" /><br />
+  	 	<input id="open" type="button" value="Connect" />&nbsp;
+  		<input id="close" type="button" value="Disconnect" /><br />
+  		<input id="send" type="button" value="Send" />&nbsp;
+  		<input id="text" /><br />
+  		<span id="message"></span>
+
+        <div id='container'></div>
+        <div id='controls'>
+            Click on the fan to turn it off or on.
+        </div>
+	</body>
+</html>
