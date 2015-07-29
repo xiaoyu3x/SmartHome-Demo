@@ -51,9 +51,11 @@
 		<script src="js/controls/OrbitControls.js"></script>
 
 		<script>
+            var debug = true;
             var controlBox;
             var dae;
-            
+            var socket = null;
+            var listOBJ = {};
 
             function _445CTmine_click(intersection) {
                 controlLine('Smoke alarm clicked');
@@ -70,7 +72,9 @@
             window['Component_35_click'] = 
             window['Component_33_click'] = function(intersect) {
                 spinningBoxFan = !spinningBoxFan;
+                listOBJ['fan'].update();
                 controlLine('boxFan is now ' + (spinningBoxFan ? 'ON' : 'OFF'));
+                //change attribute of fan.js
             }
 
             /* Kind of a hack function to find all objects matching a given node
@@ -124,7 +128,8 @@
 
 			var loader = new THREE.ColladaLoader(), box;
 			loader.options.convertUpAxis = true;
-			loader.load('./model/SmartHouseSketchResized.dae', function (collada) {
+			//loader.load('./model/SmartHouseSketchResized.dae', function (collada) {
+            loader.load('./warehouse_model/model.dae', function (collada) {    
                 loading.parentElement.removeChild(loading);
                 loading = null;
 				dae = collada.scene;
@@ -323,7 +328,7 @@
                      (window[intersect.object.name + '_mousein'] instanceof Function)) {
                     window[intersect.object.name + '_mousein'](intersect, hovering);
                 } else {
-//                    controlLine('No handler: ' + intersect.object.name + '_mousein');
+                    controlLine('No handler: ' + intersect.object.name + '_mousein'); //commentout
                 }
                 
                 hovering = intersect;
@@ -339,7 +344,7 @@
                     window[hovering.object.name + name](intersect);
                     return true;
                 }
-//              controlLine('No handler: ' + hovering.object.name + name);
+              controlLine('No handler: ' + hovering.object.name + name); //commentout
                 return false;
             }
             
@@ -438,11 +443,13 @@
   	  <script src="fan.js"></script>
       <script src="motionSensor.js"></script>
       <script src="gasSensor.js"></script>
+      <script src="ceilingFan.js"></script>
 
 
 
 	</head>
 	<body>
+    <br /><br /><br /><br />
 	  Status: <span id="status"></span><br />
 	  URL: <input id="url" /><br />
   	 	<input id="open" type="button" value="Connect" />&nbsp;

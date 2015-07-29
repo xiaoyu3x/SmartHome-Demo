@@ -2,10 +2,15 @@ function addGasSensor(sensor){
 	console.log("Test adding: " + JSON.stringify(sensor));
 
 	//print the attributes
-	sensor.att.forEach(function(att) {
-		console.log("ll:" + att + " " + sensor['W_att'][att]);
+	if (debug) {
+		for (var att in sensor.att){
+    		if (typeof sensor.att[att] !== 'function') {
+         		console.log("Key is " + att + ", value is " + sensor.att[att]);
+    		}
+		}
 
-	});
+	}
+
 
 	//TODO: gas sensor animation
 	//spinningBoxFan = sensor['W_att']['on_off'];

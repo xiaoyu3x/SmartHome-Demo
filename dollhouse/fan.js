@@ -1,20 +1,37 @@
 function addFan(sensor){
 	console.log("Test adding: "+ JSON.stringify(sensor));
 
-	//print the attributes
-	sensor.att.forEach(function(att) {
-		console.log("ll:" + att + " " + sensor['W_att'][att]);
+	//print attributes in debug mode
+	if (debug) {
+		for (var att in sensor.att){
+    		if (typeof sensor.att[att] !== 'function') {
+         		console.log("Key is " + att + ", value is " + sensor.att[att]);
+    		}
+		}
 
-	});
-	spinningBoxFan = sensor['W_att']['on_off'];
+	}
+	if ('on_off' in sensor['att']) {
+
+		spinningBoxFan = sensor['att']['on_off'];
+	}
 } 
 function updateFan(sensor){
 	console.log("Updating Fan: "+ JSON.stringify(sensor));
+    
+    var test_payload = {
+        Event:'add',
+        Type:'motionSensor',
+        att:{on_off: spinningBoxFan}
+    };
+    socket.send(JSON.stringify(test_payload));
+
 } 
 
 function dropFan (){
 	console.log("Dropping Fan");
 }
+
+
 
 listOBJ['fan'] = {};
 listOBJ['fan']['add'] = addFan;
