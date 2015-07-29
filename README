@@ -35,3 +35,6 @@ The following change was made from the default ColladaLoader:
                     mesh.name = node.name;
 				}
 ...                
+
+Current instructions:
+run first_server and then view http://127.0.0.1:8080/

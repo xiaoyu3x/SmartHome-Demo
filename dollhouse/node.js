@@ -17,36 +17,34 @@ window.addEventListener("load", function(event) {
   close.disabled = true;
   send.disabled = true;
 
-  function onresoreceadd(jsonString){
+  function onResourceAdd(jsonString) {
    
   }
   
-  function onUpdate(jsonString){
-    if(jsonString.Event == 'add'){
+  function onUpdate(jsonString) {
+    if (jsonString.Event == 'add') {
 
-      message.textContent = "Adding "+jsonString.Type;
-      if('att' in jsonString){
+      message.textContent = "Adding " + jsonString.Type;
+      if ('att' in jsonString) {
         listOBJ[jsonString.Type].add(jsonString);
-      }else{
-        message.textContent +="Error" ;
+      } else {
+        message.textContent += "Error" ;
       }
-        
-    }else if(jsonString.Event == 'update'){
-      message.textContent = "Updating "+jsonString.Type
-      if('att' in jsonString){
+
+    } else if (jsonString.Event == 'update') {
+      message.textContent = "Updating " + jsonString.Type
+      if ('att' in jsonString) {
         listOBJ[jsonString.Type].update(jsonString);
-      }else{
-        message.textContent +="Error" ;
+      }else {
+        message.textContent += "Error" ;
       }
 
-    }else if(jsonString.Event == 'drop'){
-      message.textContent = "Dropping "+jsonString.Type
-       listOBJ[jsonString.Type].drop();
-
+    } else if (jsonString.Event == 'drop') {
+      message.textContent = "Dropping " + jsonString.Type
+      listOBJ[jsonString.Type].drop();
     }
-
-
   }
+
   // Create a new connection when the Connect button is clicked
   open.addEventListener("click", function(event) {
     open.disabled = true;

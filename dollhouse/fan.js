@@ -1,22 +1,22 @@
-function addfun(test){
-	console.log("Test adding: "+ JSON.stringify(test));
+function addFan(sensor){
+	console.log("Test adding: "+ JSON.stringify(sensor));
 
-
-	test.att.forEach(function(att) {
-		console.log("ll:" +att +" " +test['W_att'][att]);
+	//print the attributes
+	sensor.att.forEach(function(att) {
+		console.log("ll:" + att + " " + sensor['W_att'][att]);
 
 	});
-	spinningBoxFan = test['W_att']['on_off'];
+	spinningBoxFan = sensor['W_att']['on_off'];
 } 
-function updatefan(test){
-	console.log("Updateing Fan: "+ JSON.stringify(test));
+function updateFan(sensor){
+	console.log("Updating Fan: "+ JSON.stringify(sensor));
 } 
 
 function dropFan (){
-	console.log("Droping Fan");
+	console.log("Dropping Fan");
 }
 
 listOBJ['fan'] = {};
-listOBJ['fan']['add'] = addfun;
-listOBJ['fan']['update'] = updatefan;
+listOBJ['fan']['add'] = addFan;
+listOBJ['fan']['update'] = updateFan;
 listOBJ['fan']['drop'] = dropFan;
