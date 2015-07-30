@@ -1,3 +1,4 @@
+
 function addFan(sensor){
 	console.log("Test adding: "+ JSON.stringify(sensor));
 
@@ -13,7 +14,7 @@ function addFan(sensor){
 	recieveUpdate(sensor);
 } 
 
-//Fan has physically changed status; reflect in model
+//Fan has physically changed status --> change model animation
 function recieveUpdate(sensor){
 	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
@@ -23,20 +24,23 @@ function recieveUpdate(sensor){
 
 //sending a message to change fan repr -> server
 function sendUpdateFan(){
-	console.log("Sending update fan ");
+	console.log("Sending fan update");
     
     var test_payload = {
         Event:'update',
         Type:'boxFan',
         att:{on_off: !spinningBoxFan}
     };
-     //onUpdate(test_payload);
-    socket.send(JSON.stringify(test_payload));
-
+    onUpdate(test_payload); //commentout
+    //socket.send(JSON.stringify(test_payload));
 } 
 
-function dropFan (){
-	console.log("Dropping Fan");
+
+function dropFan () {
+	makeVisible('Component_33', false)
+	makeVisible('Component_34', false)
+	makeVisible('Component_35', false)
+	makeVisible('Component_36', false)
 }
 
 

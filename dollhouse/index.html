@@ -7,10 +7,11 @@
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
         <style>
             body {
-                font-family: Monospace;
+                font-family: Arial;
                 padding: 0px;
                 margin: 0px;
                 overflow: hidden;
+                color: #0f0f0f;
             }
 
             .loading {
@@ -34,12 +35,12 @@
             }
 
             #controls {
-                padding: 0.5rem;
+                padding: 1rem;
                 position: absolute;
                 display: inline-block;
                 box-sizing: border-box;
                 overflow: hidden;
-                border: 1px solid #444;
+                border: 1.5px solid #444;
                 border-radius: 0.5rem;
                 background-color: #f0f0f0;
             }
@@ -84,7 +85,7 @@
             //TODO: update true/false
             window['security-system_motion-detector_click'] = function(intersection) {
                 motionSensorOn = !motionSensorOn;
-                listOBJ['motionSensor'].update();
+                listOBJ['motionSensor'].sendUpdate();
                 controlLine('Motion detector clicked');
             }
 
@@ -120,8 +121,10 @@
              * timestamp as input to an alpha function in animate() */
             window['Component_36_click'] = 
             window['Component_35_click'] = 
+            window['Component_34_click'] = 
             window['Component_33_click'] = function(intersect) {
-                spinningBoxFan = !spinningBoxFan;
+                //spinningBoxFan = !spinningBoxFan;
+
                 listOBJ['boxFan'].sendUpdate(); //change on off status
                 /*if (!spinningBoxFan) {
                     scene.remove(boxFan);
@@ -469,7 +472,9 @@
             }
         });
         </script>
+        <!--  include show_hide.js  -->
         <script src="js/underscore-min.js"></script>
+        <script src="objVisibility.js"></script>
         <script src="node.js"></script>
         <script src="fan.js"></script>
         <script src="motionSensor.js"></script>
@@ -492,7 +497,7 @@
 
         <div id='container'></div>
         <div id='controls'>
-            Click on the fan to turn it off or on.
+            <blink>Click objects to turn on and off sensors.</blink>
         </div>
     </body>
 </html>

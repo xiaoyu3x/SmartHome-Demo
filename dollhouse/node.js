@@ -1,5 +1,30 @@
 
+function onUpdate(jsonString) {
+    //adding obj
+    console.log(jsonString);
+    if (jsonString.Event == 'add') {
+      //message.textContent = "Adding " + jsonString.Type;
+      if ('att' in jsonString) {
+        listOBJ[jsonString.Type].add(jsonString);
+      } else {
+        //message.textContent += "Error" ;
+      }
 
+    //updating obj
+    } else if (jsonString.Event == 'update') {
+      //message.textContent = "Updating " + jsonString.Type
+      if ('att' in jsonString) {
+        listOBJ[jsonString.Type].update(jsonString);
+      }else {
+        //message.textContent += "Error" ;
+      }
+
+    //dropping obj
+    } else if (jsonString.Event == 'drop') {
+      //message.textContent = "Dropping " + jsonString.Type
+      listOBJ[jsonString.Type].drop();
+    }
+  }
 
 // Initialize everything when the window finishes loading
 window.addEventListener("load", function(event) {
@@ -9,7 +34,7 @@ window.addEventListener("load", function(event) {
   var close = document.getElementById("close");*/
   var send = document.getElementById("send");
  // var text = document.getElementById("text");
-  var message = document.getElementById("message");
+  //var message = document.getElementById("message");
 
   status.textContent = "Not Connected";
   url_value = "ws://"+window.location.host;
@@ -22,31 +47,7 @@ window.addEventListener("load", function(event) {
    
   }
   
-  function onUpdate(jsonString) {
-    //adding obj
-    if (jsonString.Event == 'add') {
-      message.textContent = "Adding " + jsonString.Type;
-      if ('att' in jsonString) {
-        listOBJ[jsonString.Type].add(jsonString);
-      } else {
-        message.textContent += "Error" ;
-      }
-
-    //updating obj
-    } else if (jsonString.Event == 'update') {
-      message.textContent = "Updating " + jsonString.Type
-      if ('att' in jsonString) {
-        listOBJ[jsonString.Type].update(jsonString);
-      }else {
-        message.textContent += "Error" ;
-      }
-
-    //dropping obj
-    } else if (jsonString.Event == 'drop') {
-      message.textContent = "Dropping " + jsonString.Type
-      listOBJ[jsonString.Type].drop();
-    }
-  }
+  
 
   // Create a new connection when the Connect button is clicked
   //open.addEventListener("click", function(event) {

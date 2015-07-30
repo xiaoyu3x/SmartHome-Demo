@@ -19,6 +19,7 @@ function updateCeilingFan(sensor){
 
 function dropCeilingFan (){
 	console.log("Dropping ceiling fan");
+	//TODO: makeVisible("name", false)
 }
 
 listOBJ['ceilingFan'] = {};
