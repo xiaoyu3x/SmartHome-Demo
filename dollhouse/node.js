@@ -12,7 +12,7 @@ window.addEventListener("load", function(event) {
   var message = document.getElementById("message");
 
   status.textContent = "Not Connected";
-  url_value = "ws://localhost:8080";
+  url_value = "ws://"+window.location.host;
   close.disabled = true;
   send.disabled = true;
 
