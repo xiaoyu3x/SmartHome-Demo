@@ -28,7 +28,7 @@ function sendUpdateFan(){
     var test_payload = {
         Event:'update',
         Type:'boxFan',
-        att:{on_off: spinningBoxFan}
+        att:{on_off: !spinningBoxFan}
     };
     socket.send(JSON.stringify(test_payload));
 
