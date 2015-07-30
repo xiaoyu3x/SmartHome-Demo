@@ -46,40 +46,6 @@ window.addEventListener("load", function(event) {
   function onResourceAdd(jsonString) {
    
   }
-  
-<<<<<<< Updated upstream
-  
-=======
-  function onUpdate(jsonString) {
-    //adding obj
-    if (jsonString.Event == 'add') {
-      message.textContent = "Adding " + jsonString.Type;
-      if ('att' in jsonString) {
-        listOBJ[jsonString.Type].add(jsonString);
-      } else {
-        message.textContent += "Error" ;
-      }
-
-    //updating obj
-    } else if (jsonString.Event == 'update') {
-      message.textContent = "Updating " + jsonString.Type
-      if ('att' in jsonString) {
-        listOBJ[jsonString.Type].update(jsonString);
-      }else {
-        message.textContent += "Error" ;
-      }
-
-    //dropping obj
-    } else if (jsonString.Event == 'drop') {
-      message.textContent = "Dropping " + jsonString.Type
-      listOBJ[jsonString.Type].drop();
-    } else if (jsonString.Event == 'error') {
-      message.textContent = "Error with: " + jsonString.Type
-    }
-
-  }
->>>>>>> Stashed changes
-
   // Create a new connection when the Connect button is clicked
   //open.addEventListener("click", function(event) {
     open.disabled = false;
