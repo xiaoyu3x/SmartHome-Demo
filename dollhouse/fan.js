@@ -30,6 +30,7 @@ function sendUpdateFan(){
         Type:'boxFan',
         att:{on_off: !spinningBoxFan}
     };
+     //onUpdate(test_payload);
     socket.send(JSON.stringify(test_payload));
 
 } 
