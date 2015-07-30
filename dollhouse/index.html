@@ -1,17 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>Smart House</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				font-family: Monospace;
-				background-color: #444444;
-				padding: 0px;
+    <head>
+        <title>Smart House</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                font-family: Monospace;
+                padding: 0px;
                 margin: 0px;
-				overflow: hidden;
-			}
+                overflow: hidden;
+            }
 
             .loading {
                 display: inline;
@@ -28,7 +28,7 @@
             }
             
             #container {
-                width: 520px;
+                width: 800px;
                 display: inline-block;
                 box-sizing: padding-box;
             }
@@ -44,51 +44,29 @@
                 background-color: #f0f0f0;
             }
         </style>
-		<script src="js/three.min.js"></script>
-		<script src="js/loaders/ColladaLoader.js"></script>
-		<script src="js/Detector.js"></script>
-		<script src="js/libs/stats.min.js"></script>
-		<script src="js/controls/OrbitControls.js"></script>
-
-		<script>
-            var debug = true;
-            var controlBox;
+        <script src="js/three.min.js"></script>
+        <script src="js/loaders/ColladaLoader.js"></script>
+        <script src="js/Detector.js"></script>
+        <script src="js/libs/stats.min.js"></script>
+        <script src="js/controls/OrbitControls.js"></script>
+        <script>
             var dae;
+            var controlBox;
+            var debug = true;
             var socket = null;
             var listOBJ = {};
-
-            function _445CTmine_click(intersection) {
-                controlLine('Smoke alarm clicked');
-            }
-            
-            /* Box fan 'click' handler */
             var spinningBoxFan = false, boxFan = null;
-            /* boxFan is initialized in the init() function
-             * Animation occurs in the animate() functions. 
-             * If you want an animation to be time based, set the
-             * variable to Date.now() when clicked and then use that
-             * timestamp as input to an alpha function in animate() */
-            window['Component_36_click'] = 
-            window['Component_35_click'] = 
-            window['Component_33_click'] = function(intersect) {
-                spinningBoxFan = !spinningBoxFan;
-                listOBJ['fan'].update();
-                controlLine('boxFan is now ' + (spinningBoxFan ? 'ON' : 'OFF'));
-                //change attribute of fan.js
-            }
+            var gasSmokeAlarmOn = false;
 
             /* Kind of a hack function to find all objects matching a given node
              * name and return them as an array. */
             function findObjectsById(name) {
                 var matched = [];
-                
                 dae.traverse(function(child) {
                     if (child.name == name) {
                         matched.push(child);
                     }
-                });
-                
-                return matched;
+                }); return matched;
             }
             
             function controlLine(txt) {
@@ -101,14 +79,66 @@
             }
             
         document.addEventListener('DOMContentLoaded', function() {
-			if (! Detector.webgl) Detector.addGetWebGLMessage();
+            var motionDetector = null;
+            
+
+            //TODO: update
+            window['security-system_motion-detector_click'] = function(intersection) {
+                listOBJ['motionSensor'].update();
+                controlLine('Motion detector clicked');
+            }
+
+            window['_445CTmine_click'] = function(intersection) {
+                listOBJ['gasSensor'].update();
+                gasSmokeAlarmOn = !gasSmokeAlarmOn;
+                controlLine('Smoke alarm clicked');
+                if (!spinningBoxFan) {
+                    scene.add(boxFan);
+                }
+                
+                motionDetector = !motionDetector;
+                if (motionDetector) {
+                    findObjectsById('_445CTmine').forEach(function(item) {
+                        item.traverse(function (object) {
+                            //object.visible = false;
+                        });
+                    });
+                } else {
+                    findObjectsById('security-system_motion-detector').forEach(function(item) {
+                        item.traverse(function (object) {
+                            object.visible = true;
+                        });
+                    });
+                }
+            }
+            
+            /* Box fan 'click' handler */
+            //var spinningBoxFan = false, boxFan = null;
+            /* boxFan is initialized in the init() function
+             * Animation occurs in the animate() functions. 
+             * If you want an animation to be time based, set the
+             * variable to Date.now() when clicked and then use that
+             * timestamp as input to an alpha function in animate() */
+            window['Component_36_click'] = 
+            window['Component_35_click'] = 
+            window['Component_33_click'] = function(intersect) {
+                spinningBoxFan = !spinningBoxFan;
+                listOBJ['boxFan'].update(); //change on off status
+                /*if (!spinningBoxFan) {
+                    scene.remove(boxFan);
+                }*/
+                controlLine('boxFan is now ' + (spinningBoxFan ? 'ON' : 'OFF'));
+            }
+
+
+            if (! Detector.webgl) Detector.addGetWebGLMessage();
             
             var showWireframe = false;
 
-			var container, stats;
+            var container, stats;
 
-			var camera, scene, renderer, objects, controls;
-			var particleLight;
+            var camera, scene, renderer, objects, controls;
+            var particleLight;
 
             
             var raycaster = new THREE.Raycaster(),
@@ -126,13 +156,13 @@
             
             onWindowResize();
 
-			var loader = new THREE.ColladaLoader(), box;
-			loader.options.convertUpAxis = true;
-			//loader.load('./model/SmartHouseSketchResized.dae', function (collada) {
-            loader.load('./warehouse_model/model.dae', function (collada) {    
+            var loader = new THREE.ColladaLoader(), box;
+            loader.options.convertUpAxis = true;
+            loader.load('./july_model2/newdollhouse/dollhouseJuly29_v2.dae', function 
+            /*loader.load('./model/SmartHouseSketchResized.dae', function*/ (collada) {
                 loading.parentElement.removeChild(loading);
                 loading = null;
-				dae = collada.scene;
+                dae = collada.scene;
                 
                 /* Set the scale back to 1:1 */
                 dae.scale.x = dae.scale.y = dae.scale.z = 1;
@@ -142,11 +172,11 @@
                 dae.position.x = -(box.max.x - box.min.x) * 0.5;
                 dae.position.z = (box.max.z - box.min.z) * 0.5;
                 dae.position.y = box.min.y;
-				dae.updateMatrix();
+                dae.updateMatrix();
 
-				init();
-				animate();
-			});
+                init();
+                animate();
+            });
             
             function updateCamera() {
                 /* Update the camera position and/or FOV based on the width and height
@@ -162,7 +192,8 @@
                     dist = 1.25 * width / 2 / Math.tan(Math.PI * camera.fov / 360);
                 } else { /* Portrait mode */
                     dist = width + depth;
-				    camera.fov = 2 * Math.atan((1.25 * width / camera.aspect) / (2 * dist)) * (180 / Math.PI);
+                    camera.fov = 2 * Math.atan((1.25 * width / camera.aspect) / 
+                                               (2 * dist)) * (180 / Math.PI);
                 }
                 camera.near = 1;
                 camera.far = 2000;
@@ -170,7 +201,7 @@
                 camera.updateProjectionMatrix();
             }
 
-			function init() {
+            function init() {
                 /* Set up the camera based on the size of the model. Distance is set to 125% since
                  * the target of the orbit control is ~25% off the axis. */
 
@@ -180,26 +211,27 @@
                 // Set up the Orbit Control
                 controls = new THREE.OrbitControls(camera);
                 controls.target = new THREE.Vector3(0, 0.5 * (box.max.y - box.min.y), 0);
-				controls.damping = 0.2;
-				controls.addEventListener('change', render);
+                controls.damping = 0.2;
+                controls.addEventListener('change', render);
                 controls.noPan = true;
                 controls.noZoom = true;
                 /* Start with the control disabled until the first render pass so we can
                  * lock the vertical rotation angle */
                 controls.enabled = false;
 
-				scene = new THREE.Scene();
+                scene = new THREE.Scene();
 
                 // Add the COLLADA
-				scene.add(dae);
+                scene.add(dae);
 
                 // Hack to translate the fan blades into their own group (fan) so they can be
                 // rotated as one item
                 var blades = findObjectsById('Component_33');
                 boxFan = new THREE.Group();
                 blades.forEach(function(blade, i) {
-                    scene.remove(blade);
-                    blade.rotateOnAxis(new THREE.Vector3(0, 1, 0), 2 * Math.PI * i / blades.length);
+                    //scene.remove(blade);
+                    blade.rotateOnAxis(
+                        new THREE.Vector3(0, 1, 0), 2 * Math.PI * i / blades.length);
                     blade.updateMatrix();
                     boxFan.add(blade);
                 });
@@ -211,38 +243,38 @@
                 boxFan.position.z = -1;
                 boxFan.updateMatrix();
                 
-				// Lights
-				scene.add(new THREE.AmbientLight(0xaaaaaa));
+                // Lights
+                scene.add(new THREE.AmbientLight(0xaaaaaa));
 
                 // Add a directional light
-				var directionalLight = new THREE.DirectionalLight(0xeeeeee);
-				directionalLight.position.x = 1;
-				directionalLight.position.y = 2;
-				directionalLight.position.z = 1;
-				directionalLight.position.normalize();
-				scene.add(directionalLight);
+                var directionalLight = new THREE.DirectionalLight(0xeeeeee);
+                directionalLight.position.x = 1;
+                directionalLight.position.y = 2;
+                directionalLight.position.z = 1;
+                directionalLight.position.normalize();
+                scene.add(directionalLight);
 
-				renderer = new THREE.WebGLRenderer();
+                renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setClearColor(0x444444, 1);
-				renderer.setPixelRatio(window.devicePixelRatio);
-				renderer.setSize(container.offsetWidth, container.offsetHeight);
-				container.appendChild(renderer.domElement);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                container.appendChild(renderer.domElement);
 
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
-				container.appendChild(stats.domElement);
+                stats = new Stats();
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.top = '0px';
+                container.appendChild(stats.domElement);
 
-				window.addEventListener('resize', onWindowResize, false);
+                window.addEventListener('resize', onWindowResize, false);
                 container.addEventListener('mousemove', onMouseMove, false);
                 container.addEventListener('click', onClick, false);
                 container.addEventListener('mouseup', onMouseUp, false);
                 container.addEventListener('mousedown', onMouseDown, false);
-			}
+            }
 
             function onMouseMove(event) {
-                mouse.x = (event.clientX / container.offsetWidth) * 2 - 1;
-                mouse.y = -((event.clientY / container.offsetHeight) * 2 - 1);
+                mouse.x = ((event.clientX - container.offsetLeft) / container.offsetWidth) * 2 - 1;
+                mouse.y = -(((event.clientY - container.offsetTop) / container.offsetHeight) * 2 - 1);
                 hover(intersecting);
             }
 
@@ -258,7 +290,7 @@
                 up(intersecting);
             }
             
-			function onWindowResize() {
+            function onWindowResize() {
                 container.style.height = window.innerHeight + 'px';
                 controlBox.style.height =  window.innerHeight + 'px';
                 controlBox.style.top = '0px';
@@ -277,11 +309,11 @@
                 if (renderer) {
                     renderer.setSize(container.offsetWidth, container.offsetHeight);
                 }
-			}
+            }
 
             var last = 0;
-			function animate() {
-				requestAnimationFrame(animate);
+            function animate() {
+                requestAnimationFrame(animate);
 
                 var now = Date.now();
                 
@@ -291,8 +323,8 @@
                 
                 last = now;
                 
-				render();
-				stats.update();
+                render();
+                stats.update();
                 controls.update();
                 
                 // Lock vertical rotation to a range based on the initial camera position
@@ -302,7 +334,7 @@
                     controls.enabled = true;
                     first = false;
                 }
-			}
+            }
 
             function hoverOut(intersect) {
                 if (!hovering || (intersect && hovering.object == intersect.object)) {
@@ -328,7 +360,7 @@
                      (window[intersect.object.name + '_mousein'] instanceof Function)) {
                     window[intersect.object.name + '_mousein'](intersect, hovering);
                 } else {
-                    controlLine('No handler: ' + intersect.object.name + '_mousein'); //commentout
+/*                    controlLine('No handler: ' + intersect.object.name + '_mousein'); //commentout*/
                 }
                 
                 hovering = intersect;
@@ -344,8 +376,8 @@
                     window[hovering.object.name + name](intersect);
                     return true;
                 }
-              controlLine('No handler: ' + hovering.object.name + name); //commentout
-                return false;
+/*              controlLine('No handler: ' + hovering.object.name + name); //commentout
+*/                return false;
             }
             
             function hover(intersect) {
@@ -368,7 +400,7 @@
 
 
             var intersecting = null, hovering = null;
-			function render() {
+            function render() {
                 if (mouse.x != 0 && mouse.y != 0) {
                     raycaster.setFromCamera(mouse, camera);
                     
@@ -434,33 +466,34 @@
                     }
                 }
                 
-				renderer.render(scene, camera);
-			}
+                renderer.render(scene, camera);
+            }
         });
-		</script>
-	  <script src="js/underscore-min.js"></script>
-  	  <script src="node.js"></script>
-  	  <script src="fan.js"></script>
-      <script src="motionSensor.js"></script>
-      <script src="gasSensor.js"></script>
-      <script src="ceilingFan.js"></script>
+        </script>
+        <script src="js/underscore-min.js"></script>
+        <script src="node.js"></script>
+        <script src="fan.js"></script>
+        <script src="motionSensor.js"></script>
+        <script src="gasSensor.js"></script>
+        <script src="ceilingFan.js"></script>
+    </head>
+    <body>
+        <!-- <br /><br /><br /><br />
+       -->
+       <div>
+        <!-- Status: <span id="status"></span><br />
+        URL: <input id="url" /><br />
 
-
-
-	</head>
-	<body>
-    <br /><br /><br /><br />
-	  Status: <span id="status"></span><br />
-	  URL: <input id="url" /><br />
-  	 	<input id="open" type="button" value="Connect" />&nbsp;
-  		<input id="close" type="button" value="Disconnect" /><br />
-  		<input id="send" type="button" value="Send" />&nbsp;
-  		<input id="text" /><br />
-  		<span id="message"></span>
+        <input id="text" /><br />
+        <input id="open" type="button" value="Connect" />&nbsp;
+        <input id="close" type="button" value="Disconnect" /><br /> -->
+        <input id="send" type="button" value="Send" />&nbsp;
+        <span id="message"></span>
+        </div>
 
         <div id='container'></div>
         <div id='controls'>
             Click on the fan to turn it off or on.
         </div>
-	</body>
+    </body>
 </html>

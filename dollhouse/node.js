@@ -3,12 +3,12 @@
 
 // Initialize everything when the window finishes loading
 window.addEventListener("load", function(event) {
-  var status = document.getElementById("status");
+/*  var status = document.getElementById("status");
   var url = document.getElementById("url");
   var open = document.getElementById("open");
-  var close = document.getElementById("close");
+  var close = document.getElementById("close");*/
   var send = document.getElementById("send");
-  var text = document.getElementById("text");
+ // var text = document.getElementById("text");
   var message = document.getElementById("message");
 
   status.textContent = "Not Connected";
@@ -52,7 +52,7 @@ window.addEventListener("load", function(event) {
   //open.addEventListener("click", function(event) {
     open.disabled = false;
     socket = new WebSocket(url_value, "echo-protocol");
-    console.log(url.value);
+    console.log(url_value);
     socket.addEventListener("open", function(event) {
       close.disabled = false;
       send.disabled = false;
@@ -78,12 +78,12 @@ window.addEventListener("load", function(event) {
   //});
 
   // Close the connection when the Disconnect button is clicked
-  close.addEventListener("click", function(event) {
+/*  close.addEventListener("click", function(event) {
     close.disabled = true;
     send.disabled = true;
     message.textContent = "";
     socket.close();
-  });
+  });*/
 
   // Send text to the server when the Send button is clicked
   send.addEventListener("click", function(event) {

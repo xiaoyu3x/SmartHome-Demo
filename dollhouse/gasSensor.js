@@ -5,7 +5,7 @@ function addGasSensor(sensor){
 	if (debug) {
 		for (var att in sensor.att){
     		if (typeof sensor.att[att] !== 'function') {
-         		console.log("Key is " + att + ", value is " + sensor.att[att]);
+         		console.log("Key: " + att + ", value: " + sensor.att[att]);
     		}
 		}
 
@@ -13,10 +13,17 @@ function addGasSensor(sensor){
 
 
 	//TODO: gas sensor animation
-	//spinningBoxFan = sensor['W_att']['on_off'];
+	//gas_indicator = sensor['att']['on_off'];
 } 
 function updateGasSensor(sensor){
 	console.log("Updating Gas Sensor: "+ JSON.stringify(sensor));
+
+	var test_payload = {
+        Event:'add',
+        Type:'gasSensor',
+        att:{on_off: gasSmokeAlarmOn}
+    };
+    socket.send(JSON.stringify(test_payload));
 } 
 
 function dropGasSensor (){

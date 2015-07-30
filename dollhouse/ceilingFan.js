@@ -2,10 +2,14 @@ function addCeilingFan(sensor){
 	console.log("Test adding: "+ JSON.stringify(sensor));
 
 	//print the attributes
-	sensor.att.forEach(function(att) {
-		console.log("ll:" + att + " " + sensor['W_att'][att]);
+	if (debug) {
+		for (var att in sensor.att){
+    		if (typeof sensor.att[att] !== 'function') {
+         		console.log("Key: " + att + ", value: " + sensor.att[att]);
+    		}
+		}
 
-	});
+	}
 	//TODO: animation
 	//spinningCeilingFan = sensor['W_att']['on_off'];
 } 

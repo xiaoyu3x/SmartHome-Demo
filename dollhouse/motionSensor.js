@@ -6,7 +6,7 @@ function addMotionSensor(sensor){
 	if (debug) {
 		for (var att in sensor.att){
     		if (typeof sensor.att[att] !== 'function') {
-         		console.log("Key is " + att + ", value is " + sensor.att[att]);
+         		console.log("Key: " + att + ", value: " + sensor.att[att]);
     		}
 		}
 
@@ -17,6 +17,13 @@ function addMotionSensor(sensor){
 } 
 function updateMotionSensor(sensor){
 	console.log("Updating motion sensor: "+ JSON.stringify(sensor));
+
+	    var test_payload = {
+        Event:'add',
+        Type:'motionSensor',
+        att:{on_off: true, value: 42}
+    };
+    socket.send(JSON.stringify(test_payload));
 } 
 
 function dropMotionSensor (){

@@ -5,13 +5,13 @@ function addFan(sensor){
 	if (debug) {
 		for (var att in sensor.att){
     		if (typeof sensor.att[att] !== 'function') {
-         		console.log("Key is " + att + ", value is " + sensor.att[att]);
+         		console.log("Key: " + att + ", value: " + sensor.att[att]);
     		}
 		}
 
 	}
+	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
-
 		spinningBoxFan = sensor['att']['on_off'];
 	}
 } 
@@ -20,7 +20,7 @@ function updateFan(sensor){
     
     var test_payload = {
         Event:'add',
-        Type:'motionSensor',
+        Type:'boxFan',
         att:{on_off: spinningBoxFan}
     };
     socket.send(JSON.stringify(test_payload));
@@ -33,7 +33,7 @@ function dropFan (){
 
 
 
-listOBJ['fan'] = {};
-listOBJ['fan']['add'] = addFan;
-listOBJ['fan']['update'] = updateFan;
-listOBJ['fan']['drop'] = dropFan;
+listOBJ['boxFan'] = {};
+listOBJ['boxFan']['add'] = addFan;
+listOBJ['boxFan']['update'] = updateFan;
+listOBJ['boxFan']['drop'] = dropFan;
