@@ -21,7 +21,7 @@
                 border: 1px solid black;
                 border-radius: 0.5rem;
                 color: white;
-                background-color: black;
+                background-color: purple;
                 opacity: 0.8;
                 z-index: 100;
                 font-weight: bold;
@@ -62,17 +62,22 @@
             /* Kind of a hack function to find all objects matching a given node
              * name and return them as an array. */
             function findObjectsById(name) {
-                var matched = [];
-                dae.traverse(function(child) {
-                    if (child.name == name) {
-                        matched.push(child);
-                    }
-                }); return matched;
+                
+                try { 
+                    var matched = [];
+                    dae.traverse(function(child) {
+                        if (child.name == name) {
+                            matched.push(child);
+                        }
+                    }); return matched;
+                }
+                catch (TypeError) {
+                }           
             }
             
             function controlLine(txt) {
-                var lines = controlBox.innerText.split('<br>'),
-                    content = txt + "\n";
+                var lines = controlBox.innerText.split('<br>');
+                var  content = txt + "\n";
                 for (var i = 0; i < 50 && i < lines.length; i++) {
                     content += lines[i];
                 }
