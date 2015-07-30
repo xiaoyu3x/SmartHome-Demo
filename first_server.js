@@ -27,12 +27,16 @@ wsServer = new WebSocketServer({
     autoAcceptConnections: false
 });
 
+
+var connectionList = {};
+
+
 function originIsAllowed(origin) {
   // put logic here to detect whether the specified origin is allowed.
   return true;
 }
 
-//connection.sendUTF();
+//
 function parceInComingRequest(message,connection){
    if (message.Event == "update") {
     if(message.Type == "boxFan"){
@@ -41,6 +45,18 @@ function parceInComingRequest(message,connection){
 
    }
 }
+
+function updateWebClients(msg){
+
+  console.log(msg);
+
+  for (var key in connectionList){
+    var connection = connectionList[key];
+    connection.sendUTF(msg);
+  }
+}
+
+
 
 
 wsServer.on('request', function(request) {
@@ -53,15 +69,22 @@ wsServer.on('request', function(request) {
 
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            console.log('Received Message: ' + message.utf8Data);
-            parceInComingRequest(JSON.parse(message.utf8Data),connection);
-        }
-    });
-    connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-    });
+
+    if(!(connection.remoteAddress in connectionList)){
+      connectionList[connection.remoteAddress] = connection;
+
+      connection.on('message', function(message) {
+          if (message.type === 'utf8') {
+              console.log('Received Message: ' + message.utf8Data);
+              parceInComingRequest(JSON.parse(message.utf8Data),connection);
+          }
+      });
+      connection.on('close', function(reasonCode, description) {
+          console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+          delete connectionList[connection.remoteAddress];
+      });
+
+    }
 });
 
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
@@ -87,8 +110,11 @@ function getAbsoluteUrl( response ) {
     return;
   }
 
+  //console.log(response.resJSONPayload);
+
   payload = JSON.parse( response.resJSONPayload );
   oic = payload.oic || payload.oc;
+
 
   return {href:"coap://" +
     ipv4Bytes[ 0 ] + "." + ipv4Bytes[ 1 ] + "." + ipv4Bytes[ 2 ] + "." + ipv4Bytes[ 3 ] + ":" +
@@ -100,8 +126,9 @@ function updateFan(Fan)
 {
     if('/a/fan' in Resorce_list){
       absoluteUrl = Resorce_list['/a/fan'];
+
       console.log( "OCDoResource() handler for Update: Entering" );
-      console.log( "absolute url discovered: " + absoluteUrl.href );
+      console.log( "absolute url discovered: " + absoluteUrl );
 
       var payload = JSON.stringify( 
         {
@@ -120,6 +147,8 @@ function updateFan(Fan)
     }
 }
 
+var WebCompoints = {};
+//when a server seends data to gatway
 
 function obsReqCB( handle, clientResponse ){
 
@@ -131,13 +160,21 @@ function obsReqCB( handle, clientResponse ){
         console.log("Callback Context for OBSERVE notification recvd successfully " + gNumObserveNotifies);
         console.log("JSON = %s =============> Obs Response",clientResponse.resJSONPayload);
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 5) //large number to test observing in DELETE case.
-        {
+        payloads = JSON.parse(clientResponse.resJSONPayload );
 
-          //sendPut(clientResponse);
+          for( key  in payloads.oc){
+              payload = payloads.oc[key]
+              if(!(payload.Type in WebCompoints)){
+                payload.Event = 'add';
+                WebCompoints[payload.Type] = "";
+              }else{
+                 payload.Event = 'update';
+              }
+
+              updateWebClients(payload);
+          }
 
 
-        }
         if(clientResponse.sequenceNumber == iotivity.OCObserveAction.OC_OBSERVE_REGISTER)
         {
             console.log("This also serves as a registration confirmation");
@@ -163,6 +200,18 @@ function obsReqCB( handle, clientResponse ){
 }
 
 
+
+
+
+
+
+
+//-------------------------------Server functions for register servers ----------------------------------------------------------
+
+var Resorce_list =  {};
+
+
+//send request / message to sensors server.
 function InvokeOCDoResource(query, method, qos, cb, request)
 {
   console.log("\n\nExecuting InitObserveRequest");
@@ -183,46 +232,32 @@ function InvokeOCDoResource(query, method, qos, cb, request)
     return ret;
 }
 
-var Resorce_list =  {};
 
-
-//Step2`
+//callback for when sensors is found on netwok, this stats OBSERVEing the server
 function discoveryReqCB( handle, clientResponse ) {
   console.log( "OCDoResource() handler for discovery: Entering" );
 
-  if (clientResponse)
-    {
-      console.log("StackResult:" + clientResponse.result);
-      console.log("Discovered on %s", clientResponse.connType);
-      absoluteUrl = getAbsoluteUrl( clientResponse );
+  if (clientResponse){
+    console.log("StackResult:" + clientResponse.result);
+    console.log("Discovered on %s", clientResponse.connType);
+
+    absoluteUrl = getAbsoluteUrl(clientResponse);
 
     if(!(absoluteUrl.type in Resorce_list)){
-      
       console.log( "absolute url discovered: " + absoluteUrl.href );
       Resorce_list[absoluteUrl.type] = absoluteUrl.href;
       InvokeOCDoResource(absoluteUrl.href, iotivity.OCMethod.OC_REST_OBSERVE, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, null)
-
     }
 
+  }else{
+    console.log("discoveryReqCB received Null clientResponse");
   }
-    else
-    {
-       console.log("discoveryReqCB received Null clientResponse");
-    }
 
   return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
 }
 
-
-
-function startResorce(){
-
-  iotivity.OCCreateResource(
-  handle,
-  "gw.sensor",
-  "oc.mi.def",
-  "/gw/sensor",
-  function( flag, request ) {
+//call back for when new sensor try to register to network
+function OnSensorREG( flag, request ) {
 
     var ehResult = iotivity.OCEntityHandlerResult.OC_EH_OK;
     var pResponse = iotivity.OCEntityHandlerResult.OC_EH_OK;
@@ -237,18 +272,13 @@ function startResorce(){
         }
       } );
 
-    if(request.method == iotivity.OCMethod.OC_REST_GET) {
-      console.log(" Sensors Get Request");
+    if(request.method == iotivity.OCMethod.OC_REST_PUT) {
+      console.log(" Sensors is atemting to Register.");
 
-    }
-    else if(request.method == iotivity.OCMethod.OC_REST_PUT) {
-      console.log(" Sensors Put Request");
       if('reqJSONPayload' in request){
       
         var inpayload = JSON.parse(request.reqJSONPayload);
         deviceInfo = inpayload.oc[0].rep;
-        
-        
       }
     }else {
         console.log(" Sensors unsupported request type "+request.method );
@@ -271,7 +301,6 @@ function startResorce(){
     } );
 
     if(iotivity.OCStackResult.OC_STACK_OK == resp && deviceInfo != -1){
-
       findResorce(deviceInfo.address);
     }
 
@@ -279,16 +308,15 @@ function startResorce(){
 
     return ehResult;
     
-  },
-  iotivity.OCResourceProperty.OC_DISCOVERABLE |
-  iotivity.OCResourceProperty.OC_OBSERVABLE
-);
-}
+  }
 
+
+
+//Search for Device (full URI) on network
 function findResorce(uri){
   //Step1
   var MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core?rt="+uri;
-  console.log("SEARCHING FOR "+MULTICAST_RESOURCE_DISCOVERY_QUERY);
+  console.log("Started searching for: "+MULTICAST_RESOURCE_DISCOVERY_QUERY);
 // Initial call by which we discover the resource we wish to observe
   console.log(iotivity.OCDoResource(
     handle,
@@ -303,9 +331,13 @@ function findResorce(uri){
     0 ));
 }
 
+//Creat a Registartion server, each device wil conect to this server to inform the server of there pereance on th net work.
+function startResorce(){
+  iotivity.OCCreateResource(handle,"gw.sensor","oc.mi.def","/gw/sensor",OnSensorREG,iotivity.OCResourceProperty.OC_DISCOVERABLE |iotivity.OCResourceProperty.OC_OBSERVABLE);
+}
 
-var devicelist = {list:[], data:[]};
-var devicelist_count = 0;
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 iotivity.OCInit( null, 0, iotivity.OCMode.OC_CLIENT_SERVER );
 
