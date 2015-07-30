@@ -19,9 +19,9 @@ function updateMotionSensor(sensor){
 	console.log("Updating motion sensor: "+ JSON.stringify(sensor));
 
 	    var test_payload = {
-        Event:'add',
+        Event:'update',
         Type:'motionSensor',
-        att:{on_off: true, value: 42}
+        att:{on_off: motionSensorOn, value: 42}
     };
     socket.send(JSON.stringify(test_payload));
 } 

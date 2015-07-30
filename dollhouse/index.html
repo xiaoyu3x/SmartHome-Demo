@@ -56,7 +56,7 @@
             var socket = null;
             var listOBJ = {};
             var spinningBoxFan = false, boxFan = null;
-            var gasSmokeAlarmOn = false;
+            var gasSmokeAlarmOn = false, motionSensorOn = false;
 
             /* Kind of a hack function to find all objects matching a given node
              * name and return them as an array. */
@@ -79,32 +79,31 @@
             }
             
         document.addEventListener('DOMContentLoaded', function() {
-            var motionDetector = null;
             
 
-            //TODO: update
+            //TODO: update true/false
             window['security-system_motion-detector_click'] = function(intersection) {
+                motionSensorOn = !motionSensorOn;
                 listOBJ['motionSensor'].update();
                 controlLine('Motion detector clicked');
             }
 
             window['_445CTmine_click'] = function(intersection) {
-                listOBJ['gasSensor'].update();
                 gasSmokeAlarmOn = !gasSmokeAlarmOn;
+                listOBJ['gasSensor'].update();
                 controlLine('Smoke alarm clicked');
                 if (!spinningBoxFan) {
                     scene.add(boxFan);
                 }
                 
-                motionDetector = !motionDetector;
-                if (motionDetector) {
+                if (gasSmokeAlarmOn) {
                     findObjectsById('_445CTmine').forEach(function(item) {
                         item.traverse(function (object) {
                             //object.visible = false;
                         });
                     });
                 } else {
-                    findObjectsById('security-system_motion-detector').forEach(function(item) {
+                    findObjectsById('_445CTmine').forEach(function(item) {
                         item.traverse(function (object) {
                             object.visible = true;
                         });
@@ -123,7 +122,7 @@
             window['Component_35_click'] = 
             window['Component_33_click'] = function(intersect) {
                 spinningBoxFan = !spinningBoxFan;
-                listOBJ['boxFan'].update(); //change on off status
+                listOBJ['boxFan'].sendUpdate(); //change on off status
                 /*if (!spinningBoxFan) {
                     scene.remove(boxFan);
                 }*/

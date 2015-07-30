@@ -21,7 +21,7 @@ function updateGasSensor(sensor){
 	var test_payload = {
         Event:'add',
         Type:'gasSensor',
-        att:{on_off: gasSmokeAlarmOn}
+        att:{on_off: gasSmokeAlarmOn, value: 33}
     };
     socket.send(JSON.stringify(test_payload));
 } 
