@@ -36,20 +36,73 @@ function sendUpdateFan(){
 } 
 
 
-function dropFan () {
-	makeVisible('Component_33', false)
+function dropFanWTH () {
+/*	makeVisible('Component_33', false)
 	makeVisible('Component_34', false)
 	makeVisible('Component_35', false)
-	makeVisible('Component_36', false)
+	makeVisible('Component_36', false)*/
+	console.log("Dropping Fan Sensor");
+	var components = ['Component_36', 'Component_35', 'Component_34', 'Component_33'];
+	for (var x in components){
+	    findObjectsById(components).forEach(function(item) {
+	    	item.traverse(function (object) {
+	        	object.visible = false;
+	    	});
+		});
+	}
 }
 
+function dropFan1 () {
+    findObjectsById('Component_33').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+}
+
+function dropFan2 () {
+    findObjectsById('Component_34').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+}
+
+function dropFan3 () {
+    findObjectsById('Component_35').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+}
+
+function dropFan4 () {
+    findObjectsById('Component_36').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+}
+
+function dropFan5 () {
+    findObjectsById('Component_33').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+}
+
+function dropBoxFan(){
+	boxFan.visible = false;
+}
+
+function dropAllFanComponents (){
+	dropFan1();dropFan2();dropFan3();dropFan4();dropFan5();	dropBoxFan();
+}
 
 
 listOBJ['boxFan'] = {};
 listOBJ['boxFan']['add'] = addFan;
-
 listOBJ['boxFan']['update'] = recieveUpdate;
-
 listOBJ['boxFan']['sendUpdate'] = sendUpdateFan;
-
-listOBJ['boxFan']['drop'] = dropFan;
+listOBJ['boxFan']['drop'] = dropAllFanComponents;

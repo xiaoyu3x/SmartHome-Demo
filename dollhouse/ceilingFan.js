@@ -20,6 +20,18 @@ function updateCeilingFan(sensor){
 function dropCeilingFan (){
 	console.log("Dropping ceiling fan");
 	//TODO: makeVisible("name", false)
+    findObjectsById('group_5').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+
+    findObjectsById('Ceiling_Fan6').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
+
 }
 
 listOBJ['ceilingFan'] = {};

@@ -51,8 +51,13 @@ function UpdateToServer(){
 */
 //make object invisible in webGL
 function dropMotionSensor () {
+	//makeVisible('security-system_motion-detector', false)
 	console.log("Dropping motion sensor");
-	makeVisible('security-system_motion-detector', false)
+    findObjectsById('security-system_motion-detector').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
 }
 
 listOBJ['motionSensor'] = {};

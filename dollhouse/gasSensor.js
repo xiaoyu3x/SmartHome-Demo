@@ -26,9 +26,16 @@ function updateGasSensor(sensor){
 
 //make object invisible in webGL
 function dropGasSensor () {
+/*	makeVisible('_445CTmine', false)
+*/
 	console.log("Dropping Gas Sensor");
-	makeVisible('_445CTmine', false)
+    findObjectsById('_445CTmine').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
 }
+
 
 listOBJ['gasSensor'] = {};
 listOBJ['gasSensor']['add'] = addGasSensor;
