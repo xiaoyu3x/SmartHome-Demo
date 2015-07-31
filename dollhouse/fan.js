@@ -2,6 +2,9 @@
 function addFan(sensor){
 	console.log("Test adding: "+ JSON.stringify(sensor));
 
+	//adding the fan into WebGL
+	allFanComponentsVisible(true);
+
 	//print attributes in debug mode
 	if (debug) {
 		for (var att in sensor.att){
@@ -9,7 +12,6 @@ function addFan(sensor){
          		console.log("Key: " + att + ", value: " + sensor.att[att]);
     		}
 		}
-
 	}
 	recieveUpdate(sensor);
 } 
@@ -36,20 +38,75 @@ function sendUpdateFan(){
 } 
 
 
-function dropFan () {
+function fanVisible1 (bool) {
+    findObjectsById('Component_33').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = bool;
+    	});
+	});
+}
+
+function fanVisible2 (bool) {
+    findObjectsById('Component_34').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = bool;
+    	});
+	});
+}
+
+function fanVisible3 (bool) {
+    findObjectsById('Component_35').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = bool;
+    	});
+	});
+}
+
+function fanVisible4 (bool) {
+    findObjectsById('Component_36').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = bool;
+    	});
+	});
+}
+
+function fanVisible5 (bool) {
+    findObjectsById('Component_33').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = bool;
+    	});
+	});
+}
+
+function boxFanVisible(bool){
+	boxFan.visible = bool;
+}
+
+function allFanComponentsVisible (bool){
+	fanVisible1(bool);fanVisible2(bool);
+	fanVisible3(bool);fanVisible4(bool);
+	fanVisible5(bool);	boxFanVisible(bool);
+}
+
+/*//TODO: debug as this could be a cleaner function
+function dropFanALL () {
 	makeVisible('Component_33', false)
 	makeVisible('Component_34', false)
 	makeVisible('Component_35', false)
 	makeVisible('Component_36', false)
+	console.log("Dropping Fan Sensor");
+	var components = ['Component_36', 'Component_35', 'Component_34', 'Component_33'];
+	for (var x in components){
+	    findObjectsById(components).forEach(function(item) {
+	    	item.traverse(function (object) {
+	        	object.visible = false;
+	    	});
+		});
+	}
 }
-
-
-
+*/
 listOBJ['boxFan'] = {};
 listOBJ['boxFan']['add'] = addFan;
-
 listOBJ['boxFan']['update'] = recieveUpdate;
-
 listOBJ['boxFan']['sendUpdate'] = sendUpdateFan;
-
-listOBJ['boxFan']['drop'] = dropFan;
+listOBJ['boxFan']['drop'] = allFanComponentsVisible;

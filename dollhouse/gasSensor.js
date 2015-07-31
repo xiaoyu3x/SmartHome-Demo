@@ -1,6 +1,9 @@
 function addGasSensor(sensor){
 	console.log("Test adding: " + JSON.stringify(sensor));
 
+	//sensor appears in WebGL
+    gasSensorVisible(true);
+
 	//print attributes
 	if (debug) {
 		for (var att in sensor.att){
@@ -25,12 +28,19 @@ function updateGasSensor(sensor){
 } 
 
 //make object invisible in webGL
-function dropGasSensor () {
+function gasSensorVisible (bool) {
+/*	makeVisible('_445CTmine', false)
+*/
 	console.log("Dropping Gas Sensor");
-	makeVisible('_445CTmine', false)
+    findObjectsById('_445CTmine').forEach(function(item) {
+    	item.traverse(function (object) {
+        	object.visible = false;
+    	});
+	});
 }
+
 
 listOBJ['gasSensor'] = {};
 listOBJ['gasSensor']['add'] = addGasSensor;
 listOBJ['gasSensor']['update'] = updateGasSensor;
-listOBJ['gasSensor']['drop'] = dropGasSensor;
+listOBJ['gasSensor']['drop'] = gasSensorVisible;
