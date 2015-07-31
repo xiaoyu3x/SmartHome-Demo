@@ -157,7 +157,7 @@
 
             var loader = new THREE.ColladaLoader(), box;
             loader.options.convertUpAxis = true;
-            loader.load('./july_model2/newdollhouse/dollhouseJuly29_v2.dae', function 
+            loader.load('./current/model.dae', function 
             /*loader.load('./model/SmartHouseSketchResized.dae', function*/ (collada) {
                 loading.parentElement.removeChild(loading);
                 loading = null;
@@ -275,11 +275,13 @@
                 gasSensorVisible(false);
                 motionSensorVisible(false);
                 ceilingFanVisible(false);
+                solarPanelVisible(false);
 
                 allFanComponentsVisible(true);
                 gasSensorVisible(true);
                 motionSensorVisible(true);
                 ceilingFanVisible(true);
+                solarPanelVisible(true);
 
 
             }
@@ -488,6 +490,8 @@
         <script src="objVisibility.js"></script>
         <script src="fan.js"></script>
         <script src="motionSensor.js"></script>
+        <script src="icarus.js"></script>
+
         <script src="gasSensor.js"></script>
         <script src="ceilingFan.js"></script>
     </head>
