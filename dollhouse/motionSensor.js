@@ -1,5 +1,10 @@
 function addMotionSensor(sensor){
 	console.log("Test adding: "+ JSON.stringify(sensor));
+
+	//sensor apepars in WebGL	
+    motionSensorVisible(true);
+
+
 	//print attributes
 	if (debug) {
 		for (var att in sensor.att){
@@ -50,12 +55,12 @@ function UpdateToServer(){
 } 
 */
 //make object invisible in webGL
-function dropMotionSensor () {
+function motionSensorVisible (bool) {
 	//makeVisible('security-system_motion-detector', false)
 	console.log("Dropping motion sensor");
     findObjectsById('security-system_motion-detector').forEach(function(item) {
     	item.traverse(function (object) {
-        	object.visible = false;
+        	object.visible = bool;
     	});
 	});
 }
@@ -64,4 +69,4 @@ listOBJ['motionSensor'] = {};
 listOBJ['motionSensor']['add'] = addMotionSensor;
 listOBJ['motionSensor']['update'] = recieveUpdate;
 listOBJ['motionSensor']['sendUpdate'] = UpdateToServer;
-listOBJ['motionSensor']['drop'] = dropMotionSensor;
+listOBJ['motionSensor']['drop'] = motionSensorVisible;
