@@ -3,7 +3,7 @@
 	for (item in list){
 		item.traverse(function (object) {
 			object.visible = false; //TODO: delete
-		    if (bool == true) {
+		    if (bool) {
 		        object.visible = true;
 		    }
 		    else {

@@ -1,6 +1,9 @@
 function addCeilingFan(sensor){
 	console.log("Test adding: "+ JSON.stringify(sensor));
 
+	//sensor appears in WebGL
+	ceilingFanVisible(true);
+
 	//print the attributes
 	if (debug) {
 		for (var att in sensor.att){
@@ -17,18 +20,18 @@ function updateCeilingFan(sensor){
 	console.log("Updating ceiling fan: "+ JSON.stringify(sensor));
 } 
 
-function dropCeilingFan (){
+function ceilingFanVisible (bool){
 	console.log("Dropping ceiling fan");
 	//TODO: makeVisible("name", false)
     findObjectsById('group_5').forEach(function(item) {
     	item.traverse(function (object) {
-        	object.visible = false;
+        	object.visible = bool;
     	});
 	});
 
     findObjectsById('Ceiling_Fan6').forEach(function(item) {
     	item.traverse(function (object) {
-        	object.visible = false;
+        	object.visible = bool;
     	});
 	});
 
@@ -37,4 +40,4 @@ function dropCeilingFan (){
 listOBJ['ceilingFan'] = {};
 listOBJ['ceilingFan']['add'] = addCeilingFan;
 listOBJ['ceilingFan']['update'] = updateCeilingFan;
-listOBJ['ceilingFan']['drop'] = dropCeilingFan;
+listOBJ['ceilingFan']['drop'] = ceilingFanVisible;

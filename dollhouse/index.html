@@ -271,10 +271,10 @@
                 container.addEventListener('mousedown', onMouseDown, false);
 
                 //Init: Start off with all sensors invisible until added!
-/*                dropAllFanComponents();
-                dropGasSensor();
-                dropMotionSensor();
-                dropCeilingFan();*/
+                allFanComponentsVisible(false);
+                gasSensorVisible(false);
+                motionSensorVisible(false);
+                ceilingFanVisible(false);
             }
 
             function onMouseMove(event) {
