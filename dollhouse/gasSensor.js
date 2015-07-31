@@ -34,7 +34,7 @@ function gasSensorVisible (bool) {
 	console.log("Dropping Gas Sensor");
     findObjectsById('_445CTmine').forEach(function(item) {
     	item.traverse(function (object) {
-        	object.visible = false;
+        	object.visible = bool;
     	});
 	});
 }
