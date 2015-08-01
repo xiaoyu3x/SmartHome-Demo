@@ -19,7 +19,7 @@ function addSolarPanel(sensor){
 function recieveUpdate(sensor){
 	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
-		//solarPanel = sensor['att']['on_off'];
+		solarPanelOn = sensor['att']['on_off'];
 	}
 }
 
@@ -30,11 +30,11 @@ function sendUpdateSolarPanel(){
     var test_payload = {
         Event:'update',
         Type:'solarPanel',
-        //TODO: att:{on_off: solar_attribute}
+        att:{on_off: true, angle: 5}
     };
     onUpdate(test_payload); //commentout
     //socket.send(JSON.stringify(test_payload));
-} 
+}
 
 function solarPanelVisible (bool) {
     findObjectsById('icarus').forEach(function(item) {
@@ -43,7 +43,6 @@ function solarPanelVisible (bool) {
     	});
  	});
 }
-
 
 listOBJ['solarPanel'] = {};
 listOBJ['solarPanel']['add'] = addSolarPanel;

@@ -58,6 +58,7 @@
             var listOBJ = {};
             var spinningBoxFan = false, boxFan = null;
             var gasSmokeAlarmOn = false, motionSensorOn = false;
+            var solarPanelOn = false;
 
             /* Kind of a hack function to find all objects matching a given node
              * name and return them as an array. */
@@ -85,6 +86,11 @@
                 motionSensorOn = !motionSensorOn;
                 listOBJ['motionSensor'].sendUpdate();
                 controlLine('Motion detector clicked');
+            }
+
+            window['icarus_click'] = function(intersection) {
+                listOBJ['solarPanel'].sendUpdate();
+                controlLine('Solar panel clicked');
             }
 
             window['_445CTmine_click'] = function(intersection) {
