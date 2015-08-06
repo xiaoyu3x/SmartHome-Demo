@@ -12,6 +12,7 @@
                 margin: 0px;
                 overflow: hidden;
                 color: #0f0f0f;
+                box-sizing: border-box;
             }
 
             .loading {
@@ -28,25 +29,29 @@
             }
             
             #container {
-                position: absolute;
+                /*position: absolute;*/
                 top: 0px;
                 width: ;
                 height: 100%;
                 display: inline-block;
+                box-sizing: padding-box;
+
             }
 
             #controls {
                 padding: 1rem;
                 position: absolute;
                 top: 55px;
+                bottom: 760px;
                 left: 0px;
-                width: 500px;
+                width: 270px;
                 display: inline-block;
+                box-sizing: border-box;
                 overflow: hidden;
                 color: white;
                 /*border: 1.5px solid #444;
                 border-radius: 0.5rem;*/
-                background-color: rgba(255, 255, 255, 0.3); /*made the grey behind the text box*/
+                background-color: rgba(255, 255, 255, 0.1); /*made the grey behind the text box*/
             }
         </style>
         <script src="js/three.min.js"></script>
@@ -220,10 +225,12 @@
                 // Set up the Orbit Control
                 controls = new THREE.OrbitControls(camera);
                 controls.target = new THREE.Vector3(0, 0.5 * (box.max.y - box.min.y), 0);
-                controls.damping = 0.2;
+                controls.damping = -39;
                 controls.addEventListener('change', render);
                 controls.noPan = true;
-                controls.noZoom = true;
+                controls.noZoom = false;
+                controls.zoomSpeed = 0.4;
+                controls.rotateSpeed = 0.5;
                 /* Start with the control disabled until the first render pass so we can
                  * lock the vertical rotation angle */
                 controls.enabled = false;
@@ -315,6 +322,7 @@
             }
             
             function onWindowResize() {
+                first = true;
                 container.style.height = window.innerHeight + 'px';
                 container.style.width = window.innerWidth + 'px';
                 
