@@ -4,7 +4,6 @@ function addMotionSensor(sensor){
 	//sensor apepars in WebGL	
     motionSensorVisible(true);
 
-
 	//print attributes
 	if (debug) {
 		for (var att in sensor.att){
@@ -15,7 +14,7 @@ function addMotionSensor(sensor){
 	}
 } 
 	
-	//TODO: animate flashMotionSensor akin to
+	//TODO: animateMotionSensor akin to
 	//spinningBoxFan = sensor['W_att']['on_off'];
 
 

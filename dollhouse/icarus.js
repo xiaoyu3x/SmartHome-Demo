@@ -30,7 +30,7 @@ function sendUpdateSolarPanel(){
     var test_payload = {
         Event:'update',
         Type:'solarPanel',
-        att:{on_off: true, angle: 5}
+        att:{on_off: !solarPanelOn, angle: 5}
     };
     onUpdate(test_payload); //commentout
     //socket.send(JSON.stringify(test_payload));

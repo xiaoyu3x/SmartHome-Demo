@@ -29,13 +29,11 @@
             }
             
             #container {
-                /*position: absolute;*/
                 top: 0px;
                 width: ;
                 height: 100%;
                 display: inline-block;
                 box-sizing: padding-box;
-
             }
 
             #controls {
@@ -65,9 +63,10 @@
             var debug = true;
             var socket = null;
             var listOBJ = {};
-            var spinningBoxFan = false, boxFan = null;
+            var spinningBoxFan = false, boxFan = null; icarus = null;
             var gasSmokeAlarmOn = false, motionSensorOn = false;
             var solarPanelOn = false;
+            var black = new THREE.Color( 0x000000 )
 
             /* Kind of a hack function to find all objects matching a given node
              * name and return them as an array. */
@@ -94,30 +93,78 @@
             window['security-system_motion-detector_click'] = function(intersection) {
                 motionSensorOn = !motionSensorOn;
                 listOBJ['motionSensor'].sendUpdate();
-                controlLine('Motion detector clicked');
+                /*controlLine('Motion detector clicked');*/
+                controlLine('Motion detector is ' + (motionSensorOn ? 'ON' : 'OFF'));
+
+
+                //make the motion sensor's red button turn on and off
+                if (!motionSensorOn) {
+                    findObjectsById('motion_sensor_red_button').forEach(function(item) {
+                            item.traverse(function (object) {
+                                //object.setRGB(0,77,0);
+                                 object.visible = false;
+                        });
+                    });
+                }
+                else {
+                    findObjectsById('motion_sensor_red_button').forEach(function(item) {
+                            item.traverse(function (object) {
+                                //object.setRGB(0,77,0);
+                                 object.visible = true;
+                            });
+                    });
+                }
             }
 
             window['icarus_click'] = function(intersection) {
                 listOBJ['solarPanel'].sendUpdate();
-                controlLine('Solar panel clicked');
+                /*controlLine('Solar panel clicked');*/
+                controlLine('Solar panel is ' + (solarPanelOn ? 'ON' : 'OFF'));
+                controlLine('solar on: ' + solarPanelOn)
+                if (!solarPanelOn) {
+                    scene.add(icarus);
+                }
             }
 
             window['_445CTmine_click'] = function(intersection) {
                 gasSmokeAlarmOn = !gasSmokeAlarmOn;
                 listOBJ['gasSensor'].update();
-                controlLine('Smoke alarm clicked');
+                /*controlLine('Smoke alarm clicked');*/
+                controlLine('Smoke alarm is ' + (gasSmokeAlarmOn ? 'ON' : 'OFF'));
                 if (!spinningBoxFan) {
                     scene.add(boxFan);
                 }
                 
-                if (gasSmokeAlarmOn) {
-                    findObjectsById('_445CTmine').forEach(function(item) {
+
+            //     //make the gas sensor's red button turn on and off
+            //     if (!gasSmokeAlarmOn) {
+            //         findObjectsById('smoke_red_button').forEach(function(item) {
+            //                 item.traverse(function (object) {
+            //                     //object.setRGB(0,77,0);
+            //                      object.visible = false;
+            //             });
+            //         });
+            //     }
+            //     else {
+            //         findObjectsById('smoke_sensor_red_button').forEach(function(item) {
+            //                 item.traverse(function (object) {
+            //                     //object.setRGB(0,77,0);
+            //                      object.visible = true;
+            //                 });
+            //         });
+            //     }
+            // }
+
+
+
+                if (!gasSmokeAlarmOn) {
+                    findObjectsById('smoke_red_button').forEach(function(item) {
                         item.traverse(function (object) {
-                            //object.visible = false;
+                            object.visible = false;
                         });
                     });
                 } else {
-                    findObjectsById('_445CTmine').forEach(function(item) {
+                    findObjectsById('smoke_red_button').forEach(function(item) {
                         item.traverse(function (object) {
                             object.visible = true;
                         });
@@ -142,7 +189,7 @@
                 /*if (!spinningBoxFan) {
                     scene.remove(boxFan);
                 }*/
-                controlLine('boxFan is now ' + (spinningBoxFan ? 'ON' : 'OFF'));
+                controlLine('boxFan is ' + (spinningBoxFan ? 'ON' : 'OFF'));
             }
 
 
@@ -172,7 +219,7 @@
 
             var loader = new THREE.ColladaLoader(), box;
             loader.options.convertUpAxis = true;
-            loader.load('./current/model.dae', function 
+            loader.load('./aug11/dollhouse_aug11/model.dae', function 
             /*loader.load('./model/SmartHouseSketchResized.dae', function*/ (collada) {
                 loading.parentElement.removeChild(loading);
                 loading = null;
@@ -230,7 +277,7 @@
                 controls.noPan = true;
                 controls.noZoom = false;
                 controls.zoomSpeed = 0.4;
-                controls.rotateSpeed = 0.5;
+                controls.rotateSpeed = 0.86;
                 /* Start with the control disabled until the first render pass so we can
                  * lock the vertical rotation angle */
                 controls.enabled = false;
@@ -259,8 +306,29 @@
                 boxFan.position.z = -1;
                 boxFan.updateMatrix();
                 
+                //Solar Panel
+                var solarPanel = findObjectsById('icarus');
+                solarPanel = new THREE.Vector3(1, 1, 0);
+                icarus = new THREE.Object3D();
+                icarus.add(solarPanel);
+
+                //tinkering
+                // geometry = new THREE.BoxGeometry( 5, 5, 5 );
+                // material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+
+                // mesh = new THREE.Mesh( geometry, material );
+                // scene.add( mesh );
+
+
+                scene.add(icarus);
+                icarus.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI * 0.5);
+
+
+
                 // Lights
                 scene.add(new THREE.AmbientLight(0xaaaaaa));
+
+
 
                 // Add a directional light
                 var directionalLight = new THREE.DirectionalLight(0xeeeeee);
@@ -349,7 +417,14 @@
                 if (spinningBoxFan) {
                     boxFan.rotateOnAxis(new THREE.Vector3(0, 1, 0), (last - now) * Math.PI / 1000);
                 }
-                
+
+                if (solarPanelOn) {
+                    icarus.rotateOnAxis(new THREE.Vector3(0, 1, 1), (last - now) * Math.PI / 1000);
+                }
+
+                // mesh.rotation.x -= 0.3;
+                // mesh.rotation.x += 0.3;
+
                 last = now;
                 
                 render();
