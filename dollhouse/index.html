@@ -227,7 +227,7 @@
 
             var loader = new THREE.ColladaLoader(), box;
             loader.options.convertUpAxis = true;
-            loader.load('./aug11/dollhouse_aug11/model.dae', function 
+            loader.load('./aug12/model/model.dae', function 
             /*loader.load('./model/SmartHouseSketchResized.dae', function*/ (collada) {
                 loading.parentElement.removeChild(loading);
                 loading = null;
@@ -374,8 +374,8 @@
                 allFanComponentsVisible(true);
                 gasSensorVisible(true);
                 motionSensorVisible(true);
-                ceilingFanVisible(true);
-                solarPanelVisible(true);
+                 ceilingFanVisible(true);
+                 solarPanelVisible(true);
 
 
             }
@@ -448,7 +448,7 @@
                     solarAlpha = Math.min(1, Math.max(0, solarAlpha));
                     console.log(solarAlpha, solarPanelOpen); //reset rotation every frame
                     solarPanel.rotation.x = solarPanel.rotation.y = solarPanel.rotation.z = 0;
-                    solarPanel.rotateOnAxis(new THREE.Vector3(1, 0, 0), solarAlpha * Math.PI * 25 / 360);
+                    solarPanel.rotateOnAxis(new THREE.Vector3(1, 0, 0), solarAlpha * Math.PI * 57 / 360);
 
                     if ((solarAlpha == 0 && solarPanelOpen) || 
                         (!solarPanelOpen && solarAlpha == 1)) {
