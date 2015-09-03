@@ -1,3 +1,11 @@
+**Current instructions:**
+run first_server (testing with node version 0.12.5 e.g. npm v2.11.2) and then view http://127.0.0.1:8080/ and click to interact with devices. 
+
+Depencies: nodejs; via npm: express, websocket, iotivity
+
+Note: This is a good node version manager if needed: https://github.com/creationix/nvm
+
+...
 To add a function callback, simply implement the javascript function that matches 
 the name of the Sketchup node plus the event type. 
 
@@ -36,5 +44,3 @@ The following change was made from the default ColladaLoader:
 				}
 ...                
 
-Current instructions:
-run first_server and then view http://127.0.0.1:8080/
