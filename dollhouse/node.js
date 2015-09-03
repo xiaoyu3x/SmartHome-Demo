@@ -2,6 +2,8 @@
 function onUpdate(jsonString) {
     //adding obj
     console.log(jsonString);
+
+
     if (jsonString.Event == 'add') {
       //message.textContent = "Adding " + jsonString.Type;
       if ('att' in jsonString) {
@@ -12,11 +14,12 @@ function onUpdate(jsonString) {
 
     //updating obj
     } else if (jsonString.Event == 'update') {
-      //message.textContent = "Updating " + jsonString.Type
-      if ('att' in jsonString) {
+      
+     if ('att' in jsonString) {
+        console.log("Updating " + jsonString.Type)
         listOBJ[jsonString.Type].update(jsonString);
       }else {
-        //message.textContent += "Error" ;
+        message.textContent += "Error" ;
       }
 
     //dropping obj
@@ -59,6 +62,7 @@ window.addEventListener("load", function(event) {
 
     // Display messages received from the server
     socket.addEventListener("message", function(event) {
+      //console.log(event);
       onUpdate(JSON.parse(event.data));
       //this data will be the json payload. parset the json out of event.data
       //

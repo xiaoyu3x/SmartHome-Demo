@@ -51,8 +51,9 @@ function updateWebClients(msg){
   console.log(msg);
 
   for (var key in connectionList){
+    console.log(key);
     var connection = connectionList[key];
-    connection.sendUTF(msg);
+    connection.sendUTF(JSON.stringify(msg));
   }
 }
 
@@ -68,6 +69,7 @@ wsServer.on('request', function(request) {
     }
 
     var connection = request.accept('echo-protocol', request.origin);
+
     console.log((new Date()) + ' Connection accepted.');
 
     if(!(connection.remoteAddress in connectionList)){
@@ -76,6 +78,7 @@ wsServer.on('request', function(request) {
       connection.on('message', function(message) {
           if (message.type === 'utf8') {
               console.log('Received Message: ' + message.utf8Data);
+
               parceInComingRequest(JSON.parse(message.utf8Data),connection);
           }
       });
@@ -127,7 +130,7 @@ function updateFan(Fan)
     if('/a/fan' in Resorce_list){
       absoluteUrl = Resorce_list['/a/fan'];
 
-      console.log( "OCDoResource() handler for Update: Entering" );
+      console.log( "----------------------------------------------" );
       console.log( "absolute url discovered: " + absoluteUrl );
 
       var payload = JSON.stringify( 
@@ -152,12 +155,14 @@ var WebCompoints = {};
 
 function obsReqCB( handle, clientResponse ){
 
-   console.log("Callback Context for OBS query recvd successfully:" +handle);
+   //console.log("Callback Context for OBS query recvd successfully:" +handle);
    if(clientResponse)
      {
-      console.log("StackResult: %s", clientResponse.result);
-        console.log("SEQUENCE NUMBER: %d", clientResponse.sequenceNumber);
-        console.log("Callback Context for OBSERVE notification recvd successfully " + gNumObserveNotifies);
+        //console.log("StackResult: %s", clientResponse.result);
+        //console.log("SEQUENCE NUMBER: %d", clientResponse.sequenceNumber);
+        //console.log("Callback Context for OBSERVE notification recvd successfully " + gNumObserveNotifies);
+
+        if ( typeof clientResponse.resJSONPayload !== 'undefined' && clientResponse.resJSONPayload ){
         console.log("JSON = %s =============> Obs Response",clientResponse.resJSONPayload);
         gNumObserveNotifies++;
         payloads = JSON.parse(clientResponse.resJSONPayload );
@@ -174,7 +179,7 @@ function obsReqCB( handle, clientResponse ){
               updateWebClients(payload);
           }
 
-
+        }
         if(clientResponse.sequenceNumber == iotivity.OCObserveAction.OC_OBSERVE_REGISTER)
         {
             console.log("This also serves as a registration confirmation");
@@ -214,7 +219,7 @@ var Resorce_list =  {};
 //send request / message to sensors server.
 function InvokeOCDoResource(query, method, qos, cb, request)
 {
-  console.log("\n\nExecuting InitObserveRequest");
+  console.log("\n\nExecuting InitObserveRequest:" + method);
     var ret;
     var Resourcehandle= {};
 
@@ -243,10 +248,18 @@ function discoveryReqCB( handle, clientResponse ) {
 
     absoluteUrl = getAbsoluteUrl(clientResponse);
 
-    if(!(absoluteUrl.type in Resorce_list)){
-      console.log( "absolute url discovered: " + absoluteUrl.href );
-      Resorce_list[absoluteUrl.type] = absoluteUrl.href;
-      InvokeOCDoResource(absoluteUrl.href, iotivity.OCMethod.OC_REST_OBSERVE, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, null)
+    if (absoluteUrl.type === undefined) {
+      console.log("resJSONPayload:" + clientResponse.resJSONPayload);
+
+    }else{
+
+      if(!(absoluteUrl.type in Resorce_list)){
+        console.log( "absolute url discovered: " + absoluteUrl.href );
+        Resorce_list[absoluteUrl.type] = absoluteUrl.href;
+        InvokeOCDoResource(absoluteUrl.href, iotivity.OCMethod.OC_REST_OBSERVE, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, null)
+      }
+
+
     }
 
   }else{

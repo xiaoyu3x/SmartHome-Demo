@@ -16,9 +16,21 @@ function addFan(sensor){
 
 //Fan has physically changed status --> change model animation
 function recieveUpdate(sensor){
+
+	
+
+
 	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
-		spinningBoxFan = sensor['att']['on_off'];
+		console.log("Updating Fan")
+		if((sensor['att']['on_off']) == 'on'){
+			spinningBoxFan = 1;
+		}else{
+			spinningBoxFan = 0;
+		}
+
+	}else{
+		console.log("Error Updating Fan")
 	}
 }
 
@@ -31,8 +43,8 @@ function sendUpdateFan(){
         Type:'boxFan',
         att:{on_off: !spinningBoxFan}
     };
-    onUpdate(test_payload); //commentout
-    //socket.send(JSON.stringify(test_payload));
+    //onUpdate(test_payload); //commentout
+    socket.send(JSON.stringify(test_payload));
 } 
 
 
