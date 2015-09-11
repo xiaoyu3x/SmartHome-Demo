@@ -39,21 +39,22 @@ function originIsAllowed(origin) {
 //
 function parceInComingRequest(message,connection){
    if (message.Event == "update") {
-    if(message.Type == "boxFan"){
-       updateFan(message.att["on_off"]);
-    }
-
+       update(message.Type,message.att);
    }
 }
 
 function updateWebClients(msg){
+  outmesg = {}
+  outmesg["Type"] = msg.Type;
+  outmesg["Event"] = msg.Event;
+  outmesg["att"] = msg.ATT.values;
 
-  console.log(msg);
+  console.log(outmesg);
 
   for (var key in connectionList){
     console.log(key);
     var connection = connectionList[key];
-    connection.sendUTF(JSON.stringify(msg));
+    connection.sendUTF(JSON.stringify(outmesg));
   }
 }
 
@@ -91,282 +92,214 @@ wsServer.on('request', function(request) {
 });
 
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
-var intervalId,
+  var intervalId,
+  handle = {},
   iotivity = require( "iotivity" ),
-  handle= {};
-var OC_CONNTYPE = iotivity.OCConnectivityType.OC_IPV4;
-var gNumObserveNotifies = 0;
-
-// Construct the absolute URL for the resource from the OCDoResource() response
-function getAbsoluteUrl( response ) {
-  var payload, oic,
-    ipv4Bytes = [],
-    portHolder = {};
-
-  if ( iotivity.OCStackResult.OC_STACK_OK !==
-      iotivity.OCDevAddrToIPv4Addr( response.addr, ipv4Bytes ) ) {
-    return;
-  }
-
-  if ( iotivity.OCStackResult.OC_STACK_OK !==
-      iotivity.OCDevAddrToPort( response.addr, portHolder ) ) {
-    return;
-  }
-
-  //console.log(response.resJSONPayload);
-
-  payload = JSON.parse( response.resJSONPayload );
-  oic = payload.oic || payload.oc;
+  resourcesList ={},
+  TAG = "NodeServer";
 
 
-  return {href:"coap://" +
-    ipv4Bytes[ 0 ] + "." + ipv4Bytes[ 1 ] + "." + ipv4Bytes[ 2 ] + "." + ipv4Bytes[ 3 ] + ":" +
-    portHolder.port + oic[ 0 ].href, type:oic[ 0 ].href};
+function InvokeOCDoResource(absoluteUrl, Method, QOS, obsReqCB, destination, payload){
+  getHandle = {};
+  iotivity.OCDoResource(
+      getHandle,
+      Method,
+      absoluteUrl,
+      destination,
+      payload,
+      iotivity.OCConnectivityType.CT_DEFAULT,
+      QOS,
+      function( handle, response ) {
+        console.log( "Received response to GET request:" );
+        //console.log( JSON.stringify( response, null, 4 ) );
+        return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+      },
+      null );
 }
 
-
-function updateFan(Fan)
+function update(Type,values)
 {
-    if('/a/fan' in Resorce_list){
-      absoluteUrl = Resorce_list['/a/fan'];
+    if(Type in WebCompoints){
+      URi = WebCompoints[Type];
+
+      destination = resourcesList[URi];
 
       console.log( "----------------------------------------------" );
-      console.log( "absolute url discovered: " + absoluteUrl );
-
-      var payload = JSON.stringify( 
-        {
-          "oc": [
-            {"rep": {
-              "fanstate": (Fan ? "on":"off")
-              }
+      console.log( "Sendng Update to "+ Type + " uri:"+URi);
+      payload = {
+            type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+            values: {
             }
-          ]
-        }
-      );
+          };
+      payload.values = values;
 
-      InvokeOCDoResource(absoluteUrl, iotivity.OCMethod.OC_REST_PUT, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, payload)
+      InvokeOCDoResource(URi, iotivity.OCMethod.OC_REST_PUT, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, destination, payload)
     }else{
-      console.log( "No boxFan online");
+      console.log( "No "+Type+" online");
     }
 }
 
 var WebCompoints = {};
 //when a server seends data to gatway
 
-function obsReqCB( handle, clientResponse ){
-
-   //console.log("Callback Context for OBS query recvd successfully:" +handle);
-   if(clientResponse)
-     {
-        //console.log("StackResult: %s", clientResponse.result);
-        //console.log("SEQUENCE NUMBER: %d", clientResponse.sequenceNumber);
-        //console.log("Callback Context for OBSERVE notification recvd successfully " + gNumObserveNotifies);
-
-        if ( typeof clientResponse.resJSONPayload !== 'undefined' && clientResponse.resJSONPayload ){
-        console.log("JSON = %s =============> Obs Response",clientResponse.resJSONPayload);
-        gNumObserveNotifies++;
-        payloads = JSON.parse(clientResponse.resJSONPayload );
-
-          for( key  in payloads.oc){
-              payload = payloads.oc[key]
-              if(!(payload.Type in WebCompoints)){
-                payload.Event = 'add';
-                WebCompoints[payload.Type] = "";
-              }else{
-                 payload.Event = 'update';
-              }
-
-              updateWebClients(payload);
-          }
-
-        }
-        if(clientResponse.sequenceNumber == iotivity.OCObserveAction.OC_OBSERVE_REGISTER)
-        {
-            console.log("This also serves as a registration confirmation");
-        }
-        else if(clientResponse.sequenceNumber == iotivity.OCObserveAction.OC_OBSERVE_DEREGISTER)
-        {
-           console.log("This also serves as a deregistration confirmation");
-            return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
-        }
-        else if(clientResponse.sequenceNumber == iotivity.OCObserveAction.OC_OBSERVE_NO_OPTION)
-        {
-           console.log("This also tells you that registration/deregistration failed");
-            return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
-        }
-
-    }
-    else
-    {
-         //console.log("obsReqCB received Null clientResponse");
-    }
-    return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
-
-}
-
-
-
-
-
-
-
-
-//-------------------------------Server functions for register servers ----------------------------------------------------------
-
-var Resorce_list =  {};
-
-
-//send request / message to sensors server.
-function InvokeOCDoResource(query, method, qos, cb, request)
-{
-  console.log("\n\nExecuting InitObserveRequest:" + method);
-    var ret;
-    var Resourcehandle= {};
-
-    ret = iotivity.OCDoResource(Resourcehandle, method, query, null, request,
-                       (OC_CONNTYPE), qos, cb, null, 0);
-
-    if (ret != iotivity.OCStackResult.OC_STACK_OK)
-    {
-        console.log("OCDoResource returns error " + ret + " with method "+method);
-    }
-    else if (method == iotivity.OCMethod.OC_REST_OBSERVE || method == iotivity.OCMethod.OC_REST_OBSERVE_ALL)
-    {
-        gObserveDoHandle = handle;
-    }
-    return ret;
-}
-
-
-//callback for when sensors is found on netwok, this stats OBSERVEing the server
-function discoveryReqCB( handle, clientResponse ) {
-  console.log( "OCDoResource() handler for discovery: Entering" );
-
-  if (clientResponse){
-    console.log("StackResult:" + clientResponse.result);
-    console.log("Discovered on %s", clientResponse.connType);
-
-    absoluteUrl = getAbsoluteUrl(clientResponse);
-
-    if (absoluteUrl.type === undefined) {
-      console.log("resJSONPayload:" + clientResponse.resJSONPayload);
-
-    }else{
-
-      if(!(absoluteUrl.type in Resorce_list)){
-        console.log( "absolute url discovered: " + absoluteUrl.href );
-        Resorce_list[absoluteUrl.type] = absoluteUrl.href;
-        InvokeOCDoResource(absoluteUrl.href, iotivity.OCMethod.OC_REST_OBSERVE, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, null)
+function obsReqCB( payload,Uri){
+ 
+  if ("Type" in payload){
+    if(!(payload.Type in WebCompoints)){
+        payload.Event = 'add';
+        WebCompoints[payload.Type] = Uri;
+      }else{
+         payload.Event = 'update';
       }
-
-
-    }
-
-  }else{
-    console.log("discoveryReqCB received Null clientResponse");
   }
-
-  return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
-}
-
-//call back for when new sensor try to register to network
-function OnSensorREG( flag, request ) {
-
-    var ehResult = iotivity.OCEntityHandlerResult.OC_EH_OK;
-    var pResponse = iotivity.OCEntityHandlerResult.OC_EH_OK;
-    var deviceInfo = -1;
-    var payload = JSON.stringify( {
-        "href": {
-          "rep": {
-            "0": "random",
-            "1": "int",
-            "2": 42
-          }
-        }
-      } );
-
-    if(request.method == iotivity.OCMethod.OC_REST_PUT) {
-      console.log(" Sensors is atemting to Register.");
-
-      if('reqJSONPayload' in request){
-      
-        var inpayload = JSON.parse(request.reqJSONPayload);
-        deviceInfo = inpayload.oc[0].rep;
-      }
-    }else {
-        console.log(" Sensors unsupported request type "+request.method );
-        pResponse = iotivity.OCEntityHandlerResult.OC_EH_ERROR
-        ehResult = iotivity.OCEntityHandlerResult.OC_EH_ERROR;
-    }
-
-    console.log( "OCCreateResource() handler: Responding with " + payload );
-
-    var resp = iotivity.OCDoResponse( {
-      requestHandle: request.requestHandle.handle,
-      resourceHandle: request.resource.handle,
-      ehResult: pResponse,
-      payload: payload,
-      payloadSize: payload.length,
-      numSendVendorSpecificHeaderOptions: 0,
-      sendVendorSpecificHeaderOptions: [],
-      resourceUri: 0,
-      persistentBufferFlag: 0
-    } );
-
-    if(iotivity.OCStackResult.OC_STACK_OK == resp && deviceInfo != -1){
-      findResorce(deviceInfo.address);
-    }
-
-    
-
-    return ehResult;
-    
-  }
-
-
-
-//Search for Device (full URI) on network
-function findResorce(uri){
-  //Step1
-  var MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core?rt="+uri;
-  console.log("Started searching for: "+MULTICAST_RESOURCE_DISCOVERY_QUERY);
-// Initial call by which we discover the resource we wish to observe
-  console.log(iotivity.OCDoResource(
-    handle,
-    iotivity.OCMethod.OC_REST_GET,
-    MULTICAST_RESOURCE_DISCOVERY_QUERY,
-    null,
-    null,
-    (iotivity.OCConnectivityType.OC_ALL),
-    iotivity.OCQualityOfService.OC_HIGH_QOS,
-    discoveryReqCB,
-    null,
-    0 ));
-}
-
-//Creat a Registartion server, each device wil conect to this server to inform the server of there pereance on th net work.
-function startResorce(){
-  iotivity.OCCreateResource(handle,"gw.sensor","oc.mi.def","/gw/sensor",OnSensorREG,iotivity.OCResourceProperty.OC_DISCOVERABLE |iotivity.OCResourceProperty.OC_OBSERVABLE);
+  //console.log( JSON.stringify( payload, null, 0 ) );
+  updateWebClients(payload);
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-iotivity.OCInit( null, 0, iotivity.OCMode.OC_CLIENT_SERVER );
+// Start iotivity and set up the processing loop
+iotivity.OCInit( null, 0, iotivity.OCMode.OC_SERVER );
 
 intervalId = setInterval( function() {
   iotivity.OCProcess();
-}, 10 );
+}, 1000 );
 
-startResorce();
-//findResorce("com.intel.fan");
+iotivity.OCSetDeviceInfo( { deviceName: "SmartHouse" } );
+iotivity.OCSetPlatformInfo( {
+  platformID: "SmartHouse.dollhouse",
+  manufacturerName: "iotivity-node"
+} );
 
 
+function SensorObserving ( handle, response ) {
+  console.log( "Received response to OBSERVE request:" );
+  if('payload' in response){
+    if('values' in response.payload){
+      obsReqCB(response.payload.values,response.payload.uri);
+    }
+  }
+  return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+}
+
+
+
+function bin2String(array) {
+  var result = "";
+  for (var i = 0; i < array.length; i++) {
+    result += String.fromCharCode(array[i]);
+  }
+  return result;
+}
+
+
+function OCEntityHandlerCb( flag, request ) {
+  
+
+  if(request){
+    console.log( "Entity handler called with flag = " + flag + " and the following request:" );
+    //console.log( JSON.stringify( request, null, 4 ) );
+
+    if(request.devAddr && request.payload){
+      query = "coap://"+bin2String(request.devAddr.addr)+"/oic/res";
+      console.log(query);
+      StarteObserve(query);
+    }
+  }
+    return iotivity.OCEntityHandlerResult.OC_EH_OK;
+}
+
+
+function StarteObserve(query){
+
+
+  iotivity.OCDoResource(
+
+  // The bindings fill in this object
+  handle,
+
+  iotivity.OCMethod.OC_REST_DISCOVER,
+
+  // Standard path for discovering resources
+  iotivity.OC_RSRVD_WELL_KNOWN_URI,
+
+  // There is no destination
+  null,
+
+  // There is no payload
+  null,
+  iotivity.OCConnectivityType.CT_DEFAULT,
+  iotivity.OCQualityOfService.OC_HIGH_QOS,
+  SensorCallBack,
+
+  // There are no header options
+  null );
+}
+
+
+function SensorCallBack( handle, response ) {
+  console.log( "Received response to DISCOVER request:" );
+  //console.log( JSON.stringify( response, null, 4 ) );
+  var index,
+    destination = response.addr,
+    getHandle = {},
+    resources = response && response.payload && response.payload.resources,
+    resourceCount = resources.length ? resources.length : 0;
+
+    // If the sample URI is among the resources, issue the OBSERVE request to it
+    for ( index = 0 ; index < resourceCount ; index++ ) {
+
+      if (!(resources[ index ].uri in resourcesList)){
+        resourcesList[resources[ index ].uri] = destination;
+
+         console.log( "Observing " + resources[ index ].uri );
+
+         iotivity.OCDoResource(
+          getHandle,
+          iotivity.OCMethod.OC_REST_OBSERVE,
+          resources[ index ].uri,
+          destination,
+          null,
+          iotivity.OCConnectivityType.CT_DEFAULT,
+          iotivity.OCQualityOfService.OC_HIGH_QOS,
+          SensorObserving,
+          null );
+
+      }else{
+        console.log( "Erro Observing " + resources[ index ].uri );
+      }
+    }
+
+  return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+}
+
+
+
+// Create a new resource
+iotivity.OCCreateResource(
+
+  // The bindings fill in this object
+  handle,
+
+  "core.hgw",
+  iotivity.OC_RSRVD_INTERFACE_DEFAULT,
+  "/a/hgw",
+  OCEntityHandlerCb
+  ,
+  iotivity.OCResourceProperty.OC_DISCOVERABLE );
+
+
+// Exit gracefully when interrupted
 process.on( "SIGINT", function() {
   console.log( "SIGINT: Quitting..." );
-  //clearInterval( checkclientsintervalId );
+
+  // Tear down the processing loop and stop iotivity
   clearInterval( intervalId );
+  iotivity.OCDeleteResource( handle.handle );
   iotivity.OCStop();
+
+  // Exit
   process.exit( 0 );
 } );
 

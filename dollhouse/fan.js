@@ -24,11 +24,12 @@ function recieveUpdate(sensor){
 
 	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
-		console.log("Updating Fan")
-		if((sensor['att']['on_off']) == 'on'){
+		if((sensor['att']['on_off']) == true){
 			spinningBoxFan = 1;
+			console.log("Updating Fan On")
 		}else{
 			spinningBoxFan = 0;
+			console.log("Updating Fan Off")
 		}
 
 	}else{
