@@ -1,0 +1,36 @@
+{
+	
+	Gas:{
+		add:{
+			model['Gas'] = visable
+		},
+		update:[
+			{
+				name:'value'
+				condition: "function (new_value, old_value) {
+										if (new_value < 100 && old_value > 100)
+										  return true; 
+										return false;
+									}",
+			 	actions:[
+			 		"{ Type: 'boxFan', att: { on_off: 'on' }, Event: 'update' }"
+			 	]
+			},
+			{
+				name:'value'
+				condition: "function (new_value, old_value) {
+										if (new_value < 100 && old_value > 100)
+										  return true; 
+										return false;
+									}",
+			 	actions:[
+			 		"{ Type: 'boxFan', att: { on_off: 'off' }, Event: 'update' }"
+			 	]
+			}
+		],
+		remove:{
+			modle[Gas] = visable
+		}
+	}
+
+}

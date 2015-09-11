@@ -3,7 +3,8 @@ function onUpdate(jsonString) {
     //adding obj
     console.log(jsonString);
 
-
+    //todo add foreach in jsonString
+    
     if (jsonString.Event == 'add') {
       //message.textContent = "Adding " + jsonString.Type;
       if ('att' in jsonString) {
@@ -63,7 +64,7 @@ window.addEventListener("load", function(event) {
     // Display messages received from the server
     socket.addEventListener("message", function(event) {
       //console.log(event);
-      onUpdate(JSON.parse(event.data));
+      onUpadte(JSON.parse(event.data));
       //this data will be the json payload. parset the json out of event.data
       //
     });

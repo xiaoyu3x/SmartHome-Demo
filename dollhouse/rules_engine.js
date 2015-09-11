@@ -6,7 +6,7 @@ function Rules(jsonRulesConfig)
 	//Iterate through all the devides, events and triggers and make condition a callable js function
 	for (var i = 0; i < devices.attributes.length; i++) 
 	{
-		var events devices.attributes[i]
+		var events = devices.attributes[i]
 		if(!events.specified)
 			continue;
 

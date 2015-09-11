@@ -5,7 +5,23 @@ var http = require('http')
 
 app.use(express.static(__dirname + '/dollhouse'));
 
+var fs = require('fs');
+var vm = require('vm');
+var includeInThisContext = function(path) {
+    var code = fs.readFileSync(path);
+    vm.runInThisContext(code, path);
+}.bind(this);
+includeInThisContext(__dirname+"/dollhouse/rules_engine.js");
+
+
+var fs = require("fs");
+console.log(__dirname+"/data.json");
+
+
 var server = http.createServer(app);
+var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
+//console.log(jsonRulesConfig);
+rule_manger = Rules(jsonRulesConfig);
 
 //var server = http.createServer(function(request, response) {
 //    console.log((new Date()) + ' Received request for ' + request.url);
@@ -54,7 +70,7 @@ function updateWebClients(msg){
   for (var key in connectionList){
     console.log(key);
     var connection = connectionList[key];
-    connection.sendUTF(JSON.stringify(outmesg));
+    connection.sendUTF(rule_manger.processEvents(outmesg));
   }
 }
 
