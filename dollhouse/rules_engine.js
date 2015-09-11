@@ -2,6 +2,7 @@ function Rules(jsonRulesConfig)
 {
 	this.rules = JSON.parse(jsonRulesConfig)
 	var devices = this.rules
+	var conditionFuncStr = "function(new_value, old_value){ ${0} }";
 
 	//Iterate through all the devides, events and triggers and make condition a callable js function
 	for (var i = 0; i < devices.attributes.length; i++) 
@@ -23,7 +24,7 @@ function Rules(jsonRulesConfig)
 
 				try 
 				{
-					trigger.condition = eval(trigger.condition);
+					trigger.condition = eval(conditionFuncStr.replace("${0}", trigger.condition));
 				}
 				catch(error)
 				{
