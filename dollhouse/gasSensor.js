@@ -18,13 +18,6 @@ function addGasSensor(sensor){
 
 function updateGasSensor(sensor){
 	console.log("Updating Gas Sensor: "+ JSON.stringify(sensor));
-
-	var test_payload = {
-        Event:'add',
-        Type:'gasSensor',
-        att:{on_off: gasSmokeAlarmOn, value: 33}
-    };
-    socket.send(JSON.stringify(test_payload));
 } 
 
 //make object invisible in webGL

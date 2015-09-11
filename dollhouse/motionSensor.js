@@ -31,12 +31,8 @@ function recieveUpdate(sensor){
 function UpdateToServer(){
 	console.log("Sending motion sensor update");
     
-    var test_payload = {
-        Event:'update',
-        Type:'motionSensor',
-        att:{on_off: !motionSensorOn}
-    };
-    onUpdate(test_payload); //commentout
+
+    //onUpdate(test_payload); //commentout
     //socket.send(JSON.stringify(test_payload));
 
 } 
