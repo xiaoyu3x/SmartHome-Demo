@@ -1,22 +1,24 @@
+module.exports = {
+	createRulesEngine : function(jsonRulesConfig) {
+		return new Rules(jsonRulesConfig);
+	}
+};
+
 function Rules(jsonRulesConfig)
 {
 	this.rules = JSON.parse(jsonRulesConfig);
 	var devices = this.rules;
-	var conditionFuncStr = "function(new_value, old_value){ ${0} }";
 
 	//Iterate through all the devides, events and triggers and make condition a callable js function
-	for(var i in devices) { 
+	/*for(var i in devices) 
 	{
 		var events = devices[i];
 		for (var x in events) 
 		{
 			var triggers = events[x];
-			if(!event.specified)
-				continue;
-			for (var t in triggers) {
+			for (var t in triggers)
+			{
 				var trigger = triggers[t];
-				if(!trigger.specified)
-					continue;
 
 				try 
 				{
@@ -24,12 +26,11 @@ function Rules(jsonRulesConfig)
 				}
 				catch(error)
 				{
-					console.error(error);
+					console.error("eval error: " + error);
 				}
-				
 			}
 		}
-	}
+	}*/
 }
 
 Rules.prototype.processEvents = function(jsonEvent)
@@ -37,42 +38,45 @@ Rules.prototype.processEvents = function(jsonEvent)
 	newupdate = jsonEvent;
 
 	var events = JSON.parse(jsonEvent);
-	var actions = [];
+	var actions = events;
 
-	for (var i = 0; i < events.attributes.length; i++) 
+	for (var i in events) 
 	{
-		var event = events.attributes[i];
-		if(!event.specified)
-			continue;
-
+		var event = events[i];
 		valueNames = this.rules[event.Type][event.Event]
+		
+		console.log(JSON.stringify(this.rules[event.Type][event.Event]))		
 
-		for (var i = 0; i < valueNames.attributes.length; i++) 
+		for (var i in valueNames) 
 		{
-			valueName = valueNames.attributes[i];
-			if(!valueName.specified)
-				continue;
-			
+			valueName = valueNames[i].name;
+			console.log("value: " + valueName);
+
 			if(event.att[valueName] !== undefined)
 			{
 				value = event.att[valueName]
 
 				triggers = this.rules[event.Type][event.Event]
 
-				for (var i = 0; i < triggers.attributes.length; i++) 
+				for (var i in triggers)
 				{
-					trigger = triggers.attributes[i]
-					if(!trigger.specified)
-						continue;
+					
+					trigger = triggers[i];
+					console.log("processing trigger: " + JSON.stringify(trigger));
 
 					if(trigger.name == valueName)
 					{
-
-						condition = trigger.condition;
+						new_value = value;
 						old_value = trigger.old_value;
-						if(condition(old_value, value))
+						console.log("new_value: " + new_value);
+						console.log("old_value: " + old_value);
+
+						condition = eval(trigger.condition);
+						console.log("condition success? " + condition);
+						if(condition === true)
 						{
-							actions.push(trigger.action);
+							if(trigger.action)
+								actions.push(trigger.action);
 						}
 
 						trigger.old_value = value;
@@ -89,5 +93,6 @@ Rules.prototype.rules = {};
 
 Rules.prototype.toJson = function()
 {
-	return JSON.stringify(this.rules)
-}
+	return JSON.stringify(this.rules);
+};
+
