@@ -6,7 +6,7 @@
 		"update":[
 			{
 				"name":"value",
-				"condition":"function (new_value, old_value) { \
+				"condition":"function (new_value, old_value) { 
 										if (new_value < 100 && old_value > 100)
 										  return true; 
 										return false;
