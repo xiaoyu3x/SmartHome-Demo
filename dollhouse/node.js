@@ -1,34 +1,37 @@
 
-function onUpdate(jsonString) {
+function onUpdate(jsonOBJ) {
     //adding obj
-    console.log(jsonString);
-
+    console.log(jsonOBJ);
     //todo add foreach in jsonString
-    
-    if (jsonString.Event == 'add') {
-      //message.textContent = "Adding " + jsonString.Type;
-      if ('att' in jsonString) {
-        listOBJ[jsonString.Type].add(jsonString);
-      } else {
-        //message.textContent += "Error" ;
-      }
+    for(e in jsonOBJ){
+      jsonString = jsonOBJ[e];
 
-    //updating obj
-    } else if (jsonString.Event == 'update') {
-      
-     if ('att' in jsonString) {
-        console.log("Updating " + jsonString.Type)
-        listOBJ[jsonString.Type].update(jsonString);
-      }else {
-        message.textContent += "Error" ;
-      }
+      console.log(jsonString);
+      if (jsonString.Event == 'add') {
+        //message.textContent = "Adding " + jsonString.Type;
+        if ('att' in jsonString) {
+          listOBJ[jsonString.Type].add(jsonString);
+        } else {
+          //message.textContent += "Error" ;
+        }
 
-    //dropping obj
-    } else if (jsonString.Event == 'drop') {
-      //message.textContent = "Dropping " + jsonString.Type
-      listOBJ[jsonString.Type].drop();
+        //updating obj
+      } else if (jsonString.Event == 'update') {
+          
+         if ('att' in jsonString) {
+            console.log("Updating " + jsonString.Type)
+            listOBJ[jsonString.Type].update(jsonString);
+          }else {
+            message.textContent += "Error" ;
+          }
+
+        //dropping obj
+      } else if (jsonString.Event == 'drop') {
+          //message.textContent = "Dropping " + jsonString.Type
+          listOBJ[jsonString.Type].drop();
+      }
     }
-  }
+}
 
 // Initialize everything when the window finishes loading
 window.addEventListener("load", function(event) {
@@ -64,7 +67,7 @@ window.addEventListener("load", function(event) {
     // Display messages received from the server
     socket.addEventListener("message", function(event) {
       //console.log(event);
-      onUpadte(JSON.parse(event.data));
+      onUpdate(JSON.parse(event.data));
       //this data will be the json payload. parset the json out of event.data
       //
     });

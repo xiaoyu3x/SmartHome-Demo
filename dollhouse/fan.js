@@ -19,9 +19,6 @@ function addFan(sensor){
 //Fan has physically changed status --> change model animation
 function recieveUpdate(sensor){
 
-	
-
-
 	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
 		if((sensor['att']['on_off']) == true){

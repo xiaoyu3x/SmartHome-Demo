@@ -11,7 +11,8 @@ var includeInThisContext = function(path) {
     var code = fs.readFileSync(path);
     vm.runInThisContext(code, path);
 }.bind(this);
-includeInThisContext(__dirname+"/dollhouse/rules_engine.js");
+
+//includeInThisContext(__dirname+"/dollhouse/rules_engine.js");
 
 
 var fs = require("fs");
@@ -19,9 +20,9 @@ console.log(__dirname+"/data.json");
 
 
 var server = http.createServer(app);
-var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
+//var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
 //console.log(jsonRulesConfig);
-rule_manger = Rules(jsonRulesConfig);
+//rule_manger = Rules(jsonRulesConfig);
 
 //var server = http.createServer(function(request, response) {
 //    console.log((new Date()) + ' Received request for ' + request.url);
@@ -66,13 +67,17 @@ function updateWebClients(msg){
   outmesg["Event"] = msg.Event;
   outmesg["att"] = msg.ATT.values;
 
-  console.log(outmesg);
+
+  outmesg_list.push(outmesg);
+
+  console.log(JSON.stringify(outmesg_list));
+
 
   for (var key in connectionList){
     console.log(key);
     var connection = connectionList[key];
-    connection.sendUTF([outmesg,]);
-    //connection.sendUTF(rule_manger.processEvents(outmesg));
+    connection.sendUTF(JSON.stringify(outmesg_list));
+    //connection.sendUTF();
   }
 }
 
@@ -170,7 +175,7 @@ function obsReqCB( payload,Uri){
          payload.Event = 'update';
       }
   }
-  //console.log( JSON.stringify( payload, null, 0 ) );
+  
   updateWebClients(payload);
 }
 
@@ -286,6 +291,16 @@ function SensorCallBack( handle, response ) {
 
       }else{
         console.log( "Erro Observing " + resources[ index ].uri );
+        iotivity.OCDoResource(
+          getHandle,
+          iotivity.OCMethod.OC_REST_OBSERVE,
+          resources[ index ].uri,
+          destination,
+          null,
+          iotivity.OCConnectivityType.CT_DEFAULT,
+          iotivity.OCQualityOfService.OC_HIGH_QOS,
+          SensorObserving,
+          null );
       }
     }
 

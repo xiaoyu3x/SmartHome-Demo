@@ -1,24 +1,20 @@
 function Rules(jsonRulesConfig)
 {
-	this.rules = JSON.parse(jsonRulesConfig)
-	var devices = this.rules
+	this.rules = JSON.parse(jsonRulesConfig);
+	var devices = this.rules;
 	var conditionFuncStr = "function(new_value, old_value){ ${0} }";
 
 	//Iterate through all the devides, events and triggers and make condition a callable js function
-	for (var i = 0; i < devices.attributes.length; i++) 
+	for(var i in devices) { 
 	{
-		var events = devices.attributes[i]
-		if(!events.specified)
-			continue;
-
-		var events = device
-		for (var 	x = 0; x < events.attributes.length; i++) 
+		var events = devices[i];
+		for (var x in events) 
 		{
-			var triggers = events.attributes[x]
+			var triggers = events[x];
 			if(!event.specified)
 				continue;
-			for (var i = 0; i < triggers.attributes.length; i++) {
-				var trigger = triggers.attributes[i]
+			for (var t in triggers) {
+				var trigger = triggers[t];
 				if(!trigger.specified)
 					continue;
 
