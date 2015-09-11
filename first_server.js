@@ -60,6 +60,7 @@ function parceInComingRequest(message,connection){
 }
 
 function updateWebClients(msg){
+  outmesg_list = []
   outmesg = {}
   outmesg["Type"] = msg.Type;
   outmesg["Event"] = msg.Event;
@@ -70,7 +71,8 @@ function updateWebClients(msg){
   for (var key in connectionList){
     console.log(key);
     var connection = connectionList[key];
-    connection.sendUTF(rule_manger.processEvents(outmesg));
+    connection.sendUTF([outmesg,]);
+    //connection.sendUTF(rule_manger.processEvents(outmesg));
   }
 }
 
