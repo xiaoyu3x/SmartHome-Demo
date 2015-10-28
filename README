@@ -4,7 +4,7 @@ run first_server (testing with node version 0.12.5 e.g. npm v2.11.2) and then vi
 Depencies: nodejs; via npm: express, websocket, iotivity
 
 Note: This is a good node version manager if needed: https://github.com/creationix/nvm
-
+sudo apt-get install uuid-dev
 ...
 To add a function callback, simply implement the javascript function that matches 
 the name of the Sketchup node plus the event type. 

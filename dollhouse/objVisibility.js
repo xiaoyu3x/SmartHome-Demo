@@ -13,10 +13,10 @@
 	}
 }
 
-
+*/
 //intialize every item as invisible
 var components = ['_445CTmine', 'security-system_motion-detector', 'Component_36', 'Component_35', 'Component_34', 'Component_33'];
 for (x in components){
  	makeVisible(x, false)
 	console.log('should be invisible');
-}*/
+}

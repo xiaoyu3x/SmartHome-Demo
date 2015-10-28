@@ -59,7 +59,7 @@
         <script>
             var dae;
             var controlBox;
-            var debug = true;
+            var debug = false;
             var socket = null;
             var listOBJ = {};
             var spinningBoxFan = false, boxFan = null; icarus = null;
@@ -196,7 +196,7 @@
                 /*if (!spinningBoxFan) {
                     scene.remove(boxFan);
                 }*/
-                controlLine('boxFan is ' + (spinningBoxFan ? 'ON' : 'OFF'));
+                //controlLine('boxFan is ' + (spinningBoxFan ? 'Off' : 'On'));
             }
 
 
@@ -499,7 +499,9 @@
                      (window[intersect.object.name + '_mousein'] instanceof Function)) {
                     window[intersect.object.name + '_mousein'](intersect, hovering);
                 } else {
-                    controlLine('No handler: ' + intersect.object.name + '_mousein'); //commentout
+                    if(debug){
+                        controlLine('No handler: ' + intersect.object.name + '_mousein'); //commentout
+                    }
                 }
                 
                 hovering = intersect;
@@ -525,7 +527,9 @@
 
             function click(intersect) {
                 if (!generic(intersect, '_click')) {
-                    controlLine('No _click handler: ' + hovering.object.name);
+                    if(debug){
+                        controlLine('No _click handler: ' + hovering.object.name);
+                    }
                 }
             }
 
@@ -629,9 +633,9 @@
 
         <input id="text" /><br />
         <input id="open" type="button" value="Connect" />&nbsp;
-        <input id="close" type="button" value="Disconnect" /><br /> -->
+        <input id="close" type="button" value="Disconnect" /><br /> 
         <input id="send" type="button" value="Send" />&nbsp;
-        <span id="message"></span>
+        <span id="message"></span>-->
         </div>
 
         <div id='container'></div>

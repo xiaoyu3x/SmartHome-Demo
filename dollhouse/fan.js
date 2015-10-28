@@ -43,6 +43,8 @@ function sendUpdateFan(){
         Type:'boxFan',
         att:{on_off: !spinningBoxFan}
     };
+
+    controlLine('boxFan is ' + (spinningBoxFan ? 'Off' : 'On'));
     //onUpdate(test_payload); //commentout
     socket.send(JSON.stringify(test_payload));
 } 

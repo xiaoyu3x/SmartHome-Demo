@@ -18,13 +18,34 @@ function addGasSensor(sensor){
 
 function updateGasSensor(sensor){
 	console.log("Updating Gas Sensor: "+ JSON.stringify(sensor));
+	if ('density' in sensor['att']) {
+		if (sensor['att']['density'] > 70) {
+		    findObjectsById('smoke_red_button').forEach(function(item) {
+		        item.traverse(function (object) {
+		            object.visible = true;
+		        });
+		    });
+		    if(!spinningBoxFan){
+		    	sendUpdateFan();
+			}
+		} else {
+		    findObjectsById('smoke_red_button').forEach(function(item) {
+		        item.traverse(function (object) {
+		            object.visible = false;
+		        });
+		    });
+		}
+	}
+
 } 
 
 //make object invisible in webGL
 function gasSensorVisible (bool) {
 /*	makeVisible('_445CTmine', false)
 */
-	console.log("Dropping Gas Sensor");
+	if(!bool){
+		console.log("Dropping Gas Sensor");
+	}
     findObjectsById('_445CTmine').forEach(function(item) {
     	item.traverse(function (object) {
         	object.visible = bool;

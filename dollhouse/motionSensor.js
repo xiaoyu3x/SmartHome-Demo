@@ -23,7 +23,23 @@ function addMotionSensor(sensor){
 function recieveUpdate(sensor){
 	//animate iff sensor is on
 	if ('on_off' in sensor['att']) {
-		motionSensorAnimation = sensor['att']['on_off'];
+
+		if (!sensor['att']['on_off']) {
+			findObjectsById('motion_sensor_red_button').forEach(function(item) {
+			        item.traverse(function (object) {
+			            //object.setRGB(0,77,0);
+			             object.visible = false;
+			    });
+			});
+		}
+		else {
+			findObjectsById('motion_sensor_red_button').forEach(function(item) {
+			        item.traverse(function (object) {
+			            //object.setRGB(0,77,0);
+			             object.visible = true;
+			        });
+			});
+		}
 	}
 }
 

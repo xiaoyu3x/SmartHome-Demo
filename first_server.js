@@ -3,6 +3,7 @@ var http = require('http')
   , express = require('express')
   , app = express();
 
+
 app.use(express.static(__dirname + '/dollhouse'));
 
 var fs = require('fs');
@@ -12,17 +13,16 @@ var includeInThisContext = function(path) {
     vm.runInThisContext(code, path);
 }.bind(this);
 
-//includeInThisContext(__dirname+"/dollhouse/rules_engine.js");
-
+var rules = require("./dollhouse/rules_engine");
 
 var fs = require("fs");
 console.log(__dirname+"/data.json");
 
 
 var server = http.createServer(app);
-//var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
-//console.log(jsonRulesConfig);
-//rule_manger = Rules(jsonRulesConfig);
+var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
+console.log(jsonRulesConfig);
+rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
 //var server = http.createServer(function(request, response) {
 //    console.log((new Date()) + ' Received request for ' + request.url);
@@ -71,6 +71,10 @@ function updateWebClients(msg){
   outmesg_list.push(outmesg);
 
   console.log(JSON.stringify(outmesg_list));
+  //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
+  //console.log(newEvents);
+
+  
 
 
   for (var key in connectionList){
@@ -198,6 +202,7 @@ iotivity.OCSetPlatformInfo( {
 
 function SensorObserving ( handle, response ) {
   console.log( "Received response to OBSERVE request:" );
+
   if('payload' in response){
     if('values' in response.payload){
       obsReqCB(response.payload.values,response.payload.uri);
@@ -291,7 +296,7 @@ function SensorCallBack( handle, response ) {
 
       }else{
         console.log( "Erro Observing " + resources[ index ].uri );
-        iotivity.OCDoResource(
+        /*iotivity.OCDoResource(
           getHandle,
           iotivity.OCMethod.OC_REST_OBSERVE,
           resources[ index ].uri,
@@ -301,6 +306,7 @@ function SensorCallBack( handle, response ) {
           iotivity.OCQualityOfService.OC_HIGH_QOS,
           SensorObserving,
           null );
+        */
       }
     }
 
