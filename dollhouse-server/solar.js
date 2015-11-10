@@ -8,14 +8,14 @@ var mraa = require("mraa"),
     resourceTypeName = "core.solar",
     resourceInterfaceName = "/a/solar",
     tiltPercentage = 0,
-    lcd1 = "Solar Conected!!",
+    lcd1 = "Solar Connected!!",
     lcd2 = "IOT Tracker";
 
 function resetLCDScreen() {
     if ( !lcdPin )
         return;
 
-    lcdpin.clear();
+    lcdPin.clear();
     lcdPin.setColor(255, 0, 0);
     lcdPin.setCursor(0, 0);
     lcdPin.write("Solar");
