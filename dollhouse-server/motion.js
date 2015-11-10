@@ -17,9 +17,9 @@ function setupHardware() {
     sensorPin.dir(mraa.DIR_IN);
 
     // Setup LED sensor pin.
-    ledPin = new mraa.Gpio(4);
+    /*ledPin = new mraa.Gpio(4);
     ledPin.dir(mraa.DIR_OUT);
-    ledPin.write(0);
+    ledPin.write(0);*/
 }
 
 // This function construct the payload and returns when
@@ -36,10 +36,10 @@ function getProperties() {
         hasUpdate = true;
         sensorState = motion;
 
-        if ( sensorState )
+        /*if ( sensorState )
             ledPin.write(1);
         else
-            ledPin.write(0);
+            ledPin.write(0);*/
     }
 
     // Format the payload.
@@ -154,7 +154,7 @@ process.on( "SIGINT", function() {
     console.log("Delete Motion Resource.");
 
     // Turn off led before we tear down the resource.
-    ledPin.write(0);
+    // ledPin.write(0);
 
     // Unregister resource.
     device.server.unregisterResource( motionResource.id ).then(
