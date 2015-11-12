@@ -48,7 +48,6 @@ function getProperties() {
         ATT: {'on_off': sensorState}
     };
 
-    console.log("Server: Motion sensor properties:\n" + JSON.stringify(properties, null, 4));
     return properties;
 }
 
@@ -60,9 +59,10 @@ function notifyObservers() {
         motionResource.properties = properties;
         hasUpdate = false;
 
+        console.log("\nmotionSensor: Send the response. on_off: " + sensorState);
         device.server.notify( motionResource.id /*, "update", gasResource.properties*/ ).catch(
             function( error ) {
-                console.log( "Server: Failed to notify observers." );
+                console.log( "motionSensor: Failed to notify observers." );
                 noObservers = error.noObservers;
                 if ( noObservers ) {
                     if ( notifyObserversTimeoutId ) {
@@ -82,8 +82,6 @@ function notifyObservers() {
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    console.log( "Server: Received event type: " + request.type );
-
     if ( request.type === "retrieve" ) {
         motionResource.properties = getProperties();
     } else if ( request.type === "observe" ) {
@@ -93,10 +91,10 @@ function entityHandler(request) {
 
     request.sendResponse( request.source ).then(
         function() {
-            console.log( "Server: Successfully responded to retrieve request" );
+            console.log( "motionSensor: Successfully responded to request" );
         },
         function( error ) {
-            console.log( "Server: Failed to send response with error " + error + " and result " +
+            console.log( "motionSensor: Failed to send response with error " + error + " and result " +
                 error.result );
         } );
 
@@ -118,7 +116,7 @@ device.configure( {
     }
 } ).then(
     function() {
-        console.log( "Server: device.configure() successful" );
+        console.log( "motionSensor: device.configure() successful" );
 
         // Setup Motion sensor pin.
         setupHardware();
@@ -137,16 +135,16 @@ device.configure( {
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "Server: device.server.registerResource() successful" );
+                console.log( "motionSensor: device.server.registerResource() successful" );
                 motionResource = resource;
                 device.server.addEventListener( "request", entityHandler );
             },
             function( error ) {
-                console.log( "Server: device.server.registerResource() failed with: " + error );
+                console.log( "motionSensor: device.server.registerResource() failed with: " + error );
             } );
     },
     function( error ) {
-        console.log( "Server: device.configure() failed with: " + error );
+        console.log( "motionSensor: device.configure() failed with: " + error );
     } );
 
 // Cleanup on SIGINT
@@ -159,10 +157,10 @@ process.on( "SIGINT", function() {
     // Unregister resource.
     device.server.unregisterResource( motionResource.id ).then(
         function() {
-            console.log( "Server: device.server.unregisterResource() successful" );
+            console.log( "motionSensor: device.server.unregisterResource() successful" );
         },
         function( error ) {
-            console.log( "Server: device.server.unregisterResource() failed with: " + error +
+            console.log( "motionSensor: device.server.unregisterResource() failed with: " + error +
                 " and result " + error.result );
         } );
 

@@ -19,6 +19,8 @@ function setupHardware() {
 function updateProperties(properties) {
     sensorState = properties.on_off;
 
+    console.log("\nFan: Update received. on_off: " + sensorState);
+
     if (sensorState)
       sensorPin.write(1);
     else
@@ -34,7 +36,7 @@ function getProperties() {
         ATT: {'on_off': sensorState}
     };
 
-    console.log("Server: Fan sensor properties:\n" + JSON.stringify(properties, null, 4));
+    console.log("Fan: Send the response. on_off: " + sensorState);
     return properties;
 }
 
@@ -44,17 +46,15 @@ function notifyObservers(request) {
 
     device.server.notify( fanResource.id /*, "update", fanResource.properties*/ ).then(
         function() {
-            console.log( "Server: Successfully notified observers." );
+            console.log( "Fan: Successfully notified observers." );
         },
         function( error ) {
-            console.log( "Server: notify() failed with " + error + " and result " + error.result );
+            console.log( "Fan: notify() failed with " + error + " and result " + error.result );
         } );
 }
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    console.log( "Server: Received event type: " + request.type );
-
     if ( request.type === "update" ) {
         updateProperties(request.res);
     } else if ( request.type === "retrieve" ) {
@@ -63,10 +63,10 @@ function entityHandler(request) {
 
     request.sendResponse( request.source ).then(
         function() {
-            console.log( "Server: Successfully responded to retrieve request" );
+            console.log( "Fan: Successfully responded to request" );
         },
         function( error ) {
-            console.log( "Server: Failed to send response with error " + error + " and result " +
+            console.log( "Fan: Failed to send response with error " + error + " and result " +
                 error.result );
         } );
 
@@ -87,7 +87,7 @@ device.configure( {
     }
 } ).then(
     function() {
-        console.log( "Server: device.configure() successful" );
+        console.log( "Fan: device.configure() successful" );
 
         // Setup Fan sensor pin.
         setupHardware();
@@ -106,16 +106,16 @@ device.configure( {
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "Server: device.server.registerResource() successful" );
+                console.log( "Fan: device.server.registerResource() successful" );
                 fanResource = resource;
                 device.server.addEventListener( "request", entityHandler );
             },
             function( error ) {
-                console.log( "Server: device.server.registerResource() failed with: " + error );
+                console.log( "Fan: device.server.registerResource() failed with: " + error );
             } );
     },
     function( error ) {
-        console.log( "Server: device.configure() failed with: " + error );
+        console.log( "Fan: device.configure() failed with: " + error );
     } );
 
 // Cleanup on SIGINT
@@ -128,10 +128,10 @@ process.on( "SIGINT", function() {
     // Unregister resource.
     device.server.unregisterResource( fanResource.id ).then(
         function() {
-            console.log( "Server: device.server.unregisterResource() successful" );
+            console.log( "Fan: device.server.unregisterResource() successful" );
         },
         function( error ) {
-            console.log( "Server: device.server.unregisterResource() failed with: " + error +
+            console.log( "Fan: device.server.unregisterResource() failed with: " + error +
                 " and result " + error.result );
         } );
 

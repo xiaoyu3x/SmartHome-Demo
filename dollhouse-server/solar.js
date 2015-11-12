@@ -30,6 +30,7 @@ function setupHardware() {
     pwmPin.enable(true);
 
     pwmPin.write(0.05);
+    console.log("Solar panel initialization completed.");
 }
 
 function map(x, in_min, in_max, out_min, out_max) {
@@ -39,10 +40,10 @@ function map(x, in_min, in_max, out_min, out_max) {
 // This function parce the incoming Resource properties
 // and change the sensor state.
 function updateProperties(properties) {
-    console.log("Server: recieved properties:\n" + JSON.stringify(properties, null, 4));
     tiltPercentage = properties.tiltPercentage;
 
     var val = map(tiltPercentage, 0, 100, .05, .10);
+    console.log("\nSolar: Update received. tiltPercentage: " + tiltPercentage + " : " + val);
     pwmPin.write(val);
 
     if ( properties.lcd1 ) {
@@ -71,7 +72,7 @@ function getProperties() {
         }
     };
 
-    console.log("Server: Send the response:\n" + JSON.stringify(properties, null, 4));
+    console.log("Solar: Send the response. tiltPercentage: " + tiltPercentage);
     return properties;
 }
 
@@ -90,7 +91,7 @@ function notifyObservers(request) {
 
     device.server.notify( solarResource.id /*, "update", solarResource.properties*/ ).catch(
         function( error ) {
-            console.log( "Server: Failed to notify observers." );
+            console.log( "Solar: Failed to notify observers." );
             noObservers = error.noObservers;
             if ( noObservers ) {
                 resetLCDScreen();
@@ -100,8 +101,6 @@ function notifyObservers(request) {
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    console.log( "Server: Received event type: " + request.type );
-
     if ( request.type === "update" ) {
         updateProperties(request.res);
     } else if ( request.type === "retrieve" ) {
@@ -112,10 +111,10 @@ function entityHandler(request) {
 
     request.sendResponse( request.source ).then(
         function() {
-            console.log( "Server: Successfully responded to retrieve request" );
+            console.log( "Solar: Successfully responded to request" );
         },
         function( error ) {
-            console.log( "Server: Failed to send response with error " + error + " and result " +
+            console.log( "Solar: Failed to send response with error " + error + " and result " +
                 error.result );
         } );
 
@@ -136,7 +135,7 @@ device.configure( {
     }
 } ).then(
     function() {
-        console.log( "Server: device.configure() successful" );
+        console.log( "Solar: device.configure() successful" );
 
         // Setup Solar sensor.
         setupHardware();
@@ -155,16 +154,16 @@ device.configure( {
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "Server: device.server.registerResource() successful" );
+                console.log( "Solar: device.server.registerResource() successful" );
                 solarResource = resource;
                 device.server.addEventListener( "request", entityHandler );
             },
             function( error ) {
-                console.log( "Server: device.server.registerResource() failed with: " + error );
+                console.log( "Solar: device.server.registerResource() failed with: " + error );
             } );
     },
     function( error ) {
-        console.log( "Server: device.configure() failed with: " + error );
+        console.log( "Solar: device.configure() failed with: " + error );
     } );
 
 // Cleanup on SIGINT
@@ -177,10 +176,10 @@ process.on( "SIGINT", function() {
     // Unregister resource.
     device.server.unregisterResource( solarResource.id ).then(
         function() {
-            console.log( "Server: device.server.unregisterResource() successful" );
+            console.log( "Solar: device.server.unregisterResource() successful" );
         },
         function( error ) {
-            console.log( "Server: device.server.unregisterResource() failed with: " + error +
+            console.log( "Solar: device.server.unregisterResource() failed with: " + error +
                 " and result " + error.result );
         } );
 

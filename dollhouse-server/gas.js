@@ -22,6 +22,7 @@ function getProperties() {
     var val =  sensorPin.read();
     density = val * 500 / 1024;
 
+    console.log( "\ngasSensor: density - prev: " + gasDensity + " current: " + density );
     if ( density != gasDensity ) {
         if ( density > 70 && gasDensity < 70 ){
             gasDensity = density;
@@ -38,8 +39,6 @@ function getProperties() {
         ATT: {'density': gasDensity}
     };
 
-
-    console.log("Server: Gas sensor properties:\n" + JSON.stringify(properties, null, 4));
     return properties;
 }
 
@@ -50,9 +49,10 @@ function notifyObservers() {
         gasResource.properties = properties;
         hasUpdate = false;
 
+        console.log("gasSensor: Send the respose. density: " + gasDensity);
         device.server.notify( gasResource.id /*, "update", gasResource.properties*/ ).catch(
             function( error ) {
-                console.log( "Server: Failed to notify observers." );
+                console.log( "gasSensor: Failed to notify observers." );
                 noObservers = error.noObservers;
                 if ( noObservers ) {
                     if ( notifyObserversTimeoutId ) {
@@ -72,8 +72,6 @@ function notifyObservers() {
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    console.log( "Server: Received event type: " + request.type );
-
     if ( request.type === "retrieve" ) {
         gasResource.properties = getProperties();
     } else if ( request.type === "observe" ) {
@@ -83,10 +81,10 @@ function entityHandler(request) {
 
     request.sendResponse( request.source ).then(
         function() {
-            console.log( "Server: Successfully send response" );
+            console.log( "gasSensor: Successfully responded to request" );
         },
         function( error ) {
-            console.log( "Server: Failed to send response with error " + error + " and result " +
+            console.log( "gasSensor: Failed to send response with error " + error + " and result " +
                 error.result );
         } );
 
@@ -108,7 +106,7 @@ device.configure( {
     }
 } ).then(
     function() {
-        console.log( "Server: device.configure() successful" );
+        console.log( "gasSensor: device.configure() successful" );
 
         // Setup Gas sensor pin.
         setupHardware();
@@ -127,16 +125,16 @@ device.configure( {
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "Server: device.server.registerResource() successful" );
+                console.log( "gasSensor: device.server.registerResource() successful" );
                 gasResource = resource;
                 device.server.addEventListener( "request", entityHandler );
             },
             function( error ) {
-                console.log( "Server: device.server.registerResource() failed with: " + error );
+                console.log( "gasSensor: device.server.registerResource() failed with: " + error );
             } );
     },
     function( error ) {
-        console.log( "Server: device.configure() failed with: " + error );
+        console.log( "gasSensor: device.configure() failed with: " + error );
     } );
 
 // Cleanup on SIGINT
@@ -146,10 +144,10 @@ process.on( "SIGINT", function() {
     // Unregister resource.
     device.server.unregisterResource( gasResource.id ).then(
         function() {
-            console.log( "Server: device.server.unregisterResource() successful" );
+            console.log( "gasSensor: device.server.unregisterResource() successful" );
         },
         function( error ) {
-            console.log( "Server: device.server.unregisterResource() failed with: " + error +
+            console.log( "gasSensor: device.server.unregisterResource() failed with: " + error +
                 " and result " + error.result );
         } );
 
