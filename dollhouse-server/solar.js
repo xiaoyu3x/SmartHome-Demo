@@ -3,8 +3,8 @@ var mraa = require("mraa"),
     lcd = require('jsupm_i2clcd'),
     device = require( "iotivity-node" )(),
     solarResource,
-    lcdPin = null,
-    pwmPin = null,
+    lcdPin,
+    pwmPin,
     resourceTypeName = "core.solar",
     resourceInterfaceName = "/a/solar",
     tiltPercentage = 0,
@@ -12,9 +12,6 @@ var mraa = require("mraa"),
     lcd2 = "IOT Tracker";
 
 function resetLCDScreen() {
-    if ( !lcdPin )
-        return;
-
     lcdPin.clear();
     lcdPin.setColor(255, 0, 0);
     lcdPin.setCursor(0, 0);
@@ -26,15 +23,13 @@ function resetLCDScreen() {
 // Setup solar panel.
 function setupHardware() {
     lcdPin = new lcd.Jhd1313m1(6, 0x3E, 0x62);
-
     resetLCDScreen();
-    /*pwmPin = new mraa.Pwm(3);
-    if (pwmPin != NULL) {
-        pwmPin.period_ms(20);
-        pwmPin.enable(true);
 
-        pwmPin.write(0.05);
-    }*/
+    pwmPin = new mraa.Pwm(3);
+    pwmPin.period_ms(20);
+    pwmPin.enable(true);
+
+    pwmPin.write(0.05);
 }
 
 function map(x, in_min, in_max, out_min, out_max) {
@@ -47,10 +42,8 @@ function updateProperties(properties) {
     console.log("Server: recieved properties:\n" + JSON.stringify(properties, null, 4));
     tiltPercentage = properties.tiltPercentage;
 
-    if ( pwmPin ) {
-        var val  = map(tiltPercentage, 0, 100, .05, .10);
-        pwmPin.write(val);
-     }
+    var val = map(tiltPercentage, 0, 100, .05, .10);
+    pwmPin.write(val);
 
     if ( properties.lcd1 ) {
         lcd1 = properties.lcd1;
@@ -83,9 +76,6 @@ function getProperties() {
 }
 
 function processObserve() {
-    if ( !lcdPin )
-        return;
-
     lcdPin.setColor(0,255,0);
 
     lcdPin.setCursor(0, 0);
