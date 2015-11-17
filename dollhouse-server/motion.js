@@ -3,7 +3,6 @@ var mraa = require("mraa"),
     device = require( "iotivity-node" )(),
     motionResource,
     sensorPin,
-    ledPin,
     notifyObserversTimeoutId,
     resourceTypeName = "core.pir",
     resourceInterfaceName = "/a/pir",
@@ -11,15 +10,22 @@ var mraa = require("mraa"),
     noObservers = false,
     sensorState = false;
 
+var led = "";
+try {
+    led = require('./rgb_led');
+}
+catch (e) {
+    console.log("No led module: " + e.message);
+}
+
 // Setup Motion sensor pin.
 function setupHardware() {
     sensorPin = new mraa.Gpio(5);
     sensorPin.dir(mraa.DIR_IN);
 
     // Setup LED sensor pin.
-    /*ledPin = new mraa.Gpio(4);
-    ledPin.dir(mraa.DIR_OUT);
-    ledPin.write(0);*/
+    if ( led )
+        led.setupHardware();
 }
 
 // This function construct the payload and returns when
@@ -36,10 +42,12 @@ function getProperties() {
         hasUpdate = true;
         sensorState = motion;
 
-        /*if ( sensorState )
-            ledPin.write(1);
-        else
-            ledPin.write(0);*/
+        if ( led ) {
+            if ( sensorState )
+                led.setColorRGB(255, 0, 0); //Color: RED
+            else
+                led.setColorRGB(0, 0, 255); // Color: Blue
+        }
     }
 
     // Format the payload.
@@ -152,7 +160,8 @@ process.on( "SIGINT", function() {
     console.log("Delete Motion Resource.");
 
     // Turn off led before we tear down the resource.
-    // ledPin.write(0);
+    if ( led )
+        led.setColorRGB(0, 0, 0);
 
     // Unregister resource.
     device.server.unregisterResource( motionResource.id ).then(
