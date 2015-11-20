@@ -1,7 +1,5 @@
 // Require the MRAA library
-var mraa = require("mraa"),
-    lcd = require('jsupm_i2clcd'),
-    device = require( "iotivity-node" )(),
+var device = require( "iotivity-node" )(),
     solarResource,
     lcdPin,
     pwmPin,
@@ -11,7 +9,26 @@ var mraa = require("mraa"),
     lcd1 = "Solar Connected!!",
     lcd2 = "IOT Tracker";
 
+var mraa = "";
+try {
+    mraa = require("mraa");
+}
+catch (e) {
+    console.log("No mraa module: " + e.message);
+}
+
+var lcd = "";
+try {
+    lcd = require("jsupm_i2clcd");
+}
+catch (e) {
+    console.log("No lcd module: " + e.message);
+}
+
 function resetLCDScreen() {
+    if ( !lcd )
+        return;
+
     lcdPin.clear();
     lcdPin.setColor(255, 0, 0);
     lcdPin.setCursor(0, 0);
@@ -22,8 +39,13 @@ function resetLCDScreen() {
 
 // Setup solar panel.
 function setupHardware() {
-    lcdPin = new lcd.Jhd1313m1(6, 0x3E, 0x62);
-    resetLCDScreen();
+    if ( !mraa )
+        return;
+
+    if ( lcd ) {
+        lcdPin = new lcd.Jhd1313m1(6, 0x3E, 0x62);
+        resetLCDScreen();
+    }
 
     pwmPin = new mraa.Pwm(3);
     pwmPin.period_ms(20);
@@ -41,10 +63,15 @@ function map(x, in_min, in_max, out_min, out_max) {
 // and change the sensor state.
 function updateProperties(properties) {
     tiltPercentage = properties.tiltPercentage;
+    if ( !mraa )
+        return;
 
     var val = map(tiltPercentage, 0, 100, .05, .10);
     console.log("\nSolar: Update received. tiltPercentage: " + tiltPercentage + " : " + val);
     pwmPin.write(val);
+
+    if ( !lcd )
+        return;
 
     if ( properties.lcd1 ) {
         lcd1 = properties.lcd1;
@@ -77,6 +104,9 @@ function getProperties() {
 }
 
 function processObserve() {
+    if ( !lcd )
+        return;
+
     lcdPin.setColor(0,255,0);
 
     lcdPin.setCursor(0, 0);
