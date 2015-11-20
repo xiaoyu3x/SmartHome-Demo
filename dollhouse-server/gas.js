@@ -1,6 +1,5 @@
 // Require the MRAA library
-var mraa = require("mraa"),
-    device = require( "iotivity-node" )(),
+var device = require( "iotivity-node" )(),
     gasResource,
     sensorPin,
     gasDensity=0,
@@ -10,27 +9,43 @@ var mraa = require("mraa"),
     hasUpdate=false,
     noObservers=false;
 
+var mraa = "";
+try {
+    mraa = require("mraa");
+}
+catch (e) {
+    console.log("No mraa module: " + e.message);
+}
+
 // Setup Gas sensor pin.
 function setupHardware() {
-    sensorPin = new mraa.Aio(0);
-    sensorPin.setBit(10);
+    if ( mraa ) {
+       sensorPin = new mraa.Aio(0);
+       sensorPin.setBit(10);
+    }
 }
 
 // This function construct the payload and returns when
 // the GET request received from the client.
 function getProperties() {
-    var val =  sensorPin.read();
-    density = val * 500 / 1024;
+    if ( mraa ) {
+        val =  sensorPin.read();
+        density = val * 500 / 1024;
 
-    console.log( "\ngasSensor: density - prev: " + gasDensity + " current: " + density );
-    if ( density != gasDensity ) {
-        if ( density > 70 && gasDensity < 70 ){
-            gasDensity = density;
-            hasUpdate = true;
-        } else if( gasDensity > 70 && density < 70 ) {
-            gasDensity = density;
-            hasUpdate = true;
+        console.log( "\ngasSensor: density - prev: " + gasDensity + " current: " + density );
+        if ( density != gasDensity ) {
+            if ( density > 70 && gasDensity < 70 ){
+                gasDensity = density;
+                hasUpdate = true;
+            } else if( gasDensity > 70 && density < 70 ) {
+                gasDensity = density;
+                hasUpdate = true;
+            }
         }
+    } else {
+        // Send the default properties. This is useful
+        // for testing on desktop without mraa.
+        hasUpdate = true;
     }
 
     // Format the properties.
