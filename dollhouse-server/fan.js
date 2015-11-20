@@ -1,17 +1,26 @@
 // Require the MRAA library
-var mraa = require("mraa"),
-    device = require( "iotivity-node" )(),
+var device = require( "iotivity-node" )(),
     fanResource,
     sensorPin,
     sensorState = false,
     resourceTypeName = "core.fan",
     resourceInterfaceName = "/a/fan";
 
+var mraa = "";
+try {
+    mraa = require("mraa");
+}
+catch (e) {
+    console.log("No mraa module: " + e.message);
+}
+
 // Setup Fan sensor pin.
 function setupHardware() {
-    sensorPin = new mraa.Gpio(9);
-    sensorPin.dir(mraa.DIR_OUT);
-    sensorPin.write(0);
+    if ( mraa ) {
+        sensorPin = new mraa.Gpio(9);
+        sensorPin.dir(mraa.DIR_OUT);
+        sensorPin.write(0);
+    }
 }
 
 // This function parce the incoming Resource properties
@@ -20,6 +29,9 @@ function updateProperties(properties) {
     sensorState = properties.on_off;
 
     console.log("\nFan: Update received. on_off: " + sensorState);
+
+    if ( !mraa )
+        return;
 
     if (sensorState)
       sensorPin.write(1);
@@ -123,7 +135,8 @@ process.on( "SIGINT", function() {
     console.log("Delete Fan Resource.");
 
     // Stop fan before we tear down the resource.
-    sensorPin.write(0);
+    if ( mraa )
+        sensorPin.write(0);
 
     // Unregister resource.
     device.server.unregisterResource( fanResource.id ).then(
