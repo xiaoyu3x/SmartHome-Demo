@@ -1,8 +1,18 @@
-var mraa = require("mraa"),
-    clockPin,
+var clockPin,
     dataPin;
 
+var mraa = "";
+try {
+    mraa = require("mraa");
+}
+catch (e) {
+    console.log("No mraa module: " + e.message);
+}
+
 exports.setupHardware = function() {
+    if ( !mraa )
+        return;
+
     clockPin = new mraa.Gpio(7);
     clockPin.dir(mraa.DIR_OUT);
     dataPin = new mraa.Gpio(8);
@@ -12,20 +22,26 @@ exports.setupHardware = function() {
 }
 
 function clk() {
-  clockPin.write(0);
-  clockPin.write(1);
+    if ( !mraa )
+        return;
+
+    clockPin.write(0);
+    clockPin.write(1);
 }
 
 function sendByte( b ) {
+    if ( !mraa )
+        return;
+
     // send one bit at a time
     for ( var i=0; i<8; i++ ) {
-      if ((b & 0x80) != 0)
-        dataPin.write(1);
-      else
-        dataPin.write(0);
+        if ((b & 0x80) != 0)
+            dataPin.write(1);
+        else
+            dataPin.write(0);
 
-      clk();
-      b <<= 1;
+        clk();
+        b <<= 1;
   }
 }
 

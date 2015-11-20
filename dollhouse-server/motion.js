@@ -1,6 +1,5 @@
 // Require the MRAA library
-var mraa = require("mraa"),
-    device = require( "iotivity-node" )(),
+var device = require( "iotivity-node" )(),
     motionResource,
     sensorPin,
     notifyObserversTimeoutId,
@@ -9,6 +8,14 @@ var mraa = require("mraa"),
     hasUpdate = false,
     noObservers = false,
     sensorState = false;
+
+var mraa = "";
+try {
+    mraa = require('mraa');
+}
+catch (e) {
+    console.log("No mraa module: " + e.message);
+}
 
 var led = "";
 try {
@@ -20,6 +27,9 @@ catch (e) {
 
 // Setup Motion sensor pin.
 function setupHardware() {
+    if ( !mraa )
+        return;
+
     sensorPin = new mraa.Gpio(5);
     sensorPin.dir(mraa.DIR_IN);
 
@@ -33,10 +43,16 @@ function setupHardware() {
 function getProperties() {
     var motion = false;
 
-    if ( sensorPin.read() > 0 )
-        motion = true;
-    else
-        motion = false;
+    if ( mraa ) {
+        if ( sensorPin.read() > 0 )
+            motion = true;
+        else
+            motion = false;
+    } else {
+        // Simulate real sensor behavior. This is
+        // useful for testing on desktop without mraa.
+        motion = !sensorState;
+    }
 
     if ( sensorState != motion ) {
         hasUpdate = true;
