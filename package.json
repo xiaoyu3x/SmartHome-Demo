@@ -9,7 +9,7 @@
   "author": "",
   "license": "BSD-2-Clause",
   "dependencies": { 
-	"iotivity-node": "file:./../../iotivity-node",
+	"iotivity-node": "^1.0.0-1",
 	"express": "*",
 	"websocket": "*",
 	"http": "*"
