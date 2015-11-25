@@ -1,40 +1,40 @@
-// Require the MRAA library
-var device = require( "iotivity-node" )(),
+var device = require('iotivity-node')(),
     motionResource,
     sensorPin,
     notifyObserversTimeoutId,
-    resourceTypeName = "core.pir",
-    resourceInterfaceName = "/a/pir",
+    resourceTypeName = 'core.pir',
+    resourceInterfaceName = '/a/pir',
     hasUpdate = false,
     noObservers = false,
     sensorState = false;
 
-var mraa = "";
+// Require the MRAA library
+var mraa = '';
 try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log("No mraa module: " + e.message);
+    console.log('No mraa module: ' + e.message);
 }
 
-var led = "";
+var led = '';
 try {
     led = require('./rgb_led');
 }
 catch (e) {
-    console.log("No led module: " + e.message);
+    console.log('No led module: ' + e.message);
 }
 
 // Setup Motion sensor pin.
 function setupHardware() {
-    if ( !mraa )
+    if (!mraa)
         return;
 
     sensorPin = new mraa.Gpio(5);
     sensorPin.dir(mraa.DIR_IN);
 
     // Setup LED sensor pin.
-    if ( led )
+    if (led)
         led.setupHardware();
 }
 
@@ -43,8 +43,8 @@ function setupHardware() {
 function getProperties() {
     var motion = false;
 
-    if ( mraa ) {
-        if ( sensorPin.read() > 0 )
+    if (mraa) {
+        if (sensorPin.read() > 0)
             motion = true;
         else
             motion = false;
@@ -54,12 +54,12 @@ function getProperties() {
         motion = !sensorState;
     }
 
-    if ( sensorState != motion ) {
+    if (sensorState != motion) {
         hasUpdate = true;
         sensorState = motion;
 
-        if ( led ) {
-            if ( sensorState )
+        if (led) {
+            if (sensorState)
                 led.setColorRGB(255, 0, 0); //Color: RED
             else
                 led.setColorRGB(0, 0, 255); // Color: Blue
@@ -79,57 +79,57 @@ function getProperties() {
 function notifyObservers() {
     properties = getProperties();
 
-    if ( hasUpdate ) {
+    if (hasUpdate) {
         motionResource.properties = properties;
         hasUpdate = false;
 
-        console.log("\nmotionSensor: Send the response. on_off: " + sensorState);
-        device.server.notify( motionResource.id /*, "update", gasResource.properties*/ ).catch(
-            function( error ) {
-                console.log( "motionSensor: Failed to notify observers." );
+        console.log('\nmotionSensor: Send the response: ' + sensorState);
+        device.server.notify(motionResource.id).catch(
+            function(error) {
+                console.log('motionSensor: Failed to notify observers.');
                 noObservers = error.noObservers;
-                if ( noObservers ) {
-                    if ( notifyObserversTimeoutId ) {
+                if (noObservers) {
+                    if (notifyObserversTimeoutId) {
                         clearTimeout(notifyObserversTimeoutId);
                         notifyObserversTimeoutId = null;
                     }
                 }
-            } );
+            });
     }
 
     // After all our clients are complete, we don't care about any
     // more requests to notify.
-    if ( !noObservers ) {
-        notifyObserversTimeoutId = setTimeout(notifyObservers, 2000 );
+    if (!noObservers) {
+        notifyObserversTimeoutId = setTimeout(notifyObservers, 2000);
     }
 }
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    if ( request.type === "retrieve" ) {
+    if (request.type === 'retrieve') {
         motionResource.properties = getProperties();
-    } else if ( request.type === "observe" ) {
+    } else if (request.type === 'observe') {
         noObservers = false;
         hasUpdate = true;
     }
 
-    request.sendResponse( request.source ).then(
+    request.sendResponse(request.source).then(
         function() {
-            console.log( "motionSensor: Successfully responded to request" );
+            console.log('motionSensor: Successfully responded to request');
         },
-        function( error ) {
-            console.log( "motionSensor: Failed to send response with error " + error + " and result " +
-                error.result );
-        } );
+        function(error) {
+            console.log('motionSensor: Failed to send response with error ' +
+                error + ' and result ' + error.result);
+        });
 
-    if ( !noObservers && !notifyObserversTimeoutId )
+    if (!noObservers && !notifyObserversTimeoutId)
         setTimeout(notifyObservers, 200);
 }
 
 // Create Motion resource
-device.configure( {
-    role: "server",
-    connectionMode: "acked",
+device.configure({
+    role: 'server',
+    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -138,58 +138,59 @@ device.configure( {
         platformVersion: "1.0.0",
         firmwareVersion: "0.0.1",
     }
-} ).then(
+}).then(
     function() {
-        console.log( "motionSensor: device.configure() successful" );
+        console.log('motionSensor: device.configure() successful');
 
         // Setup Motion sensor pin.
         setupHardware();
 
-        console.log("\nCreate motion resource.");
+        console.log('\nCreate motion resource.');
 
         // Register Motion resource
-        device.server.registerResource( {
+        device.server.registerResource({
             url: resourceInterfaceName,
             deviceId: device.settings.info.uuid,
             connectionMode: device.settings.connectionMode,
             resourceTypes: resourceTypeName,
-            interfaces: "oic.if.baseline",
+            interfaces: 'oic.if.baseline',
             discoverable: true,
             observable: true,
             properties: getProperties()
-        } ).then(
-            function( resource ) {
-                console.log( "motionSensor: device.server.registerResource() successful" );
+        }).then(
+            function(resource) {
+                console.log('motionSensor: registerResource() successful');
                 motionResource = resource;
-                device.server.addEventListener( "request", entityHandler );
+                device.server.addEventListener('request', entityHandler);
             },
-            function( error ) {
-                console.log( "motionSensor: device.server.registerResource() failed with: " + error );
-            } );
+            function(error) {
+                console.log('motionSensor: registerResource() failed with: ' +
+                    error);
+            });
     },
-    function( error ) {
-        console.log( "motionSensor: device.configure() failed with: " + error );
-    } );
+    function(error) {
+        console.log('motionSensor: device.configure() failed with: ' + error);
+    });
 
 // Cleanup on SIGINT
-process.on( "SIGINT", function() {
-    console.log("Delete Motion Resource.");
+process.on('SIGINT', function() {
+    console.log('Delete Motion Resource.');
 
     // Turn off led before we tear down the resource.
-    if ( led )
+    if (led)
         led.setColorRGB(0, 0, 0);
 
     // Unregister resource.
-    device.server.unregisterResource( motionResource.id ).then(
+    device.server.unregisterResource(motionResource.id).then(
         function() {
-            console.log( "motionSensor: device.server.unregisterResource() successful" );
+            console.log('motionSensor: unregisterResource() successful');
         },
-        function( error ) {
-            console.log( "motionSensor: device.server.unregisterResource() failed with: " + error +
-                " and result " + error.result );
-        } );
+        function(error) {
+            console.log('motionSensor: unregisterResource() failed with: ' +
+                error + ' and result ' + error.result);
+        });
 
     // Exit
-    process.exit( 0 );
-} );
+    process.exit(0);
+});
 

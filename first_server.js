@@ -1,8 +1,7 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http')
-  , express = require('express')
-  , app = express();
-
+    , express = require('express')
+    , app = express();
 
 app.use(express.static(__dirname + '/dollhouse'));
 
@@ -13,14 +12,13 @@ var includeInThisContext = function(path) {
     vm.runInThisContext(code, path);
 }.bind(this);
 
-var rules = require("./dollhouse/rules_engine");
+var rules = require('./dollhouse/rules_engine');
 
-var fs = require("fs");
-console.log(__dirname+"/data.json");
-
+var fs = require('fs');
+console.log(__dirname + "/data.json");
 
 var server = http.createServer(app);
-var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
+var jsonRulesConfig = fs.readFileSync(__dirname + "/data.json", "utf8");
 console.log(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
@@ -44,45 +42,39 @@ wsServer = new WebSocketServer({
     autoAcceptConnections: false
 });
 
-
 var connectionList = {};
 
-
 function originIsAllowed(origin) {
-  // put logic here to detect whether the specified origin is allowed.
-  return true;
+    // put logic here to detect whether the specified origin is allowed.
+    return true;
 }
 
-//
-function parceInComingRequest(message,connection){
-   if (message.Event == "update") {
-       update(message.Type,message.att);
-   }
+function parceInComingRequest(message, connection) {
+     if (message.Event == "update") {
+         update(message.Type, message.att);
+     }
 }
 
-function updateWebClients(msg){
-  outmesg_list = []
-  outmesg = {}
-  outmesg["Type"] = msg.Type;
-  outmesg["Event"] = msg.Event;
-  outmesg["att"] = msg.ATT;
+function updateWebClients(msg) {
+    outmesg_list = [];
+    outmesg = {};
+    outmesg["Type"] = msg.Type;
+    outmesg["Event"] = msg.Event;
+    outmesg["att"] = msg.ATT;
 
-  outmesg_list.push(outmesg);
+    outmesg_list.push(outmesg);
 
-  console.log(JSON.stringify(outmesg_list));
-  //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
-  //console.log(newEvents);
+    console.log(JSON.stringify(outmesg_list));
+    //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
+    //console.log(newEvents);
 
-  for (var key in connectionList){
-    console.log(key);
-    var connection = connectionList[key];
-    connection.sendUTF(JSON.stringify(outmesg_list));
-    //connection.sendUTF();
-  }
+    for (var key in connectionList) {
+        console.log(key);
+        var connection = connectionList[key];
+        connection.sendUTF(JSON.stringify(outmesg_list));
+        //connection.sendUTF();
+    }
 }
-
-
-
 
 wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
@@ -96,14 +88,14 @@ wsServer.on('request', function(request) {
 
     console.log((new Date()) + ' Connection accepted.');
 
-    if(!(connection.remoteAddress in connectionList)){
+    if (!(connection.remoteAddress in connectionList)) {
       connectionList[connection.remoteAddress] = connection;
 
       connection.on('message', function(message) {
           if (message.type === 'utf8') {
               console.log('Received Message: ' + message.utf8Data);
 
-              parceInComingRequest(JSON.parse(message.utf8Data),connection);
+              parceInComingRequest(JSON.parse(message.utf8Data), connection);
           }
       });
       connection.on('close', function(reasonCode, description) {
@@ -115,40 +107,40 @@ wsServer.on('request', function(request) {
 });
 
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
-var resourcesList ={},
-  devicesList ={},
-  TAG = "NodeServer";
+var resourcesList = {},
+    devicesList = {},
+    TAG = "NodeServer";
 
-function update(Type,values)
+function update(Type, values)
 {
-    if(Type in WebCompoints){
-      URi = WebCompoints[Type];
-      resource = resourcesList[URi];
+    if (Type in WebCompoints) {
+        URi = WebCompoints[Type];
+        resource = resourcesList[URi];
 
-      console.log( "----------------------------------------------" );
-      console.log( "Sendng Update to "+ Type + " uri:"+URi);
+        console.log('----------------------------------------------');
+        console.log('Sendng Update to ' + Type + ' uri:' + URi);
 
-      resource.properties = values;
-      device.client.updateResource(resource.id, resource);
-    }else{
-      console.log( "No "+Type+" online");
+        resource.properties = values;
+        device.client.updateResource(resource.id, resource);
+    } else {
+        console.log('No ' + Type + ' online');
     }
 }
 
 var WebCompoints = {};
 //when a server seends data to gatway
 
-function obsReqCB( payload,Uri){
- 
-  if ("Type" in payload){
-    if(!(payload.Type in WebCompoints)){
-        payload.Event = 'add';
-        WebCompoints[payload.Type] = Uri;
-      }else{
-         payload.Event = 'update';
-      }
-  }
-  
+function obsReqCB(payload, Uri) {
+
+    if ("Type" in payload) {
+        if (!(payload.Type in WebCompoints)) {
+            payload.Event = 'add';
+            WebCompoints[payload.Type] = Uri;
+         } else {
+            payload.Event = 'update';
+         }
+    }
+
   updateWebClients(payload);
 }
 
@@ -158,85 +150,85 @@ function obsReqCB( payload,Uri){
 // Start iotivity and set up the processing loop
 var notifyObserversTimeoutId,
     resourcehanlde,
-    device = require( "iotivity-node" )();
+    device = require('iotivity-node')();
 
-device.configure( {
-    role: "client",
-    connectionMode: "acked"
-} ).then(
+device.configure({
+    role: 'client',
+    connectionMode: 'acked'
+}).then(
     function() {
-        console.log( "Client: device.configure() successful" );
+        console.log('Client: device.configure() successful');
         discoverDevices();
     },
-    function( error ) {
-        console.log( "Client: device.configure() failed with " + error );
-    } );
+    function(error) {
+        console.log('Client: device.configure() failed with ' + error);
+    });
 
-function SensorObserving ( response ) {
-  console.log("Resource changed:" + JSON.stringify( response.properties, null, 4 ) );
+function SensorObserving(response) {
+    console.log('Resource changed:' + JSON.stringify(response.properties, null, 4));
 
-  if ('properties' in response) {
-    obsReqCB(response.properties, response.uri);
-  }
+    if ('properties' in response) {
+        obsReqCB(response.properties, response.uri);
+    }
 }
 
-device.client.on( "resourcechange", function( event ) {
+device.client.on('resourcechange', function(event) {
     SensorObserving(event.resource);
-} );
+});
 
 // Add a listener that will receive the results of the discovery
-device.client.addEventListener( "resourcefound", function( event ) {
-    if ( !( event.resource.url in resourcesList ) ||
-           ( event.resource.deviceId != resourcesList[event.resource.url].deviceId )) {
-        console.log("Resource found:" + JSON.stringify( event.resource, null, 4 ) );
+device.client.addEventListener('resourcefound', function(event) {
+    if (!(event.resource.url in resourcesList) ||
+           (event.resource.deviceId != resourcesList[event.resource.url].deviceId)) {
+        console.log('Resource found:' + JSON.stringify(event.resource, null, 4));
 
         resourcesList[event.resource.uri] = event.resource;
-        device.client.startObserving( event.resource.id ).then(
-            function( observedResource ) {
-                console.log( "Client: startObserving() successful" );
+        device.client.startObserving(event.resource.id).then(
+            function(observedResource) {
+                console.log('Client: startObserving() successful');
             },
-            function( error ) {
-                console.log( "Client: startObserving() failed with " + error + " and result " +
-                    error.result );
-            } );
+            function(error) {
+                console.log('Client: startObserving() failed with ' + error + ' and result ' +
+                    error.result);
+            });
      }
-} );
+});
 
 function discoverResources() {
-    console.log("Discover resources.");
+    console.log('Discover resources.');
     device.client.findResources().then(
         function() {
-            console.log( "Client: findResources() successful" );
+            console.log('Client: findResources() successful');
         },
-        function( error ) {
-            console.log( "Client: findResources() failed with " + error +
-                " and result " + error.result );
-        } );
+        function(error) {
+            console.log('Client: findResources() failed with ' + error +
+                ' and result ' + error.result);
+        });
 }
 
-device.client.addEventListener( "devicefound", function( event ) {
-    if ( !(event.device.uuid in devicesList) ){
-        console.log("New device: " + event.device.uuid + "found.");
+device.client.addEventListener('devicefound', function(event) {
+    if (!(event.device.uuid in devicesList)) {
+        console.log('New device: " + event.device.uuid + "found.');
         devicesList[event.device.uuid] = event.device;
         discoverResources();
     }
-} );
+});
 
 function discoverDevices() {
     device.client.findDevices().then(
         function() {
-            console.log( "Client: findDevices() successful" );
+            console.log('Client: findDevices() successful');
         },
-        function( error ) {
-            console.log( "Client: findDevices() failed with " + error +
-                " and result " + error.result );
-        } );
+        function(error) {
+            console.log('Client: findDevices() failed with ' + error +
+                ' and result ' + error.result);
+        });
     notifyObserversTimeoutId = setTimeout(discoverDevices, 5000);
 }
 
 // Exit gracefully when interrupted
-process.on( "SIGINT", function() {
-  console.log( "SIGINT: Quitting..." );
+process.on('SIGINT', function() {
+  console.log('SIGINT: Quitting...');
 
   // Tear down the processing loop
   if (notifyObserversTimeoutId) {
@@ -250,8 +242,5 @@ process.on( "SIGINT", function() {
   }
 
   // Exit
-  process.exit( 0 );
-} );
-
-
-
+  process.exit(0);
+});

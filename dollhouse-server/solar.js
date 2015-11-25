@@ -1,48 +1,48 @@
-// Require the MRAA library
-var device = require( "iotivity-node" )(),
+var device = require('iotivity-node')(),
     solarResource,
     lcdPin,
     pwmPin,
-    resourceTypeName = "core.solar",
-    resourceInterfaceName = "/a/solar",
+    resourceTypeName = 'core.solar',
+    resourceInterfaceName = '/a/solar',
     tiltPercentage = 0,
     lcd1 = "Solar Connected!!",
     lcd2 = "IOT Tracker";
 
-var mraa = "";
+// Require the MRAA library
+var mraa = '';
 try {
-    mraa = require("mraa");
+    mraa = require('mraa');
 }
 catch (e) {
-    console.log("No mraa module: " + e.message);
+    console.log('No mraa module: ' + e.message);
 }
 
-var lcd = "";
+var lcd = '';
 try {
-    lcd = require("jsupm_i2clcd");
+    lcd = require('jsupm_i2clcd');
 }
 catch (e) {
-    console.log("No lcd module: " + e.message);
+    console.log('No lcd module: ' + e.message);
 }
 
 function resetLCDScreen() {
-    if ( !lcd )
+    if (!lcd)
         return;
 
     lcdPin.clear();
     lcdPin.setColor(255, 0, 0);
     lcdPin.setCursor(0, 0);
-    lcdPin.write("Solar");
+    lcdPin.write('Solar');
     lcdPin.setCursor(1, 0);
-    lcdPin.write("IOT Tracker");
+    lcdPin.write('IOT Tracker');
 }
 
 // Setup solar panel.
 function setupHardware() {
-    if ( !mraa )
+    if (!mraa)
         return;
 
-    if ( lcd ) {
+    if (lcd) {
         lcdPin = new lcd.Jhd1313m1(6, 0x3E, 0x62);
         resetLCDScreen();
     }
@@ -52,7 +52,7 @@ function setupHardware() {
     pwmPin.enable(true);
 
     pwmPin.write(0.05);
-    console.log("Solar panel initialization completed.");
+    console.log('Solar panel initialization completed.');
 }
 
 function map(x, in_min, in_max, out_min, out_max) {
@@ -63,23 +63,24 @@ function map(x, in_min, in_max, out_min, out_max) {
 // and change the sensor state.
 function updateProperties(properties) {
     tiltPercentage = properties.tiltPercentage;
-    if ( !mraa )
+    if (!mraa)
         return;
 
     var val = map(tiltPercentage, 0, 100, .05, .10);
-    console.log("\nSolar: Update received. tiltPercentage: " + tiltPercentage + " : " + val);
+    console.log('\nSolar: Update received. tiltPercentage: ' +
+            tiltPercentage + ' : ' + val);
     pwmPin.write(val);
 
-    if ( !lcd )
+    if (!lcd)
         return;
 
-    if ( properties.lcd1 ) {
+    if (properties.lcd1) {
         lcd1 = properties.lcd1;
         lcdPin.setCursor(0, 0);
         lcdPin.write(lcd1);
     }
 
-    if ( properties.lcd2 ) {
+    if (properties.lcd2) {
         lcd2 = properties.lcd2;
         lcdPin.setCursor(1, 0);
         lcdPin.write(properties.lcd2);
@@ -99,15 +100,15 @@ function getProperties() {
         }
     };
 
-    console.log("Solar: Send the response. tiltPercentage: " + tiltPercentage);
+    console.log('Solar: Send the response. tiltPercentage: ' + tiltPercentage);
     return properties;
 }
 
 function processObserve() {
-    if ( !lcd )
+    if (!lcd)
         return;
 
-    lcdPin.setColor(0,255,0);
+    lcdPin.setColor(0, 255, 0);
 
     lcdPin.setCursor(0, 0);
     lcdPin.write(lcd1);
@@ -119,42 +120,42 @@ function processObserve() {
 function notifyObservers(request) {
     solarResource.properties = getProperties();
 
-    device.server.notify( solarResource.id /*, "update", solarResource.properties*/ ).catch(
-        function( error ) {
-            console.log( "Solar: Failed to notify observers." );
+    device.server.notify(solarResource.id).catch(
+        function(error) {
+            console.log('Solar: Failed to notify observers.');
             noObservers = error.noObservers;
-            if ( noObservers ) {
+            if (noObservers) {
                 resetLCDScreen();
             }
-        } );
+        });
 }
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    if ( request.type === "update" ) {
+    if (request.type === 'update') {
         updateProperties(request.res);
-    } else if ( request.type === "retrieve" ) {
+    } else if (request.type === 'retrieve') {
         solarResource.properties = getProperties();
-    } else if ( request.type === "observe" ) {
+    } else if (request.type === 'observe') {
         processObserve();
     }
 
-    request.sendResponse( request.source ).then(
+    request.sendResponse(request.source).then(
         function() {
-            console.log( "Solar: Successfully responded to request" );
+            console.log('Solar: Successfully responded to request');
         },
-        function( error ) {
-            console.log( "Solar: Failed to send response with error " + error + " and result " +
-                error.result );
-        } );
+        function(error) {
+            console.log('Solar: Failed to send response with error ' +
+                error + ' and result ' + error.result);
+        });
 
     setTimeout(notifyObservers, 200);
 }
 
 // Create Solar resource
-device.configure( {
-    role: "server",
-    connectionMode: "acked",
+device.configure({
+    role: 'server',
+    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -163,56 +164,56 @@ device.configure( {
         platformVersion: "1.0.0",
         firmwareVersion: "0.0.1",
     }
-} ).then(
+}).then(
     function() {
-        console.log( "Solar: device.configure() successful" );
+        console.log('Solar: device.configure() successful');
 
         // Setup Solar sensor.
         setupHardware();
 
-        console.log("\nCreate Solar resource.");
+        console.log('\nCreate Solar resource.');
 
         // Register Solar resource
-        device.server.registerResource( {
+        device.server.registerResource({
             url: resourceInterfaceName,
             deviceId: device.settings.info.uuid,
             connectionMode: device.settings.connectionMode,
             resourceTypes: resourceTypeName,
-            interfaces: "oic.if.baseline",
+            interfaces: 'oic.if.baseline',
             discoverable: true,
             observable: true,
             properties: getProperties()
-        } ).then(
-            function( resource ) {
-                console.log( "Solar: device.server.registerResource() successful" );
+        }).then(
+            function(resource) {
+                console.log('Solar: registerResource() successful');
                 solarResource = resource;
-                device.server.addEventListener( "request", entityHandler );
+                device.server.addEventListener('request', entityHandler);
             },
-            function( error ) {
-                console.log( "Solar: device.server.registerResource() failed with: " + error );
-            } );
+            function(error) {
+                console.log('Solar: registerResource() failed with: ' + error);
+            });
     },
-    function( error ) {
-        console.log( "Solar: device.configure() failed with: " + error );
-    } );
+    function(error) {
+        console.log('Solar: device.configure() failed with: ' + error);
+    });
 
 // Cleanup on SIGINT
-process.on( "SIGINT", function() {
-    console.log("Delete Solar Resource.");
+process.on('SIGINT', function() {
+    console.log('Delete Solar Resource.');
 
     // Reset LCD screen.
     resetLCDScreen();
 
     // Unregister resource.
-    device.server.unregisterResource( solarResource.id ).then(
+    device.server.unregisterResource(solarResource.id).then(
         function() {
-            console.log( "Solar: device.server.unregisterResource() successful" );
+            console.log('Solar: unregisterResource() successful');
         },
-        function( error ) {
-            console.log( "Solar: device.server.unregisterResource() failed with: " + error +
-                " and result " + error.result );
-        } );
+        function(error) {
+            console.log('Solar: unregisterResource() failed with: ' + error +
+                ' and result ' + error.result);
+        });
 
     // Exit
-    process.exit( 0 );
-} )
+    process.exit(0);
+});

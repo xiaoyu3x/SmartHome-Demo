@@ -1,16 +1,18 @@
 var clockPin,
     dataPin;
 
-var mraa = "";
+// Require the MRAA library
+var mraa = '';
 try {
-    mraa = require("mraa");
+    mraa = require('mraa');
 }
 catch (e) {
-    console.log("No mraa module: " + e.message);
+    console.log('No mraa module: ' + e.message);
 }
 
+// Setup LED pin.
 exports.setupHardware = function() {
-    if ( !mraa )
+    if (!mraa)
         return;
 
     clockPin = new mraa.Gpio(7);
@@ -19,22 +21,22 @@ exports.setupHardware = function() {
     dataPin.dir(mraa.DIR_OUT);
 
     exports.setColorRGB(0, 0, 0);
-}
+};
 
 function clk() {
-    if ( !mraa )
+    if (!mraa)
         return;
 
     clockPin.write(0);
     clockPin.write(1);
 }
 
-function sendByte( b ) {
-    if ( !mraa )
+function sendByte(b) {
+    if (!mraa)
         return;
 
     // send one bit at a time
-    for ( var i=0; i<8; i++ ) {
+    for (var i = 0; i < 8; i++) {
         if ((b & 0x80) != 0)
             dataPin.write(1);
         else
@@ -45,7 +47,7 @@ function sendByte( b ) {
   }
 }
 
-function sendColor( red, green, blue ) {
+function sendColor(red, green, blue) {
     // start by sending a byte with the format "1 1 /B7 /B6 /G7 /G6 /R7 /R6"
     var prefix = 0xC0;
 
@@ -63,7 +65,8 @@ function sendColor( red, green, blue ) {
     sendByte(red);
 }
 
-exports.setColorRGB = function( red, green, blue ) {
+// Set the RGB color
+exports.setColorRGB = function(red, green, blue) {
     // send prefix 32 x "0"
     sendByte(0x00);
     sendByte(0x00);

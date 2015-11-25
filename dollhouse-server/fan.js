@@ -1,22 +1,22 @@
-// Require the MRAA library
-var device = require( "iotivity-node" )(),
+var device = require('iotivity-node')(),
     fanResource,
     sensorPin,
     sensorState = false,
-    resourceTypeName = "core.fan",
-    resourceInterfaceName = "/a/fan";
+    resourceTypeName = 'core.fan',
+    resourceInterfaceName = '/a/fan';
 
-var mraa = "";
+// Require the MRAA library
+var mraa = '';
 try {
-    mraa = require("mraa");
+    mraa = require('mraa');
 }
 catch (e) {
-    console.log("No mraa module: " + e.message);
+    console.log('No mraa module: ' + e.message);
 }
 
 // Setup Fan sensor pin.
 function setupHardware() {
-    if ( mraa ) {
+    if (mraa) {
         sensorPin = new mraa.Gpio(9);
         sensorPin.dir(mraa.DIR_OUT);
         sensorPin.write(0);
@@ -28,9 +28,9 @@ function setupHardware() {
 function updateProperties(properties) {
     sensorState = properties.on_off;
 
-    console.log("\nFan: Update received. on_off: " + sensorState);
+    console.log('\nFan: Update received. on_off: ' + sensorState);
 
-    if ( !mraa )
+    if (!mraa)
         return;
 
     if (sensorState)
@@ -48,7 +48,7 @@ function getProperties() {
         ATT: {'on_off': sensorState}
     };
 
-    console.log("Fan: Send the response. on_off: " + sensorState);
+    console.log('Fan: Send the response. on_off: ' + sensorState);
     return properties;
 }
 
@@ -56,39 +56,40 @@ function getProperties() {
 function notifyObservers(request) {
     fanResource.properties = getProperties();
 
-    device.server.notify( fanResource.id /*, "update", fanResource.properties*/ ).then(
+    device.server.notify(fanResource.id).then(
         function() {
-            console.log( "Fan: Successfully notified observers." );
+            console.log('Fan: Successfully notified observers.');
         },
-        function( error ) {
-            console.log( "Fan: notify() failed with " + error + " and result " + error.result );
-        } );
+        function(error) {
+            console.log('Fan: Notify failed with ' + error + ' and result ' +
+                error.result);
+        });
 }
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    if ( request.type === "update" ) {
+    if (request.type === 'update') {
         updateProperties(request.res);
-    } else if ( request.type === "retrieve" ) {
+    } else if (request.type === 'retrieve') {
         fanResource.properties = getProperties();
     }
 
-    request.sendResponse( request.source ).then(
+    request.sendResponse(request.source).then(
         function() {
-            console.log( "Fan: Successfully responded to request" );
+            console.log('Fan: Successfully responded to request');
         },
-        function( error ) {
-            console.log( "Fan: Failed to send response with error " + error + " and result " +
-                error.result );
-        } );
+        function(error) {
+            console.log('Fan: Failed to send response with error ' + error +
+                ' and result ' + error.result);
+        });
 
     setTimeout(notifyObservers, 200);
 }
 
 // Create Fan resource
-device.configure( {
-    role: "server",
-    connectionMode: "acked",
+device.configure({
+    role: 'server',
+    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -97,57 +98,57 @@ device.configure( {
         platformVersion: "1.0.0",
         firmwareVersion: "0.0.1",
     }
-} ).then(
+}).then(
     function() {
-        console.log( "Fan: device.configure() successful" );
+        console.log('Fan: device.configure() successful');
 
         // Setup Fan sensor pin.
         setupHardware();
 
-        console.log("\nCreate Fan resource.");
+        console.log('\nCreate Fan resource.');
 
         // Register Fan resource
-        device.server.registerResource( {
+        device.server.registerResource({
             url: resourceInterfaceName,
             deviceId: device.settings.info.uuid,
             connectionMode: device.settings.connectionMode,
             resourceTypes: resourceTypeName,
-            interfaces: "oic.if.baseline",
+            interfaces: 'oic.if.baseline',
             discoverable: true,
             observable: true,
             properties: getProperties()
-        } ).then(
-            function( resource ) {
-                console.log( "Fan: device.server.registerResource() successful" );
+        }).then(
+            function(resource) {
+                console.log('Fan: registerResource() successful');
                 fanResource = resource;
-                device.server.addEventListener( "request", entityHandler );
+                device.server.addEventListener('request', entityHandler);
             },
-            function( error ) {
-                console.log( "Fan: device.server.registerResource() failed with: " + error );
-            } );
+            function(error) {
+                console.log('Fan: registerResource() failed with: ' + error);
+            });
     },
-    function( error ) {
-        console.log( "Fan: device.configure() failed with: " + error );
-    } );
+    function(error) {
+        console.log('Fan: device.configure() failed with: ' + error);
+    });
 
 // Cleanup on SIGINT
-process.on( "SIGINT", function() {
-    console.log("Delete Fan Resource.");
+process.on('SIGINT', function() {
+    console.log('Delete Fan Resource.');
 
     // Stop fan before we tear down the resource.
-    if ( mraa )
+    if (mraa)
         sensorPin.write(0);
 
     // Unregister resource.
-    device.server.unregisterResource( fanResource.id ).then(
+    device.server.unregisterResource(fanResource.id).then(
         function() {
-            console.log( "Fan: device.server.unregisterResource() successful" );
+            console.log('Fan: unregisterResource() successful');
         },
-        function( error ) {
-            console.log( "Fan: device.server.unregisterResource() failed with: " + error +
-                " and result " + error.result );
-        } );
+        function(error) {
+            console.log('Fan: unregisterResource() failed with: ' + error +
+                ' and result ' + error.result);
+        });
 
     // Exit
-    process.exit( 0 );
-} )
+    process.exit(0);
+});
