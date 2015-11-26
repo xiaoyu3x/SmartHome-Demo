@@ -2,7 +2,7 @@ var device = require('iotivity-node')(),
     solarResource,
     lcdPin,
     pwmPin,
-    resourceTypeName = 'core.solar',
+    resourceTypeName = 'oic.r.solar',
     resourceInterfaceName = '/a/solar',
     tiltPercentage = 0,
     lcd1 = "Solar Connected!!",
@@ -92,12 +92,11 @@ function updateProperties(properties) {
 function getProperties() {
     // Format the payload.
     var properties = {
-        Type: 'solar',
-        ATT: {
-            'tiltPercentage': tiltPercentage,
-            'lcd1': lcd1,
-            'lcd2': lcd2
-        }
+        rt: resourceTypeName,
+        id: 'solar',
+        tiltPercentage: tiltPercentage,
+        lcd1: lcd1,
+        lcd2: lcd2
     };
 
     console.log('Solar: Send the response. tiltPercentage: ' + tiltPercentage);
