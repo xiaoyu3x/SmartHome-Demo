@@ -22,9 +22,9 @@ function addMotionSensor(sensor){
 //Motion sensor physically changed status --> change model animation
 function recieveUpdate(sensor){
 	//animate iff sensor is on
-	if ('on_off' in sensor['att']) {
+	if ('value' in sensor['att']) {
 
-		if (!sensor['att']['on_off']) {
+		if (!sensor['att']['value']) {
 			findObjectsById('motion_sensor_red_button').forEach(function(item) {
 			        item.traverse(function (object) {
 			            //object.setRGB(0,77,0);
