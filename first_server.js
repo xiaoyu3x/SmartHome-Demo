@@ -55,12 +55,12 @@ function parceInComingRequest(message, connection) {
      }
 }
 
-function updateWebClients(msg) {
+function updateWebClients(msg, eventType) {
     outmesg_list = [];
     outmesg = {};
-    outmesg["Type"] = msg.Type;
-    outmesg["Event"] = msg.Event;
-    outmesg["att"] = msg.ATT;
+    outmesg["Type"] = msg.id;
+    outmesg["Event"] = eventType;
+    outmesg["att"] = msg;
 
     outmesg_list.push(outmesg);
 
@@ -131,17 +131,17 @@ var WebCompoints = {};
 //when a server seends data to gatway
 
 function obsReqCB(payload, Uri) {
-
-    if ("Type" in payload) {
-        if (!(payload.Type in WebCompoints)) {
-            payload.Event = 'add';
-            WebCompoints[payload.Type] = Uri;
+    var eventType;
+    if ("id" in payload) {
+        if (!(payload.id in WebCompoints)) {
+            eventType = 'add';
+            WebCompoints[payload.id] = Uri;
          } else {
-            payload.Event = 'update';
+            eventType = 'update';
          }
     }
 
-  updateWebClients(payload);
+    updateWebClients(payload, eventType);
 }
 
 
@@ -208,7 +208,7 @@ function discoverResources() {
 
 device.client.addEventListener('devicefound', function(event) {
     if (!(event.device.uuid in devicesList)) {
-        console.log('New device: " + event.device.uuid + "found.');
+        console.log('New device: ' + event.device.uuid + ' found.');
         devicesList[event.device.uuid] = event.device;
         discoverResources();
     }

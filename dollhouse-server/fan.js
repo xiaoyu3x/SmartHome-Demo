@@ -2,7 +2,7 @@ var device = require('iotivity-node')(),
     fanResource,
     sensorPin,
     sensorState = false,
-    resourceTypeName = 'core.fan',
+    resourceTypeName = 'oic.r.fan',
     resourceInterfaceName = '/a/fan';
 
 // Require the MRAA library
@@ -26,9 +26,9 @@ function setupHardware() {
 // This function parce the incoming Resource properties
 // and change the sensor state.
 function updateProperties(properties) {
-    sensorState = properties.on_off;
+    sensorState = properties.value;
 
-    console.log('\nFan: Update received. on_off: ' + sensorState);
+    console.log('\nFan: Update received. value: ' + sensorState);
 
     if (!mraa)
         return;
@@ -44,11 +44,12 @@ function updateProperties(properties) {
 function getProperties() {
     // Format the payload.
     var properties = {
-        Type: 'boxFan',
-        ATT: {'on_off': sensorState}
+        rt: resourceTypeName,
+        id: 'boxFan',
+        value: sensorState
     };
 
-    console.log('Fan: Send the response. on_off: ' + sensorState);
+    console.log('Fan: Send the response. value: ' + sensorState);
     return properties;
 }
 
