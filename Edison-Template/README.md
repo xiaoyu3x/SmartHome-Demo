@@ -12,7 +12,10 @@ It contains a number of OIC devices (servers) located in sub-folders:
 
 E.g.:
 
-1. Install dev tools (inc. IoTivity dev package) on target
+1. Install dev tools ond the following dev packages on target:
+  * `mraa-dev`
+  * `iotivity-resource-dev`
+  * `upm-dev` (for `solar`)
 2. Transfer code to target
 3. Run `make` within the OIC server directory
 4. Start the OIC server as follows:
