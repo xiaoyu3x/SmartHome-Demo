@@ -226,8 +226,8 @@
 
             var loader = new THREE.ColladaLoader(), box;
             loader.options.convertUpAxis = true;
-            loader.load('./aug12/model/model.dae', function 
-            /*loader.load('./model/SmartHouseSketchResized.dae', function*/ (collada) {
+            /*Adjust the path to the 3D model you want to use*/
+            loader.load('./home_3dmodel/aug12/model/model.dae', function (collada) {
                 loading.parentElement.removeChild(loading);
                 loading = null;
                 dae = collada.scene;
