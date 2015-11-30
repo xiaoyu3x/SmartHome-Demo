@@ -1,8 +1,7 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http')
-  , express = require('express')
-  , app = express();
-
+    , express = require('express')
+    , app = express();
 
 app.use(express.static(__dirname + '/dollhouse'));
 
@@ -13,14 +12,13 @@ var includeInThisContext = function(path) {
     vm.runInThisContext(code, path);
 }.bind(this);
 
-var rules = require("./dollhouse/rules_engine");
+var rules = require('./dollhouse/rules_engine');
 
-var fs = require("fs");
-console.log(__dirname+"/data.json");
-
+var fs = require('fs');
+console.log(__dirname + "/data.json");
 
 var server = http.createServer(app);
-var jsonRulesConfig = fs.readFileSync(__dirname+"/data.json", "utf8");
+var jsonRulesConfig = fs.readFileSync(__dirname + "/data.json", "utf8");
 console.log(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
@@ -44,49 +42,39 @@ wsServer = new WebSocketServer({
     autoAcceptConnections: false
 });
 
-
 var connectionList = {};
 
-
 function originIsAllowed(origin) {
-  // put logic here to detect whether the specified origin is allowed.
-  return true;
+    // put logic here to detect whether the specified origin is allowed.
+    return true;
 }
 
-//
-function parceInComingRequest(message,connection){
-   if (message.Event == "update") {
-       update(message.Type,message.att);
-   }
+function parceInComingRequest(message, connection) {
+     if (message.Event == "update") {
+         update(message.Type, message.att);
+     }
 }
 
-function updateWebClients(msg){
-  outmesg_list = []
-  outmesg = {}
-  outmesg["Type"] = msg.Type;
-  outmesg["Event"] = msg.Event;
-  outmesg["att"] = msg.ATT.values;
+function updateWebClients(msg) {
+    outmesg_list = [];
+    outmesg = {};
+    outmesg["Type"] = msg.Type;
+    outmesg["Event"] = msg.Event;
+    outmesg["att"] = msg.ATT;
 
+    outmesg_list.push(outmesg);
 
-  outmesg_list.push(outmesg);
+    console.log(JSON.stringify(outmesg_list));
+    //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
+    //console.log(newEvents);
 
-  console.log(JSON.stringify(outmesg_list));
-  //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
-  //console.log(newEvents);
-
-  
-
-
-  for (var key in connectionList){
-    console.log(key);
-    var connection = connectionList[key];
-    connection.sendUTF(JSON.stringify(outmesg_list));
-    //connection.sendUTF();
-  }
+    for (var key in connectionList) {
+        console.log(key);
+        var connection = connectionList[key];
+        connection.sendUTF(JSON.stringify(outmesg_list));
+        //connection.sendUTF();
+    }
 }
-
-
-
 
 wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
@@ -100,14 +88,14 @@ wsServer.on('request', function(request) {
 
     console.log((new Date()) + ' Connection accepted.');
 
-    if(!(connection.remoteAddress in connectionList)){
+    if (!(connection.remoteAddress in connectionList)) {
       connectionList[connection.remoteAddress] = connection;
 
       connection.on('message', function(message) {
           if (message.type === 'utf8') {
               console.log('Received Message: ' + message.utf8Data);
 
-              parceInComingRequest(JSON.parse(message.utf8Data),connection);
+              parceInComingRequest(JSON.parse(message.utf8Data), connection);
           }
       });
       connection.on('close', function(reasonCode, description) {
@@ -119,67 +107,40 @@ wsServer.on('request', function(request) {
 });
 
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
-  var intervalId,
-  handle = {},
-  iotivity = require( "iotivity" ),
-  resourcesList ={},
-  TAG = "NodeServer";
+var resourcesList = {},
+    devicesList = {},
+    TAG = "NodeServer";
 
-
-function InvokeOCDoResource(absoluteUrl, Method, QOS, obsReqCB, destination, payload){
-  getHandle = {};
-  iotivity.OCDoResource(
-      getHandle,
-      Method,
-      absoluteUrl,
-      destination,
-      payload,
-      iotivity.OCConnectivityType.CT_DEFAULT,
-      QOS,
-      function( handle, response ) {
-        console.log( "Received response to GET request:" );
-        //console.log( JSON.stringify( response, null, 4 ) );
-        return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
-      },
-      null );
-}
-
-function update(Type,values)
+function update(Type, values)
 {
-    if(Type in WebCompoints){
-      URi = WebCompoints[Type];
+    if (Type in WebCompoints) {
+        URi = WebCompoints[Type];
+        resource = resourcesList[URi];
 
-      destination = resourcesList[URi];
+        console.log('----------------------------------------------');
+        console.log('Sendng Update to ' + Type + ' uri:' + URi);
 
-      console.log( "----------------------------------------------" );
-      console.log( "Sendng Update to "+ Type + " uri:"+URi);
-      payload = {
-            type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-            values: {
-            }
-          };
-      payload.values = values;
-
-      InvokeOCDoResource(URi, iotivity.OCMethod.OC_REST_PUT, iotivity.OCQualityOfService.OC_HIGH_QOS, obsReqCB, destination, payload)
-    }else{
-      console.log( "No "+Type+" online");
+        resource.properties = values;
+        device.client.updateResource(resource.id, resource);
+    } else {
+        console.log('No ' + Type + ' online');
     }
 }
 
 var WebCompoints = {};
 //when a server seends data to gatway
 
-function obsReqCB( payload,Uri){
- 
-  if ("Type" in payload){
-    if(!(payload.Type in WebCompoints)){
-        payload.Event = 'add';
-        WebCompoints[payload.Type] = Uri;
-      }else{
-         payload.Event = 'update';
-      }
-  }
-  
+function obsReqCB(payload, Uri) {
+
+    if ("Type" in payload) {
+        if (!(payload.Type in WebCompoints)) {
+            payload.Event = 'add';
+            WebCompoints[payload.Type] = Uri;
+         } else {
+            payload.Event = 'update';
+         }
+    }
+
   updateWebClients(payload);
 }
 
@@ -187,160 +148,99 @@ function obsReqCB( payload,Uri){
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Start iotivity and set up the processing loop
-iotivity.OCInit( null, 0, iotivity.OCMode.OC_SERVER );
+var notifyObserversTimeoutId,
+    resourcehanlde,
+    device = require('iotivity-node')();
 
-intervalId = setInterval( function() {
-  iotivity.OCProcess();
-}, 1000 );
+device.configure({
+    role: 'client',
+    connectionMode: 'acked'
+}).then(
+    function() {
+        console.log('Client: device.configure() successful');
+        discoverDevices();
+    },
+    function(error) {
+        console.log('Client: device.configure() failed with ' + error);
+    });
 
-iotivity.OCSetDeviceInfo( { deviceName: "SmartHouse" } );
-iotivity.OCSetPlatformInfo( {
-  platformID: "SmartHouse.dollhouse",
-  manufacturerName: "iotivity-node"
-} );
+function SensorObserving(response) {
+    console.log('Resource changed:' + JSON.stringify(response.properties, null, 4));
 
-
-function SensorObserving ( handle, response ) {
-  console.log( "Received response to OBSERVE request:" );
-
-  if('payload' in response){
-    if('values' in response.payload){
-      obsReqCB(response.payload.values,response.payload.uri);
+    if ('properties' in response) {
+        obsReqCB(response.properties, response.uri);
     }
-  }
-  return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
 }
 
+device.client.on('resourcechange', function(event) {
+    SensorObserving(event.resource);
+});
 
+// Add a listener that will receive the results of the discovery
+device.client.addEventListener('resourcefound', function(event) {
+    if (!(event.resource.url in resourcesList) ||
+           (event.resource.deviceId != resourcesList[event.resource.url].deviceId)) {
+        console.log('Resource found:' + JSON.stringify(event.resource, null, 4));
 
-function bin2String(array) {
-  var result = "";
-  for (var i = 0; i < array.length; i++) {
-    result += String.fromCharCode(array[i]);
-  }
-  return result;
+        resourcesList[event.resource.uri] = event.resource;
+        device.client.startObserving(event.resource.id).then(
+            function(observedResource) {
+                console.log('Client: startObserving() successful');
+            },
+            function(error) {
+                console.log('Client: startObserving() failed with ' + error + ' and result ' +
+                    error.result);
+            });
+     }
+});
+
+function discoverResources() {
+    console.log('Discover resources.');
+    device.client.findResources().then(
+        function() {
+            console.log('Client: findResources() successful');
+        },
+        function(error) {
+            console.log('Client: findResources() failed with ' + error +
+                ' and result ' + error.result);
+        });
 }
 
-
-function OCEntityHandlerCb( flag, request ) {
-  
-
-  if(request){
-    console.log( "Entity handler called with flag = " + flag + " and the following request:" );
-    //console.log( JSON.stringify( request, null, 4 ) );
-
-    if(request.devAddr && request.payload){
-      query = "coap://"+bin2String(request.devAddr.addr)+"/oic/res";
-      console.log(query);
-      StarteObserve(query);
+device.client.addEventListener('devicefound', function(event) {
+    if (!(event.device.uuid in devicesList)) {
+        console.log('New device: " + event.device.uuid + "found.');
+        devicesList[event.device.uuid] = event.device;
+        discoverResources();
     }
-  }
-    return iotivity.OCEntityHandlerResult.OC_EH_OK;
+});
+
+function discoverDevices() {
+    device.client.findDevices().then(
+        function() {
+            console.log('Client: findDevices() successful');
+        },
+        function(error) {
+            console.log('Client: findDevices() failed with ' + error +
+                ' and result ' + error.result);
+        });
+    notifyObserversTimeoutId = setTimeout(discoverDevices, 5000);
 }
-
-
-function StarteObserve(query){
-
-
-  iotivity.OCDoResource(
-
-  // The bindings fill in this object
-  handle,
-
-  iotivity.OCMethod.OC_REST_DISCOVER,
-
-  // Standard path for discovering resources
-  iotivity.OC_RSRVD_WELL_KNOWN_URI,
-
-  // There is no destination
-  null,
-
-  // There is no payload
-  null,
-  iotivity.OCConnectivityType.CT_DEFAULT,
-  iotivity.OCQualityOfService.OC_HIGH_QOS,
-  SensorCallBack,
-
-  // There are no header options
-  null );
-}
-
-
-function SensorCallBack( handle, response ) {
-  console.log( "Received response to DISCOVER request:" );
-  //console.log( JSON.stringify( response, null, 4 ) );
-  var index,
-    destination = response.addr,
-    getHandle = {},
-    resources = response && response.payload && response.payload.resources,
-    resourceCount = resources.length ? resources.length : 0;
-
-    // If the sample URI is among the resources, issue the OBSERVE request to it
-    for ( index = 0 ; index < resourceCount ; index++ ) {
-
-      if (!(resources[ index ].uri in resourcesList)){
-        resourcesList[resources[ index ].uri] = destination;
-
-         console.log( "Observing " + resources[ index ].uri );
-
-         iotivity.OCDoResource(
-          getHandle,
-          iotivity.OCMethod.OC_REST_OBSERVE,
-          resources[ index ].uri,
-          destination,
-          null,
-          iotivity.OCConnectivityType.CT_DEFAULT,
-          iotivity.OCQualityOfService.OC_HIGH_QOS,
-          SensorObserving,
-          null );
-
-      }else{
-        console.log( "Erro Observing " + resources[ index ].uri );
-        /*iotivity.OCDoResource(
-          getHandle,
-          iotivity.OCMethod.OC_REST_OBSERVE,
-          resources[ index ].uri,
-          destination,
-          null,
-          iotivity.OCConnectivityType.CT_DEFAULT,
-          iotivity.OCQualityOfService.OC_HIGH_QOS,
-          SensorObserving,
-          null );
-        */
-      }
-    }
-
-  return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
-}
-
-
-
-// Create a new resource
-iotivity.OCCreateResource(
-
-  // The bindings fill in this object
-  handle,
-
-  "core.hgw",
-  iotivity.OC_RSRVD_INTERFACE_DEFAULT,
-  "/a/hgw",
-  OCEntityHandlerCb
-  ,
-  iotivity.OCResourceProperty.OC_DISCOVERABLE );
-
 
 // Exit gracefully when interrupted
-process.on( "SIGINT", function() {
-  console.log( "SIGINT: Quitting..." );
+process.on('SIGINT', function() {
+  console.log('SIGINT: Quitting...');
 
-  // Tear down the processing loop and stop iotivity
-  clearInterval( intervalId );
-  iotivity.OCDeleteResource( handle.handle );
-  iotivity.OCStop();
+  // Tear down the processing loop
+  if (notifyObserversTimeoutId) {
+    clearTimeout(notifyObserversTimeoutId);
+    notifyObserversTimeoutId = null;
+  }
+
+  // Cancel observing
+  for (var index in resourcesList) {
+     device.client.cancelObserving(resourcesList[index].id);
+  }
 
   // Exit
-  process.exit( 0 );
-} );
-
-
-
+  process.exit(0);
+});
