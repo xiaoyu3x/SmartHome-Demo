@@ -2,7 +2,7 @@ var device = require('iotivity-node')(),
     motionResource,
     sensorPin,
     notifyObserversTimeoutId,
-    resourceTypeName = 'core.pir',
+    resourceTypeName = 'oic.r.sensor.motion',
     resourceInterfaceName = '/a/pir',
     hasUpdate = false,
     noObservers = false,
@@ -68,8 +68,9 @@ function getProperties() {
 
     // Format the payload.
     var properties = {
-        Type: 'motionSensor',
-        ATT: {'on_off': sensorState}
+        rt: resourceTypeName,
+        id: 'motionSensor',
+        value: sensorState
     };
 
     return properties;

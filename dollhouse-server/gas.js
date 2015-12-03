@@ -2,11 +2,12 @@ var device = require('iotivity-node')(),
     gasResource,
     sensorPin,
     gasDensity = 0,
-    resourceTypeName = 'core.gas',
+    resourceTypeName = 'oic.r.sensor.carbonDioxide.json',
     resourceInterfaceName = '/a/gas',
     notifyObserversTimeoutId,
     hasUpdate = false,
-    noObservers = false;
+    noObservers = false,
+    gasDetected = false;
 
 // Require the MRAA library
 var mraa = '';
@@ -32,26 +33,30 @@ function getProperties() {
         val = sensorPin.read();
         density = val * 500 / 1024;
 
-        console.log('\ngasSensor: density: ' + gasDensity + ' threshold: 70 ');
+        console.log('\ngasSensor: density: ' + density + ' threshold: 70 ');
         if (density != gasDensity) {
             if (density > 70 && gasDensity < 70) {
                 gasDensity = density;
+                gasDetected = true;
                 hasUpdate = true;
             } else if (gasDensity > 70 && density < 70) {
                 gasDensity = density;
+                gasDetected = false;
                 hasUpdate = true;
             }
         }
     } else {
-        // Send the default properties. This is useful
+        // Simulate real sensor behavior. This is useful
         // for testing on desktop without mraa.
+        gasDetected = !gasDetected;
         hasUpdate = true;
     }
 
     // Format the properties.
     var properties = {
-        Type: 'gasSensor',
-        ATT: {'density': gasDensity}
+        rt: resourceTypeName,
+        id: 'gasSensor',
+        value: gasDetected
     };
 
     return properties;
@@ -64,7 +69,7 @@ function notifyObservers() {
         gasResource.properties = properties;
         hasUpdate = false;
 
-        console.log('gasSensor: Send the respose. density: ' + gasDensity);
+        console.log('gasSensor: Send the respose: ' + gasDetected);
         device.server.notify(gasResource.id).catch(
             function(error) {
                 console.log('gasSensor: Failed to notify observers.');

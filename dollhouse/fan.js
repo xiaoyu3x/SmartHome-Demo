@@ -20,8 +20,8 @@ function addFan(sensor){
 function recieveUpdate(sensor){
 
 	//animate iff sensor is on
-	if ('on_off' in sensor['att']) {
-		if((sensor['att']['on_off']) == true){
+	if ('value' in sensor['att']) {
+		if((sensor['att']['value']) == true){
 			spinningBoxFan = 1;
 			console.log("Updating Fan On")
 		}else{
@@ -41,7 +41,7 @@ function sendUpdateFan(){
     var test_payload = {
         Event:'update',
         Type:'boxFan',
-        att:{on_off: !spinningBoxFan}
+        att:{value: !spinningBoxFan}
     };
 
     controlLine('boxFan is ' + (spinningBoxFan ? 'Off' : 'On'));

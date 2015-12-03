@@ -18,8 +18,8 @@ function addGasSensor(sensor){
 
 function updateGasSensor(sensor){
 	console.log("Updating Gas Sensor: "+ JSON.stringify(sensor));
-	if ('density' in sensor['att']) {
-		if (sensor['att']['density'] > 70) {
+	if ('value' in sensor['att']) {
+		if (sensor['att']['value']) {
 		    findObjectsById('smoke_red_button').forEach(function(item) {
 		        item.traverse(function (object) {
 		            object.visible = true;
