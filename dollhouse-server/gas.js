@@ -2,7 +2,7 @@ var device = require('iotivity-node')(),
     gasResource,
     sensorPin,
     gasDensity = 0,
-    resourceTypeName = 'oic.r.sensor.carbonDioxide.json',
+    resourceTypeName = 'oic.r.sensor.carbonDioxide',
     resourceInterfaceName = '/a/gas',
     notifyObserversTimeoutId,
     hasUpdate = false,
@@ -69,7 +69,7 @@ function notifyObservers() {
         gasResource.properties = properties;
         hasUpdate = false;
 
-        console.log('gasSensor: Send the respose: ' + gasDetected);
+        console.log('gasSensor: Send the response: ' + gasDetected);
         device.server.notify(gasResource.id).catch(
             function(error) {
                 console.log('gasSensor: Failed to notify observers.');
