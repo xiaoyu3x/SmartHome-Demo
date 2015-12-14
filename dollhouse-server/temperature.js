@@ -125,7 +125,7 @@ function notifyObservers() {
         hasUpdate = false;
 
         console.log('Temperature: Send the response: ' + temperature);
-        device.server.notify(temperatureResource.id).catch(
+        device.notify(temperatureResource).catch(
             function(error) {
                 console.log('Temperature: Failed to notify observers.');
                 noObservers = error.noObservers;
@@ -182,7 +182,7 @@ function entityHandler(request) {
         return;
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(temperatureResource).then(
         function() {
             console.log('Temperature: Successfully responded to request');
         },
@@ -198,7 +198,6 @@ function entityHandler(request) {
 // Create Temperature resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -217,12 +216,10 @@ device.configure({
         console.log('\nCreate Temperature resource.');
 
         // Register Temperature resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties(units.C)
@@ -230,7 +227,7 @@ device.configure({
             function(resource) {
                 console.log('Temperature: registerResource() successful');
                 temperatureResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('Temperature: registerResource() failed with: ' +
@@ -246,7 +243,7 @@ process.on('SIGINT', function() {
     console.log('Delete temperature Resource.');
 
     // Unregister resource.
-    device.server.unregisterResource(temperatureResource.id).then(
+    device.unregisterResource(temperatureResource).then(
         function() {
             console.log('Temperature: unregisterResource() successful');
         },

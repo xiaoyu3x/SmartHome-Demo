@@ -140,7 +140,7 @@ function getProperties() {
 function notifyObservers(request) {
     rgbLEDResource.properties = getProperties();
 
-    device.server.notify(rgbLEDResource.id).then(
+    device.notify(rgbLEDResource).then(
         function() {
             console.log('rgbled: Successfully notified observers.');
         },
@@ -152,14 +152,13 @@ function notifyObservers(request) {
 
 // This is the entity handler for the registered resource.
 function entityHandler(request) {
-    updateProperties("dsfsdfs");
     if (request.type === 'update') {
         updateProperties(request.res);
     } else if (request.type === 'retrieve') {
         rgbLEDResource.properties = getProperties();
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(rgbLEDResource).then(
         function() {
             console.log('rgbled: Successfully responded to request');
         },
@@ -174,7 +173,6 @@ function entityHandler(request) {
 // Create Fan resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -193,12 +191,10 @@ device.configure({
         console.log('\nCreate RGB LED resource.');
 
         // Register Fan resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -206,7 +202,7 @@ device.configure({
             function(resource) {
                 console.log('rgbled: registerResource() successful');
                 rgbLEDResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('rgbled: registerResource() failed with: ' + error);
@@ -227,7 +223,7 @@ process.on('SIGINT', function() {
     }
 
     // Unregister resource.
-    device.server.unregisterResource(rgbLEDResource.id).then(
+    device.unregisterResource(rgbLEDResource).then(
         function() {
             console.log('rgbled: unregisterResource() successful');
         },

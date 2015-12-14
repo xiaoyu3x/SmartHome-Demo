@@ -57,7 +57,7 @@ function getProperties() {
 function notifyObservers(request) {
     fanResource.properties = getProperties();
 
-    device.server.notify(fanResource.id).then(
+    device.notify(fanResource).then(
         function() {
             console.log('Fan: Successfully notified observers.');
         },
@@ -75,7 +75,7 @@ function entityHandler(request) {
         fanResource.properties = getProperties();
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(fanResource).then(
         function() {
             console.log('Fan: Successfully responded to request');
         },
@@ -90,7 +90,6 @@ function entityHandler(request) {
 // Create Fan resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -109,12 +108,10 @@ device.configure({
         console.log('\nCreate Fan resource.');
 
         // Register Fan resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: ['oic.if.baseline'],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -122,7 +119,7 @@ device.configure({
             function(resource) {
                 console.log('Fan: registerResource() successful');
                 fanResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('Fan: registerResource() failed with: ' + error);
@@ -141,7 +138,7 @@ process.on('SIGINT', function() {
         sensorPin.write(0);
 
     // Unregister resource.
-    device.server.unregisterResource(fanResource.id).then(
+    device.unregisterResource(fanResource).then(
         function() {
             console.log('Fan: unregisterResource() successful');
         },
