@@ -1,0 +1,53 @@
+#%RAML 0.8
+title: OICBuzzer
+version: v1.0-20151126
+schemas:
+  - Buzzer: !include oic.r.buzzer.json
+
+traits:
+  - interface:
+      queryParameters:
+        if:
+          enum: ["oic.if.a"]
+
+/BuzzerResURI:
+  description: |
+    This resource describes a buzzer (on/off).
+    The value is a boolean.
+    A value of 'true' means that the buzzer go beeping.
+    A value of 'false' means that the buzzer stop beeping.
+  displayName: Buzzer
+  is: [ interface ] # valid for all methods
+
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            schema: Buzzer
+            example: |
+              {
+                "rt":     "oic.r.buzzer",
+                "id":     "unique_example_id",
+                "value":  false
+              }
+  post:
+    body:
+      application/json:
+        schema: Buzzer
+        example: |
+          {
+            "id":    "unique_example_id",
+            "value": true
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            schema: Buzzer
+            example: |
+              {
+                "rt":     "oic.r.buzzer",
+                "id":    "unique_example_id",
+                "value": true
+              }
