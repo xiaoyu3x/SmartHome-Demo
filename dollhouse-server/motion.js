@@ -17,14 +17,6 @@ catch (e) {
     console.log('No mraa module: ' + e.message);
 }
 
-var led = '';
-try {
-    led = require('./rgb_led');
-}
-catch (e) {
-    console.log('No led module: ' + e.message);
-}
-
 // Setup Motion sensor pin.
 function setupHardware() {
     if (!mraa)
@@ -32,10 +24,6 @@ function setupHardware() {
 
     sensorPin = new mraa.Gpio(5);
     sensorPin.dir(mraa.DIR_IN);
-
-    // Setup LED sensor pin.
-    if (led)
-        led.setupHardware();
 }
 
 // This function construct the payload and returns when
@@ -57,13 +45,6 @@ function getProperties() {
     if (sensorState != motion) {
         hasUpdate = true;
         sensorState = motion;
-
-        if (led) {
-            if (sensorState)
-                led.setColorRGB(255, 0, 0); //Color: RED
-            else
-                led.setColorRGB(0, 0, 255); // Color: Blue
-        }
     }
 
     // Format the payload.
@@ -176,10 +157,6 @@ device.configure({
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
     console.log('Delete Motion Resource.');
-
-    // Turn off led before we tear down the resource.
-    if (led)
-        led.setColorRGB(0, 0, 0);
 
     // Unregister resource.
     device.server.unregisterResource(motionResource.id).then(
