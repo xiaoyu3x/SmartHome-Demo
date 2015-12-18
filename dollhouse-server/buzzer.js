@@ -119,6 +119,15 @@ device.configure({
     function() {
         console.log('Buzzer: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('Buzzer: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('Buzzer: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Buzzer sensor pin.
         setupHardware();
 
@@ -165,6 +174,15 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('Buzzer: unregisterResource() failed with: ' + error +
                 ' and result ' + error.result);
+        });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('Buzzer: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('Buzzer: device.disablePresence() failed with: ' + error);
         });
 
     // Exit

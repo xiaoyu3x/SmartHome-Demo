@@ -123,6 +123,15 @@ device.configure({
     function() {
         console.log('motionSensor: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('motionSensor: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('motionSensor: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Motion sensor pin.
         setupHardware();
 
@@ -162,6 +171,15 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('motionSensor: unregisterResource() failed with: ' +
                 error + ' and result ' + error.result);
+        });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('motionSensor: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('motionSensor: device.disablePresence() failed with: ' + error);
         });
 
     // Exit

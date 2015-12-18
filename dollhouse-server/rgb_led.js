@@ -185,6 +185,15 @@ device.configure({
     function() {
         console.log('rgbled: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('rgbled: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('rgbled: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Fan sensor pin.
         setupHardware();
 
@@ -230,6 +239,15 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('rgbled: unregisterResource() failed with: ' + error +
                 ' and result ' + error.result);
+        });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('rgbled: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('rgbled: device.disablePresence() failed with: ' + error);
         });
 
     // Exit

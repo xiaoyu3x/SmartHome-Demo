@@ -127,6 +127,15 @@ device.configure({
     function() {
         console.log('gasSensor: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('gasSensor: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('gasSensor: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Gas sensor pin.
         setupHardware();
 
@@ -167,6 +176,15 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('gasSensor: unregisterResource() failed with: ' +
                 error + ' and result ' + error.result);
+        });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('gasSensor: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('gasSensor: device.disablePresence() failed with: ' + error);
         });
 
     // Exit
