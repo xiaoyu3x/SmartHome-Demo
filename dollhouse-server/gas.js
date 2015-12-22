@@ -2,7 +2,7 @@ var device = require('iotivity-node')(),
     gasResource,
     sensorPin,
     gasDensity = 0,
-    resourceTypeName = 'oic.r.sensor.carbonDioxide',
+    resourceTypeName = 'oic.r.sensor.carbondioxide',
     resourceInterfaceName = '/a/gas',
     notifyObserversTimeoutId,
     hasUpdate = false,
@@ -70,7 +70,7 @@ function notifyObservers() {
         hasUpdate = false;
 
         console.log('gasSensor: Send the response: ' + gasDetected);
-        device.server.notify(gasResource.id).catch(
+        device.notify(gasResource).catch(
             function(error) {
                 console.log('gasSensor: Failed to notify observers.');
                 noObservers = error.noObservers;
@@ -99,7 +99,7 @@ function entityHandler(request) {
         hasUpdate = true;
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(gasResource).then(
         function() {
             console.log('gasSensor: Successfully responded to request');
         },
@@ -115,7 +115,6 @@ function entityHandler(request) {
 // Create Gas resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -134,12 +133,10 @@ device.configure({
         console.log('\nCreate Gas resource.');
 
         // Register Gas resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -147,7 +144,7 @@ device.configure({
             function(resource) {
                 console.log('gasSensor: registerResource() successful');
                 gasResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('gasSensor: registerResource() failed with: ' +
@@ -163,7 +160,7 @@ process.on('SIGINT', function() {
     console.log('Delete Gas Resource.');
 
     // Unregister resource.
-    device.server.unregisterResource(gasResource.id).then(
+    device.unregisterResource(gasResource).then(
         function() {
             console.log('gasSensor: unregisterResource() successful');
         },

@@ -65,7 +65,7 @@ function notifyObservers() {
         hasUpdate = false;
 
         console.log('\nambientLight: Send the response - illuminance: ' + lux);
-        device.server.notify(ambientLightResource.id).catch(
+        device.notify(ambientLightResource).catch(
             function(error) {
                 console.log('ambientLight: Failed to notify observers.');
                 noObservers = error.noObservers;
@@ -94,7 +94,7 @@ function entityHandler(request) {
         hasUpdate = true;
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(ambientLightResource).then(
         function() {
             console.log('ambientLight: Successfully responded to request');
         },
@@ -110,7 +110,6 @@ function entityHandler(request) {
 // Create ambient light resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -129,12 +128,10 @@ device.configure({
         console.log('\nCreate Ambient Light resource.');
 
         // Register ambient light resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -142,7 +139,7 @@ device.configure({
             function(resource) {
                 console.log('ambientLight: registerResource() successful');
                 ambientLightResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('ambientLight: registerResource() failed with: ' +
@@ -158,7 +155,7 @@ process.on('SIGINT', function() {
     console.log('Delete Ambient Light Resource.');
 
     // Unregister resource.
-    device.server.unregisterResource(ambientLightResource.id).then(
+    device.unregisterResource(ambientLightResource).then(
         function() {
             console.log('ambientLight: unregisterResource() successful');
         },

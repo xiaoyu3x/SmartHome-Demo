@@ -57,7 +57,7 @@ function getProperties() {
 function notifyObservers(request) {
     ledResource.properties = getProperties();
 
-    device.server.notify(ledResource.id).then(
+    device.notify(ledResource).then(
         function() {
             console.log('Led: Successfully notified observers.');
         },
@@ -75,7 +75,7 @@ function entityHandler(request) {
         ledResource.properties = getProperties();
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(ledResource).then(
         function() {
             console.log('Led: Successfully responded to request');
         },
@@ -90,7 +90,6 @@ function entityHandler(request) {
 // Create LED resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -109,12 +108,10 @@ device.configure({
         console.log('\nCreate LED resource.');
 
         // Register LED resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -122,7 +119,7 @@ device.configure({
             function(resource) {
                 console.log('Led: registerResource() successful');
                 ledResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('Led: registerResource() failed with: ' + error);
@@ -141,7 +138,7 @@ process.on('SIGINT', function() {
         sensorPin.write(0);
 
     // Unregister resource.
-    device.server.unregisterResource(ledResource.id).then(
+    device.unregisterResource(ledResource).then(
         function() {
             console.log('Led: unregisterResource() successful');
         },

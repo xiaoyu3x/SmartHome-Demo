@@ -74,7 +74,7 @@ function getProperties() {
 function notifyObservers(request) {
     buzzerResource.properties = getProperties();
 
-    device.server.notify(buzzerResource.id).then(
+    device.notify(buzzerResource).then(
         function() {
             console.log('Buzzer: Successfully notified observers.');
         },
@@ -92,7 +92,7 @@ function entityHandler(request) {
         buzzerResource.properties = getProperties();
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(buzzerResource).then(
         function() {
             console.log('Buzzer: Successfully responded to request');
         },
@@ -107,7 +107,6 @@ function entityHandler(request) {
 // Create Buzzer resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -126,12 +125,10 @@ device.configure({
         console.log('\nCreate Buzzer resource.');
 
         // Register Buzzer resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -139,7 +136,7 @@ device.configure({
             function(resource) {
                 console.log('Buzzer: registerResource() successful');
                 buzzerResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('Buzzer: registerResource() failed with: ' + error);
@@ -161,7 +158,7 @@ process.on('SIGINT', function() {
         sensorPin.write(0);
 
     // Unregister resource.
-    device.server.unregisterResource(buzzerResource.id).then(
+    device.unregisterResource(buzzerResource).then(
         function() {
             console.log('Buzzer: unregisterResource() successful');
         },

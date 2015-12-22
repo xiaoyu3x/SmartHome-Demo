@@ -119,7 +119,7 @@ function processObserve() {
 function notifyObservers(request) {
     solarResource.properties = getProperties();
 
-    device.server.notify(solarResource.id).catch(
+    device.notify(solarResource).catch(
         function(error) {
             console.log('Solar: Failed to notify observers.');
             noObservers = error.noObservers;
@@ -139,7 +139,7 @@ function entityHandler(request) {
         processObserve();
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(solarResource).then(
         function() {
             console.log('Solar: Successfully responded to request');
         },
@@ -154,7 +154,6 @@ function entityHandler(request) {
 // Create Solar resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -173,12 +172,10 @@ device.configure({
         console.log('\nCreate Solar resource.');
 
         // Register Solar resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -186,7 +183,7 @@ device.configure({
             function(resource) {
                 console.log('Solar: registerResource() successful');
                 solarResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('Solar: registerResource() failed with: ' + error);
@@ -204,7 +201,7 @@ process.on('SIGINT', function() {
     resetLCDScreen();
 
     // Unregister resource.
-    device.server.unregisterResource(solarResource.id).then(
+    device.unregisterResource(solarResource).then(
         function() {
             console.log('Solar: unregisterResource() successful');
         },

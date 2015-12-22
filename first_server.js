@@ -121,7 +121,7 @@ function update(Type, values)
         console.log('Sendng Update to ' + Type + ' uri:' + URi);
 
         resource.properties = values;
-        device.client.updateResource(resource.id, resource);
+        device.updateResource(resource);
     } else {
         console.log('No ' + Type + ' online');
     }
@@ -158,45 +158,36 @@ device.configure({
 }).then(
     function() {
         console.log('Client: device.configure() successful');
-        discoverDevices();
+        discoverResources();
     },
     function(error) {
         console.log('Client: device.configure() failed with ' + error);
     });
 
-function SensorObserving(response) {
-    console.log('Resource changed:' + JSON.stringify(response.properties, null, 4));
+function SensorObserving(event) {
+    console.log('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
 
-    if ('properties' in response) {
-        obsReqCB(response.properties, response.uri);
+    if ('properties' in event.resource) {
+        obsReqCB(event.resource.properties, event.resource.id.path);
     }
 }
 
-device.client.on('resourcechange', function(event) {
-    SensorObserving(event.resource);
-});
-
 // Add a listener that will receive the results of the discovery
-device.client.addEventListener('resourcefound', function(event) {
-    if (!(event.resource.url in resourcesList) ||
-           (event.resource.deviceId != resourcesList[event.resource.url].deviceId)) {
+device.addEventListener('resourcefound', function(event) {
+    if (!(event.resource.id.path in resourcesList) ||
+           (event.resource.id.deviceId != resourcesList[event.resource.id.path].id.deviceId)) {
         console.log('Resource found:' + JSON.stringify(event.resource, null, 4));
 
-        resourcesList[event.resource.uri] = event.resource;
-        device.client.startObserving(event.resource.id).then(
-            function(observedResource) {
-                console.log('Client: startObserving() successful');
-            },
-            function(error) {
-                console.log('Client: startObserving() failed with ' + error + ' and result ' +
-                    error.result);
-            });
+        resourcesList[event.resource.id.path] = event.resource;
+
+        // Start observing the resource.
+        event.resource.addEventListener("update", SensorObserving);
      }
 });
 
 function discoverResources() {
     console.log('Discover resources.');
-    device.client.findResources().then(
+    device.findResources().then(
         function() {
             console.log('Client: findResources() successful');
         },
@@ -204,26 +195,7 @@ function discoverResources() {
             console.log('Client: findResources() failed with ' + error +
                 ' and result ' + error.result);
         });
-}
-
-device.client.addEventListener('devicefound', function(event) {
-    if (!(event.device.uuid in devicesList)) {
-        console.log('New device: ' + event.device.uuid + ' found.');
-        devicesList[event.device.uuid] = event.device;
-        discoverResources();
-    }
-});
-
-function discoverDevices() {
-    device.client.findDevices().then(
-        function() {
-            console.log('Client: findDevices() successful');
-        },
-        function(error) {
-            console.log('Client: findDevices() failed with ' + error +
-                ' and result ' + error.result);
-        });
-    notifyObserversTimeoutId = setTimeout(discoverDevices, 5000);
+    notifyObserversTimeoutId = setTimeout(discoverResources, 5000);
 }
 
 // Exit gracefully when interrupted
@@ -232,13 +204,14 @@ process.on('SIGINT', function() {
 
   // Tear down the processing loop
   if (notifyObserversTimeoutId) {
-    clearTimeout(notifyObserversTimeoutId);
-    notifyObserversTimeoutId = null;
+      clearTimeout(notifyObserversTimeoutId);
+      notifyObserversTimeoutId = null;
   }
 
-  // Cancel observing
+  // Stop observing
   for (var index in resourcesList) {
-     device.client.cancelObserving(resourcesList[index].id);
+     var resource = resourcesList[index];
+     resource.removeEventListener("update", SensorObserving);
   }
 
   // Exit

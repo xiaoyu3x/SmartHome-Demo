@@ -66,7 +66,7 @@ function notifyObservers() {
         hasUpdate = false;
 
         console.log('\nmotionSensor: Send the response: ' + sensorState);
-        device.server.notify(motionResource.id).catch(
+        device.notify(motionResource).catch(
             function(error) {
                 console.log('motionSensor: Failed to notify observers.');
                 noObservers = error.noObservers;
@@ -95,7 +95,7 @@ function entityHandler(request) {
         hasUpdate = true;
     }
 
-    request.sendResponse(request.source).then(
+    request.sendResponse(motionResource).then(
         function() {
             console.log('motionSensor: Successfully responded to request');
         },
@@ -111,7 +111,6 @@ function entityHandler(request) {
 // Create Motion resource
 device.configure({
     role: 'server',
-    connectionMode: 'acked',
     info: {
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
@@ -128,14 +127,11 @@ device.configure({
         setupHardware();
 
         console.log('\nCreate motion resource.');
-
         // Register Motion resource
-        device.server.registerResource({
-            url: resourceInterfaceName,
-            deviceId: device.settings.info.uuid,
-            connectionMode: device.settings.connectionMode,
-            resourceTypes: resourceTypeName,
-            interfaces: 'oic.if.baseline',
+        device.registerResource({
+            id: { path: resourceInterfaceName },
+            resourceTypes: [ resourceTypeName ],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -143,7 +139,7 @@ device.configure({
             function(resource) {
                 console.log('motionSensor: registerResource() successful');
                 motionResource = resource;
-                device.server.addEventListener('request', entityHandler);
+                device.addEventListener('request', entityHandler);
             },
             function(error) {
                 console.log('motionSensor: registerResource() failed with: ' +
@@ -159,7 +155,7 @@ process.on('SIGINT', function() {
     console.log('Delete Motion Resource.');
 
     // Unregister resource.
-    device.server.unregisterResource(motionResource.id).then(
+    device.unregisterResource(motionResource).then(
         function() {
             console.log('motionSensor: unregisterResource() successful');
         },
