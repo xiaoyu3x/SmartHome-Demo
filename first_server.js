@@ -114,11 +114,11 @@ var resourcesList = {},
 function update(Type, values)
 {
     if (Type in WebCompoints) {
-        URi = WebCompoints[Type];
-        resource = resourcesList[URi];
+        resourceId = WebCompoints[Type];
+        resource = resourcesList[resourceId];
 
         console.log('----------------------------------------------');
-        console.log('Sendng Update to ' + Type + ' uri:' + URi);
+        console.log('Sending Update to ' + Type + ' resourceId:' + resourceId);
 
         resource.properties = values;
         device.updateResource(resource);
@@ -130,12 +130,12 @@ function update(Type, values)
 var WebCompoints = {};
 //when a server seends data to gatway
 
-function obsReqCB(payload, Uri) {
+function obsReqCB(payload, resourceId) {
     var eventType;
     if ("id" in payload) {
         if (!(payload.id in WebCompoints)) {
             eventType = 'add';
-            WebCompoints[payload.id] = Uri;
+            WebCompoints[payload.id] = resourceId;
          } else {
             eventType = 'update';
          }
@@ -168,20 +168,37 @@ function SensorObserving(event) {
     console.log('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
 
     if ('properties' in event.resource) {
-        obsReqCB(event.resource.properties, event.resource.id.path);
+        var resourceId = event.resource.id.deviceId + ":" + event.resource.id.path;
+        obsReqCB(event.resource.properties, resourceId);
+    }
+}
+
+function deleteResource(event) {
+    var id = this.id.deviceId + ":" + this.id.path;
+    console.log('Client: deleteResource: ' + id);
+
+    var resource = resourcesList[id];
+    if (resource) {
+        resource.removeEventListener("update", SensorObserving);
+        delete resourcesList[id];
     }
 }
 
 // Add a listener that will receive the results of the discovery
 device.addEventListener('resourcefound', function(event) {
-    if (!(event.resource.id.path in resourcesList) ||
-           (event.resource.id.deviceId != resourcesList[event.resource.id.path].id.deviceId)) {
-        console.log('Resource found:' + JSON.stringify(event.resource, null, 4));
+    // If the resource has identified by deviceId and path,
+    // then we don't start observe.
+    var resourceId = resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path];
 
-        resourcesList[event.resource.id.path] = event.resource;
+    if (!resourceId) {
+        console.log('Resource found:' + JSON.stringify(event.resource, null, 4));
+        resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path] = event.resource;
 
         // Start observing the resource.
         event.resource.addEventListener("update", SensorObserving);
+
+        // Start observing the resource deletion.
+        event.resource.addEventListener("delete", deleteResource);
      }
 });
 

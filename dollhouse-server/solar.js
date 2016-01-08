@@ -166,6 +166,15 @@ device.configure({
     function() {
         console.log('Solar: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('Solar: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('Solar: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Solar sensor.
         setupHardware();
 
@@ -209,6 +218,16 @@ process.on('SIGINT', function() {
             console.log('Solar: unregisterResource() failed with: ' + error +
                 ' and result ' + error.result);
         });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('Solar: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('Solar: device.disablePresence() failed with: ' + error);
+        });
+
 
     // Exit
     process.exit(0);

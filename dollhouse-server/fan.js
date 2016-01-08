@@ -102,6 +102,14 @@ device.configure({
     function() {
         console.log('Fan: device.configure() successful');
 
+        device.enablePresence().then(
+            function() {
+                console.log('Fan: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('Fan: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Fan sensor pin.
         setupHardware();
 
@@ -145,6 +153,14 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('Fan: unregisterResource() failed with: ' + error +
                 ' and result ' + error.result);
+        });
+
+    device.disablePresence().then(
+        function() {
+            console.log('Fan: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('Fan: device.disablePresence() failed with: ' + error);
         });
 
     // Exit

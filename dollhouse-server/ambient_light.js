@@ -122,6 +122,15 @@ device.configure({
     function() {
         console.log('ambientLight: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('ambientLight: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('ambientLight: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup ambient light sensor pin.
         setupHardware();
 
@@ -162,6 +171,15 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('ambientLight: unregisterResource() failed with: ' +
                 error + ' and result ' + error.result);
+        });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('ambientLight: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('ambientLight: device.disablePresence() failed with: ' + error);
         });
 
     // Exit

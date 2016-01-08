@@ -210,6 +210,15 @@ device.configure({
     function() {
         console.log('Temperature: device.configure() successful');
 
+        // Enable presence
+        device.enablePresence().then(
+            function() {
+                console.log('Temperature: device.enablePresence() successful');
+            },
+            function(error) {
+                console.log('Temperature: device.enablePresence() failed with: ' + error);
+            });
+
         // Setup Temperature sensor pin.
         setupHardware();
 
@@ -250,6 +259,15 @@ process.on('SIGINT', function() {
         function(error) {
             console.log('Temperature: unregisterResource() failed with: ' +
                 error + ' and result ' + error.result);
+        });
+
+    // Disable presence
+    device.disablePresence().then(
+        function() {
+            console.log('Temperature: device.disablePresence() successful');
+        },
+        function(error) {
+            console.log('Temperature: device.disablePresence() failed with: ' + error);
         });
 
     // Exit
