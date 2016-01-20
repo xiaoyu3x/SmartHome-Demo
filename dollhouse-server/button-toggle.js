@@ -12,7 +12,8 @@ var device = require('iotivity-node')(),
     resourceInterfaceName = '/a/button',
     hasUpdate = false,
     noObservers = false,
-    sensorState = false;
+    sensorState = false,
+    prevState = false;
 
 // Require the MRAA library
 var mraa = '';
@@ -37,9 +38,21 @@ function setupHardware() {
 function getProperties() {
 
     if (mraa) {
-        if (sensorPin.read() == 1) {
-            sensorState = !sensorState;
-            hasUpdate = true;
+        var buttonState = (sensorPin.read() == 1) ? true : false;
+
+        // We care only when the button state is different.
+        if (buttonState != prevState) {
+            prevState = buttonState;
+
+            if (buttonState == true && sensorState == false) {
+                // Set the state ON, if the button is pressed and toggled off.
+                sensorState = true;
+                hasUpdate = true;
+            } else if (buttonState == true && sensorState == true) {
+                // Set the state OFF, if the button is pressed and toggled on.
+                sensorState = false;
+                hasUpdate = true;
+            }
         }
     } else {
         // Simulate real sensor behavior. This is
@@ -83,7 +96,7 @@ function notifyObservers() {
     // After all our clients are complete, we don't care about any
     // more requests to notify.
     if (!noObservers) {
-        notifyObserversTimeoutId = setTimeout(notifyObservers, 1000);
+        notifyObserversTimeoutId = setTimeout(notifyObservers, 200);
     }
 }
 
