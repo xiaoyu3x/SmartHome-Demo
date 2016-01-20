@@ -32,7 +32,10 @@ The connector listed below was derived from the corresponding `*.js` files. Plea
 | Ambient Light Sensor (Illuminance) | A3 analog pin | [Grove Light Sensor] (http://www.seeedstudio.com/depot/Grove-Light-Sensor-p-746.html) |
 | Temperature | A1 analog pin | [Grove Temperature Sensor] (http://www.seeedstudio.com/depot/Grove-Temperature-Sensor-p-774.html) |
 | Button | GPIO 4 | [Grove Button] (http://www.seeedstudio.com/wiki/Grove_-_Button) |
+| button-toggle [note] | GPIO 4 | [Grove Button] (http://www.seeedstudio.com/wiki/Grove_-_Button) |
 | Switch | GPIO 4 | [Grove Switch(P)] (http://www.seeedstudio.com/wiki/Grove_-_Switch(P)) |
+
+[note]: This is a variation of the classical `Button` implemenation in that it makes the button act as a toggle between `true` and `false` (instead of reporting `true` when pressed and `false` otherwise.
 
 ## Setting up the Smart Solar Panel
 ### Hardware components required
