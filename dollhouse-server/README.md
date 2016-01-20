@@ -1,7 +1,7 @@
 # JavaScript OIC servers
 This folder contains JavaScript implementation of various OIC servers, such as:
 * Fan
-* C02 detector
+* CO2 detector
 * Motion Sensor
 * RGB LED
 * LED (on/off)
