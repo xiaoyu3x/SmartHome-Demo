@@ -115,7 +115,7 @@ device.configure({
         uuid: "SmartHouse.dollhouse",
         name: "SmartHouse",
         manufacturerName: "Intel",
-        maanufactureDate: "Fri Jan 20 10:04:17 EEST 2016",
+        manufacturerDate: "Fri Jan 20 10:04:17 EEST 2016",
         platformVersion: "1.0.0",
         firmwareVersion: "0.0.1",
     }
