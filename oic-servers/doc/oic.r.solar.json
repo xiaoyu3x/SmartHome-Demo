@@ -1,0 +1,31 @@
+{
+  "id": "http://openinterconnect.org/schemas/oic.r.solar#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Solar Panel Controller",
+  "definitions": {
+    "oic.r.solar": {
+      "type": "object",
+      "properties": {
+        "tiltPercentage": {
+          "type": "number",
+          "description": "Tilt value used to moves the solar pannel with hardware controller and a linear actuator"
+        },
+        "lcd1": {
+          "type": "string",
+          "description": "Time and location details"
+        },
+        "lcd2": {
+          "type": "string",
+          "description": "Tilt percentage to print on the LCD second row"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {"$ref": "oic.core.json#/definitions/oic.core"},
+    {"$ref": "oic.baseResource.json#/definitions/oic.r.baseResource"},
+    {"$ref": "#/definitions/oic.r.fan"}
+  ],
+  "required": [ "value" ]
+}
