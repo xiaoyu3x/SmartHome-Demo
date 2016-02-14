@@ -1,0 +1,65 @@
+#%RAML 0.8
+title: OICSolarPanelController
+version: v1.0-20151126
+schemas:
+  - SolarPanelController:       !include oic.r.solar.json
+
+traits:
+  - interface:
+      queryParameters:
+        if:
+          enum: ["oic.if.a"]
+
+/SolarPanelResURI:
+  description: |
+    This resource describes the properties that are used to move a solar
+    panel with hardware controller and a linear actuator to track the sun.
+    The tiltPercentage is the value used to moves the actuators.
+    The lcd1 is the time information to print on the LCD first row.
+    The lcd2 is the tilt percentage to print on the LCD second row.
+  displayName: Solar Panel Controller
+  is: [ interface ] # valid for all methods
+
+  get:
+    description: |
+      Retrieves the properties associated with the solar panel.
+    responses:
+      200:
+        body:
+          application/json:
+            schema: SolarPanelController
+            example: |
+              {
+                "rt": "oic.r.solar",
+                "id": "unique_example_id",
+                "tiltPercentage": 9.95
+                "lcd1": "08:26:00 Europe/Dublin"
+                "lcd2": "10.0%"
+              }
+
+  post:
+    description: |
+      Sets the solar panel properties to move a solar panel with hardware controller and a linear actuator.
+    body:
+      application/json:
+        schema: SolarPanelController
+        example: |
+          {
+            "id": "unique_example_id",
+            "tiltPercentage": 9.95
+            "lcd1": "08:26:00 Europe/Dublin"
+            "lcd2": "10.0%"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            schema: SolarPanelController
+            example: |
+              {
+                "rt": "oic.r.solar",
+                "id": "unique_example_id",
+                "tiltPercentage": 9.95
+                "lcd1": "08:26:00 Europe/Dublin"
+                "lcd2": "10.0%"
+              }
