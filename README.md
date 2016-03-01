@@ -1,10 +1,10 @@
 # SmartHome "Dollhouse" demo
 
-This repository includes code that allows to demonstrate a SmartHome network using [OIC](http://openinterconnect.org/) and [IoTivity](https://www.iotivity.org/) to communicate between smart appliances (OIC servers) and a Home GW (OIC client). The User Interface (UI) is a 3D model of the house (<insert reference here>) that is exposed through a webserver running on the HomeGW.
+This repository provides source code that allows to set-up and demonstrate a SmartHome scenario leveraging [OCF](http://openconnectivity.org/) and [IoTivity](https://www.iotivity.org/) to communicate between smart appliances (OCF servers) and a Home GW (OCF client). The User Interface (UI) is a 3D model of the house (<insert reference here>) that is exposed through a webserver running on the HomeGW.
 
 The repository is organised as follows:
 * root: the root folder is the code code running on the HomeGW
-* `oic-servers`: provides a number of OIC server implementations, a few are implemented in C code (`c-servers/`) and others are implemented in JavaScript (`js-servers`). The documentation for these servers is availabe in the `doc/` folder. These are not strictly part of the code running on the gateway but are provided here as a convenience.
+* `ocf-servers`: provides a number of OCF server implementations in JavaScript (located in `js-servers`). The documentation for these servers is availabe in the `doc/` folder. These are not strictly part of the code running on the gateway but are provided here as a convenience.
 
 ## Home GW dependencies
 
@@ -30,7 +30,7 @@ Python dependencies can be installed using `pip install <python_module>` (you ne
 
 ## How to start the Home GW SW
 
-1. Transfer the content of this repo (minus the `oic-servers` folder that you don't need)
+1. Transfer the content of this repo (minus the `ocf-servers` folder that you don't need)
 2. Install all `node.js` and `Python` dependencies (see above)
 3. Start the services: 
 

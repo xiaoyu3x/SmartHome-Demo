@@ -1,5 +1,5 @@
-# JavaScript OIC servers
-This folder contains JavaScript implementation of various OIC servers, such as:
+# JavaScript OCF servers
+This folder contains JavaScript implementation of various OCF servers, such as:
 * Fan
 * CO2 detector
 * Motion Sensor
@@ -12,10 +12,10 @@ This folder contains JavaScript implementation of various OIC servers, such as:
 * Button
 * Switch
 
-# How to start these OIC servers
+# How to start these OCF servers
 ## Prerequisites
 * Have the corresponding HW hooked up to your board (see table below)
-* `node <oic-server>.js`
+* `node <ocf-server>.js`
 * Et voila...
 
 ## Setting up the HW devices/sensors
