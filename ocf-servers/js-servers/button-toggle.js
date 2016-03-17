@@ -130,7 +130,7 @@ device.configure({
         name: "SmartHouse",
         manufacturerName: "Intel",
         manufacturerDate: "Fri Jan 20 10:04:17 EEST 2016",
-        platformVersion: "1.0.0",
+        platformVersion: "1.0.1",
         firmwareVersion: "0.0.1",
     }
 }).then(
