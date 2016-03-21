@@ -1,7 +1,8 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http')
     , express = require('express')
-    , app = express();
+    , app = express()
+    , systemd = require('systemd');
 
 app.use(express.static(__dirname + '/dollhouse'));
 
@@ -28,9 +29,8 @@ rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 //    response.end();
 //});
 
-server.listen(8080, function() {
-    console.log((new Date()) + ' Server is listening on port 8080');
-});
+var serverPort = process.env.LISTEN_PID > 0 ? 'systemd' : 8080;
+server.listen(serverPort);
 
 wsServer = new WebSocketServer({
     httpServer: server,
