@@ -18,10 +18,18 @@ catch (e) {
     console.log('No mraa module: ' + e.message);
 }
 
+// Default: MinnowBoard MAX/Turbot, raw mode
+var dev = "/dev/ttyUSB0";
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry == "--edison" || entry == "-e")
+        dev = 0;
+});
+
 // Setup UART
 function setupHardware() {
     if (mraa) {
-        uart = new mraa.Uart(0);
+        uart = new mraa.Uart(dev);
         uart.setBaudRate(115200);
         uart.setMode(8, 0, 1);
         uart.setFlowcontrol(false, false);
