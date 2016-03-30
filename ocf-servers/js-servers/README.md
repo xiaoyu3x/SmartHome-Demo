@@ -43,7 +43,7 @@ The connector listed below was derived from the corresponding `*.js` files. Plea
 * 1x [Line Actuator] (http://www.robotshop.com/en/firgelli-technologies-l12-30-210-12-p.html)
 * 1x [Actuator Controller Board] (http://www.robotshop.com/en/firgelli-technologies-linear-actuator-control-board.html)
 * 1x set of mounting brackets (3D printed, CAD model to be added later to the repo)
-* 1x [Box Fan] (http://www.coolerguys.com/840556100690.html#__utma=89875097.248028884.1450303989.1450303989.1450303989.1&__utmb=89875097.7.10.1450303989&__utmc=89875097&__utmx=-&__utmz=89875097.1450303989.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)&__utmv=-&__utmk=245640909)
+* 
 
 ### Software components
 **To Be Completed**
