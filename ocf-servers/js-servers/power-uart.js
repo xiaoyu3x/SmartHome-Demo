@@ -20,10 +20,10 @@ catch (e) {
 
 // Default: MinnowBoard MAX/Turbot, raw mode
 var dev = "/dev/ttyUSB0";
+// e.g., node power-uart.js /dev/ttyS0
 var args = process.argv.slice(2);
 args.forEach(function(entry) {
-    if (entry == "--edison" || entry == "-e")
-        dev = 0;
+    dev = entry;
 });
 
 // Setup UART
@@ -47,11 +47,11 @@ function readJsonFromUart() {
 
     var start = false; end = false;
 
-    var json = "", last = "";
+    var json = "", last = "", count = 0;
 
     while (uart.dataAvailable(0)) {
         var ch = uart.readStr(1);
-
+        count++
         if (ch == '{')
             start = true;
         else if (ch == '}' && start == true)
@@ -65,7 +65,13 @@ function readJsonFromUart() {
             start = end = false;
             json = "";
         }
+        /* In some cases the reading wont stop, make it stop. */
+        if (count >= 4096) {
+          console.log("UART read error.");
+          break;
+        }
     }
+    console.log("read: " + count + " bytes");
     return last;
 }
 
