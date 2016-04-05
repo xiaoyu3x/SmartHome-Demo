@@ -1,0 +1,26 @@
+{
+	
+	"Gas":{
+		"add":{
+		},
+		"update":[
+			{
+				"name":"value",
+				"condition":"new_value < 100 && old_value > 100",
+			 	"actions":[
+			 		"{ Type: 'boxFan', att: { on_off: 'on' }, Event: 'update' }"
+			 	]
+			},
+			{
+				"name":"value",
+				"condition": "new_value > 100 && old_value < 100",
+			 	"actions":[
+			 		"{ Type: 'boxFan', att: { on_off: 'off' }, Event: 'update' }"
+			 	]
+			}
+		],
+		"remove":{
+		}
+	}
+
+}
