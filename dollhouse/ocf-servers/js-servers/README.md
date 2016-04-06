@@ -43,7 +43,7 @@ The connector listed below was derived from the corresponding `*.js` files. Plea
 * 1x [Line Actuator] (http://www.robotshop.com/en/firgelli-technologies-l12-30-210-12-p.html)
 * 1x [Actuator Controller Board] (http://www.robotshop.com/en/firgelli-technologies-linear-actuator-control-board.html)
 * 1x set of mounting brackets (3D printed, CAD model to be added later to the repo)
-* 
+* 1x [Grove LCD RGB panel] (http://www.seeedstudio.com/wiki/Grove_-_LCD_RGB_Backlight)
 
 ### Software components
 **To Be Completed**
