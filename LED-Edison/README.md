@@ -1,1 +1,0 @@
-# IoTivity-LED-Edison
