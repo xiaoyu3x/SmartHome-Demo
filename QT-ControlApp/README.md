@@ -1,1 +1,0 @@
-# IoTivity-QT-Demo
