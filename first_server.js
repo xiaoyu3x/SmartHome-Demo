@@ -4,7 +4,7 @@ var http = require('http')
     , app = express()
     , systemd = require('systemd');
 
-app.use(express.static(__dirname + '/dollhouse'));
+app.use(express.static(__dirname + '/gateway-webui'));
 
 var fs = require('fs');
 var vm = require('vm');
@@ -13,7 +13,7 @@ var includeInThisContext = function(path) {
     vm.runInThisContext(code, path);
 }.bind(this);
 
-var rules = require('./dollhouse/rules_engine');
+var rules = require('./gateway-webui/rules_engine');
 
 var fs = require('fs');
 console.log(__dirname + "/data.json");
