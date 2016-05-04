@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     switchResource,
     sensorPin,
     notifyObserversTimeoutId,
@@ -86,52 +87,42 @@ function notifyObservers() {
     }
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'retrieve') {
-        switchResource.properties = getProperties();
-    } else if (request.type === 'observe') {
-        noObservers = false;
-        hasUpdate = true;
-    }
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    switchResource.properties = getProperties();
+    request.sendResponse(switchResource).catch(handleError);
 
-    request.sendResponse(switchResource).then(
-        function() {
-            console.log('binarySwitch: Successfully responded to request');
-        },
-        function(error) {
-            console.log('binarySwitch: Failed to send response with error ' +
-                error + ' and result ' + error.result);
-        });
+    noObservers = false;
+    hasUpdate = true;
 
-    if (!noObservers && !notifyObserversTimeoutId)
+    if (!notifyObserversTimeoutId)
         setTimeout(notifyObservers, 200);
 }
 
-// Create binary switch resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Jan 20 10:04:17 EEST 2016",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
+function retrieveHandler(request) {
+    switchResource.properties = getProperties();
+    request.sendResponse(switchResource).catch(handleError);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Binary Switch'
+});
+
+function handleError(error) {
+    console.log('binarySwitch: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
     function() {
-        console.log('binarySwitch: device.configure() successful');
-
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('binarySwitch: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('binarySwitch: device.enablePresence() failed with: ' + error);
-            });
-
         // Setup binary switch pin.
         setupHardware();
 
@@ -148,7 +139,10 @@ device.configure({
             function(resource) {
                 console.log('binarySwitch: registerResource() successful');
                 switchResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
                 console.log('binarySwitch: registerResource() failed with: ' +
@@ -156,12 +150,16 @@ device.configure({
             });
     },
     function(error) {
-        console.log('binarySwitch: device.configure() failed with: ' + error);
+        console.log('binarySwitch: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
     console.log('Delete Switch Resource.');
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
 
     // Unregister resource.
     device.unregisterResource(switchResource).then(

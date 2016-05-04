@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     ledResource,
     sensorPin,
     sensorState = false,
@@ -67,49 +68,44 @@ function notifyObservers(request) {
         });
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'update') {
-        updateProperties(request.res);
-    } else if (request.type === 'retrieve') {
-        ledResource.properties = getProperties();
-    }
-
-    request.sendResponse(ledResource).then(
-        function() {
-            console.log('Led: Successfully responded to request');
-        },
-        function(error) {
-            console.log('Led: Failed to send response with error ' + error +
-                ' and result ' + error.result);
-        });
-
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    request.sendResponse(ledResource).catch(handleError);
     setTimeout(notifyObservers, 200);
 }
 
-// Create LED resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
-    function() {
-        console.log('Led: device.configure() successful');
+function retrieveHandler(request) {
+    ledResource.properties = getProperties();
+    request.sendResponse(ledResource).catch(handleError);
+}
 
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('Led: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('Led: device.enablePresence() failed with: ' + error);
-            });
+function updateHandler(request) {
+    updateProperties(request.res);
+
+    ledResource.properties = getProperties();
+    request.sendResponse(ledResource).catch(handleError);
+    setTimeout(notifyObservers, 200);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home LED'
+});
+
+function handleError(error) {
+    console.log('LED: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
+    function() {
 
         // Setup LED pin.
         setupHardware();
@@ -128,14 +124,18 @@ device.configure({
             function(resource) {
                 console.log('Led: registerResource() successful');
                 ledResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
+                device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
                 console.log('Led: registerResource() failed with: ' + error);
             });
     },
     function(error) {
-        console.log('Led: device.configure() failed with: ' + error);
+        console.log('Led: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
@@ -145,6 +145,11 @@ process.on('SIGINT', function() {
     // Turn off LED before we tear down the resource.
     if (mraa)
         sensorPin.write(0);
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
+    device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
     device.unregisterResource(ledResource).then(

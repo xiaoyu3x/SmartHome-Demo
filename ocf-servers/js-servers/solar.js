@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     solarResource,
     lcdPin,
     pwmPin,
@@ -129,52 +130,45 @@ function notifyObservers(request) {
         });
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'update') {
-        updateProperties(request.res);
-    } else if (request.type === 'retrieve') {
-        solarResource.properties = getProperties();
-    } else if (request.type === 'observe') {
-        processObserve();
-    }
-
-    request.sendResponse(solarResource).then(
-        function() {
-            console.log('Solar: Successfully responded to request');
-        },
-        function(error) {
-            console.log('Solar: Failed to send response with error ' +
-                error + ' and result ' + error.result);
-        });
-
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    processObserve();
+    request.sendResponse(solarResource).catch(handleError);
     setTimeout(notifyObservers, 200);
 }
 
-// Create Solar resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
+function retrieveHandler(request) {
+    solarResource.properties = getProperties();
+    request.sendResponse(solarResource).catch(handleError);
+}
+
+function updateHandler(request) {
+    updateProperties(request.res);
+
+    solarResource.properties = getProperties();
+    request.sendResponse(solarResource).catch(handleError);
+    setTimeout(notifyObservers, 200);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Solar'
+});
+
+function handleError(error) {
+    console.log('Solar: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
     function() {
-        console.log('Solar: device.configure() successful');
-
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('Solar: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('Solar: device.enablePresence() failed with: ' + error);
-            });
-
         // Setup Solar sensor.
         setupHardware();
 
@@ -192,14 +186,18 @@ device.configure({
             function(resource) {
                 console.log('Solar: registerResource() successful');
                 solarResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
+                device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
                 console.log('Solar: registerResource() failed with: ' + error);
             });
     },
     function(error) {
-        console.log('Solar: device.configure() failed with: ' + error);
+        console.log('Solar: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
@@ -208,6 +206,11 @@ process.on('SIGINT', function() {
 
     // Reset LCD screen.
     resetLCDScreen();
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
+    device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
     device.unregisterResource(solarResource).then(

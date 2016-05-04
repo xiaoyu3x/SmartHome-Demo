@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     powerResource,
     uart,
     resourceTypeName = 'oic.r.energy.consumption',
@@ -138,51 +139,42 @@ function notifyObservers() {
     }
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'retrieve') {
-        powerResource.properties = getProperties();
-    } else if (request.type === 'observe') {
-        noObservers = false;
-        hasUpdate = true;
-    }
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    powerResource.properties = getProperties();
+    request.sendResponse(powerResource).catch(handleError);
 
-    request.sendResponse(powerResource).then(
-        function() {
-            console.log('powerSensor: Successfully responded to request: ' + request.type);
-        },
-        function(error) {
-            console.log('powerSensor: Failed to send response with error ' +
-                error + ' and result ' + error.result);
-        });
+    noObservers = false;
+    hasUpdate = true;
 
-    if (!noObservers && !notifyObserversTimeoutId)
+    if (!notifyObserversTimeoutId)
         setTimeout(notifyObservers, 200);
 }
 
-// Create Power resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Mon Mar 14 10:04:17 EET 2016",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.7",
-    }
-}).then(
-    function() {
-        console.log('power: device.configure() successful');
+function retrieveHandler(request) {
+    powerResource.properties = getProperties();
+    request.sendResponse(powerResource).catch(handleError);
+}
 
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('power: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('power: device.enablePresence() failed with: ' + error);
-            });
+device.device = _.extend(device.device, {
+    name: 'Smart Home Energy Consumption'
+});
+
+function handleError(error) {
+    console.log('power: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
+    function() {
 
         // Setup uart
         setupHardware();
@@ -201,7 +193,10 @@ device.configure({
             function(resource) {
                 console.log('power: registerResource() successful');
                 powerResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
                 console.log('power: registerResource() failed with: ' +
@@ -209,12 +204,16 @@ device.configure({
             });
     },
     function(error) {
-        console.log('power: device.configure() failed with: ' + error);
+        console.log('power: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
     console.log('Delete Power Resource.');
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
 
     // Unregister resource.
     device.unregisterResource(powerResource).then(

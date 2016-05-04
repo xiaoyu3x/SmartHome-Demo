@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     buttonResource,
     sensorPin,
     notifyObserversTimeoutId,
@@ -86,56 +87,47 @@ function notifyObservers() {
     }
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'retrieve') {
-        buttonResource.properties = getProperties();
-    } else if (request.type === 'observe') {
-        noObservers = false;
-        hasUpdate = true;
-    }
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    buttonResource.properties = getProperties();
+    request.sendResponse(buttonResource).catch(handleError);
 
-    request.sendResponse(buttonResource).then(
-        function() {
-            console.log('button: Successfully responded to request');
-        },
-        function(error) {
-            console.log('button: Failed to send response with error ' +
-                error + ' and result ' + error.result);
-        });
+    noObservers = false;
+    hasUpdate = true;
 
-    if (!noObservers && !notifyObserversTimeoutId)
+    if (!notifyObserversTimeoutId)
         setTimeout(notifyObservers, 200);
 }
 
-// Create Button resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Jan 20 10:04:17 EEST 2016",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
+function retrieveHandler(request) {
+    buttonResource.properties = getProperties();
+    request.sendResponse(buttonResource).catch(handleError);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Button Sensor'
+});
+
+function handleError(error) {
+    console.log('button: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
     function() {
-        console.log('button: device.configure() successful');
-
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('button: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('button: device.enablePresence() failed with: ' + error);
-            });
-
         // Setup Button pin.
         setupHardware();
 
         console.log('\nCreate button resource.');
+
         // Register Button resource
         device.registerResource({
             id: { path: resourceInterfaceName },
@@ -148,7 +140,10 @@ device.configure({
             function(resource) {
                 console.log('button: registerResource() successful');
                 buttonResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
                 console.log('button: registerResource() failed with: ' +
@@ -156,12 +151,16 @@ device.configure({
             });
     },
     function(error) {
-        console.log('button: device.configure() failed with: ' + error);
+        console.log('button: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
     console.log('Delete Button Resource.');
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
 
     // Unregister resource.
     device.unregisterResource(buttonResource).then(

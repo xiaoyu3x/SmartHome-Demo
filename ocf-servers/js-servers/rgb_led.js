@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     rgbLEDResource,
     sensorPin,
     sensorState = false,
@@ -150,56 +151,50 @@ function notifyObservers(request) {
         });
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'update') {
-        updateProperties(request.res);
-    } else if (request.type === 'retrieve') {
-        rgbLEDResource.properties = getProperties();
-    }
-
-    request.sendResponse(rgbLEDResource).then(
-        function() {
-            console.log('rgbled: Successfully responded to request');
-        },
-        function(error) {
-            console.log('rgbled: Failed to send response with error ' + error +
-                ' and result ' + error.result);
-        });
-
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    request.sendResponse(rgbLEDResource).catch(handleError);
     setTimeout(notifyObservers, 200);
 }
 
-// Create Fan resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
+function retrieveHandler(request) {
+    rgbLEDResource.properties = getProperties();
+    request.sendResponse(rgbLEDResource).catch(handleError);
+}
+
+function updateHandler(request) {
+    updateProperties(request.res);
+
+    rgbLEDResource.properties = getProperties();
+    request.sendResponse(rgbLEDResource).catch(handleError);
+    setTimeout(notifyObservers, 200);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home RGB LED'
+});
+
+function handleError(error) {
+    console.log('rgbled: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
     function() {
-        console.log('rgbled: device.configure() successful');
-
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('rgbled: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('rgbled: device.enablePresence() failed with: ' + error);
-            });
-
-        // Setup Fan sensor pin.
+        // Setup RGB LED sensor pin.
         setupHardware();
 
         console.log('\nCreate RGB LED resource.');
 
-        // Register Fan resource
+        // Register RGB LED resource
         device.registerResource({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
@@ -211,14 +206,18 @@ device.configure({
             function(resource) {
                 console.log('rgbled: registerResource() successful');
                 rgbLEDResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
+                device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
                 console.log('rgbled: registerResource() failed with: ' + error);
             });
     },
     function(error) {
-        console.log('rgbled: device.configure() failed with: ' + error);
+        console.log('rgbled: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
@@ -230,6 +229,11 @@ process.on('SIGINT', function() {
         rgbValue = "0,0,0";
         setColourRGB(0, 0, 0);
     }
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
+    device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
     device.unregisterResource(rgbLEDResource).then(
