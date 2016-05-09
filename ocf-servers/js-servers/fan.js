@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     fanResource,
     sensorPin,
     sensorState = false,
@@ -67,48 +68,45 @@ function notifyObservers(request) {
         });
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'update') {
-        updateProperties(request.res);
-    } else if (request.type === 'retrieve') {
-        fanResource.properties = getProperties();
-    }
-
-    request.sendResponse(fanResource).then(
-        function() {
-            console.log('Fan: Successfully responded to request');
-        },
-        function(error) {
-            console.log('Fan: Failed to send response with error ' + error +
-                ' and result ' + error.result);
-        });
-
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    request.sendResponse(fanResource).catch(handleError);
     setTimeout(notifyObservers, 200);
 }
 
-// Create Fan resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
-    function() {
-        console.log('Fan: device.configure() successful');
+function retrieveHandler(request) {
+    fanResource.properties = getProperties();
+    request.sendResponse(fanResource).catch(handleError);
+}
 
-        device.enablePresence().then(
-            function() {
-                console.log('Fan: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('Fan: device.enablePresence() failed with: ' + error);
-            });
+function updateHandler(request) {
+    updateProperties(request.res);
+
+    fanResource.properties = getProperties();
+    request.sendResponse(fanResource).catch(handleError);
+    setTimeout(notifyObservers, 200);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Fan'
+});
+
+function handleError(error) {
+    console.log('Fan: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
+    function() {
+        console.log('Fan: device.enablePresence() successful');
 
         // Setup Fan sensor pin.
         setupHardware();
@@ -119,7 +117,7 @@ device.configure({
         device.registerResource({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
-            interfaces: ['oic.if.baseline'],
+            interfaces: [ 'oic.if.baseline' ],
             discoverable: true,
             observable: true,
             properties: getProperties()
@@ -127,14 +125,18 @@ device.configure({
             function(resource) {
                 console.log('Fan: registerResource() successful');
                 fanResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
+                device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
                 console.log('Fan: registerResource() failed with: ' + error);
             });
     },
     function(error) {
-        console.log('Fan: device.configure() failed with: ' + error);
+        console.log('Fan: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
@@ -144,6 +146,11 @@ process.on('SIGINT', function() {
     // Stop fan before we tear down the resource.
     if (mraa)
         sensorPin.write(0);
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
+    device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
     device.unregisterResource(fanResource).then(

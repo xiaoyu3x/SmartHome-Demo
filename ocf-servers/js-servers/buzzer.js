@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     buzzerResource,
     playNote = false,
     timerId = 0,
@@ -84,49 +85,44 @@ function notifyObservers(request) {
         });
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'update') {
-        updateProperties(request.res);
-    } else if (request.type === 'retrieve') {
-        buzzerResource.properties = getProperties();
-    }
-
-    request.sendResponse(buzzerResource).then(
-        function() {
-            console.log('Buzzer: Successfully responded to request');
-        },
-        function(error) {
-            console.log('Buzzer: Failed to send response with error ' + error +
-                ' and result ' + error.result);
-        });
-
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    request.sendResponse(buzzerResource).catch(handleError);
     setTimeout(notifyObservers, 200);
 }
 
-// Create Buzzer resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
-    function() {
-        console.log('Buzzer: device.configure() successful');
+function retrieveHandler(request) {
+    buzzerResource.properties = getProperties();
+    request.sendResponse(buzzerResource).catch(handleError);
+}
 
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('Buzzer: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('Buzzer: device.enablePresence() failed with: ' + error);
-            });
+function updateHandler(request) {
+    updateProperties(request.res);
+
+    buzzerResource.properties = getProperties();
+    request.sendResponse(buzzerResource).catch(handleError);
+    setTimeout(notifyObservers, 200);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Buzzer'
+});
+
+function handleError(error) {
+    console.log('Buzzer: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
+    function() {
 
         // Setup Buzzer sensor pin.
         setupHardware();
@@ -145,14 +141,18 @@ device.configure({
             function(resource) {
                 console.log('Buzzer: registerResource() successful');
                 buzzerResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
+                device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
                 console.log('Buzzer: registerResource() failed with: ' + error);
             });
     },
     function(error) {
-        console.log('Buzzer: device.configure() failed with: ' + error);
+        console.log('Buzzer: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
@@ -165,6 +165,11 @@ process.on('SIGINT', function() {
 
     if (mraa)
         sensorPin.write(0);
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
+    device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
     device.unregisterResource(buzzerResource).then(

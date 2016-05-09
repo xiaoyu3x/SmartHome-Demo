@@ -1,4 +1,5 @@
-var device = require('iotivity-node')(),
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
     temperatureResource,
     sensorPin,
     beta = 3975, // Value of the thermistor
@@ -145,79 +146,83 @@ function notifyObservers() {
     }
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    temperatureResource.properties = getProperties(units.C);
+    request.sendResponse(temperatureResource).catch(handleError);
+
+    noObservers = false;
+    hasUpdate = true;
+
+    if (!notifyObserversTimeoutId)
+        setTimeout(notifyObservers, 200);
+}
+
+function retrieveHandler(request) {
     var ret = true;
     var error = {};
-    if (request.type === 'retrieve') {
-        // TODO: Enable this when we have queryParameter enabled in JS bindings.
-        /*if (request.res.queryParameter.units && !(request.res.queryParameter.units in units)) {
-            ret = false;
-
-            // Format the error properties.
-            error = {
-                id: 'temperature',
-                units: units.C
-            };
-        } else {
-            temperatureResource.properties = getProperties(request.res.queryParameter.units);
-        }*/
-
-        temperatureResource.properties = getProperties(units.C);
-    } else if (request.type === 'observe') {
-        noObservers = false;
-        hasUpdate = true;
-    } else if (request.type === 'update') {
-        ret = updateProperties(request.res);
+    // TODO: Enable this when we have queryParameter enabled in JS bindings.
+    /*if (request.res.queryParameter.units && !(request.res.queryParameter.units in units)) {
+        ret = false;
 
         // Format the error properties.
         error = {
             id: 'temperature',
-            range: getRange(units.C)
+            units: units.C
         };
+    } else {
+        temperatureResource.properties = getProperties(request.res.queryParameter.units);
     }
 
     if (!ret) {
         request.sendError(error);
         return;
-    }
+    }*/
 
-    request.sendResponse(temperatureResource).then(
-        function() {
-            console.log('Temperature: Successfully responded to request');
-        },
-        function(error) {
-            console.log('Temperature: Failed to send response with error ' +
-                error + ' and result ' + error.result);
-        });
-
-    if (!noObservers && !notifyObserversTimeoutId)
-        setTimeout(notifyObservers, 200);
+    temperatureResource.properties = getProperties(units.C);
+    request.sendResponse(temperatureResource).catch(handleError);
 }
 
-// Create Temperature resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
-    function() {
-        console.log('Temperature: device.configure() successful');
+function updateHandler(request) {
+    var ret = true;
+    ret = updateProperties(request.res);
 
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('Temperature: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('Temperature: device.enablePresence() failed with: ' + error);
-            });
+    if (!ret) {
+        // Format the error properties.
+        var error = {
+            id: 'temperature',
+            range: getRange(units.C)
+        };
+
+        request.sendError(error);
+        return;
+    }
+
+    temperatureResource.properties = getProperties(units.C);
+    request.sendResponse(temperatureResource).catch(handleError);
+
+    setTimeout(notifyObservers, 200);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Temperature Sensor'
+});
+
+function handleError(error) {
+    console.log('Temperature: Failed to send response with error ' +
+    error + ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
+    function() {
 
         // Setup Temperature sensor pin.
         setupHardware();
@@ -236,7 +241,11 @@ device.configure({
             function(resource) {
                 console.log('Temperature: registerResource() successful');
                 temperatureResource = resource;
-                device.addEventListener('request', entityHandler);
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
+                device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
                 console.log('Temperature: registerResource() failed with: ' +
@@ -244,12 +253,17 @@ device.configure({
             });
     },
     function(error) {
-        console.log('Temperature: device.configure() failed with: ' + error);
+        console.log('Temperature: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
     console.log('Delete temperature Resource.');
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
+    device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
     device.unregisterResource(temperatureResource).then(

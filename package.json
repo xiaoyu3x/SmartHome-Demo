@@ -1,6 +1,6 @@
 {
-  "name": "my-project",
-  "version": "0.0.0",
+  "name": "smarthome-demo",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,10 +9,11 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": { 
-	"iotivity-node": "^1.0.1-1",
+	"iotivity-node": "^1.1.0-1",
 	"express": "*",
 	"websocket": "*",
 	"http": "*",
-	"systemd": "^0.2.6"
-	}
+	"systemd": "^0.2.6",
+	"lodash": "^3.10.1"
+  }
 }

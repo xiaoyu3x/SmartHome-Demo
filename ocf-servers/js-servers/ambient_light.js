@@ -1,5 +1,6 @@
-var device = require('iotivity-node')(),
-    ambientLightResource,
+var device = require('iotivity-node')('server'),
+    _ = require('lodash'),
+    illuminanceResource,
     sensorPin,
     notifyObserversTimeoutId,
     resourceTypeName = 'oic.r.sensor.illuminance',
@@ -61,13 +62,13 @@ function notifyObservers() {
     properties = getProperties();
 
     if (hasUpdate) {
-        ambientLightResource.properties = properties;
+        illuminanceResource.properties = properties;
         hasUpdate = false;
 
-        console.log('\nambientLight: Send the response - illuminance: ' + lux);
-        device.notify(ambientLightResource).catch(
+        console.log('\nIlluminance: Send the response - Illuminance: ' + lux);
+        device.notify(illuminanceResource).catch(
             function(error) {
-                console.log('ambientLight: Failed to notify observers.');
+                console.log('Illuminance: Failed to notify observers.');
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -85,58 +86,48 @@ function notifyObservers() {
     }
 }
 
-// This is the entity handler for the registered resource.
-function entityHandler(request) {
-    if (request.type === 'retrieve') {
-        ambientLightResource.properties = getProperties();
-    } else if (request.type === 'observe') {
-        noObservers = false;
-        hasUpdate = true;
-    }
+// Event handlers for the registered resource.
+function observeHandler(request) {
+    illuminanceResource.properties = getProperties();
+    request.sendResponse(illuminanceResource).catch(handleError);
 
-    request.sendResponse(ambientLightResource).then(
-        function() {
-            console.log('ambientLight: Successfully responded to request');
-        },
-        function(error) {
-            console.log('ambientLight: Failed to send response with error ' +
-                error + ' and result ' + error.result);
-        });
+    noObservers = false;
+    hasUpdate = true;
 
-    if (!noObservers && !notifyObserversTimeoutId)
+    if (!notifyObserversTimeoutId)
         setTimeout(notifyObservers, 200);
 }
 
-// Create ambient light resource
-device.configure({
-    role: 'server',
-    info: {
-        uuid: "SmartHouse.dollhouse",
-        name: "SmartHouse",
-        manufacturerName: "Intel",
-        manufacturerDate: "Fri Oct 30 10:04:17 EEST 2015",
-        platformVersion: "1.0.1",
-        firmwareVersion: "0.0.1",
-    }
-}).then(
+function retrieveHandler(request) {
+    illuminanceResource.properties = getProperties();
+    request.sendResponse(illuminanceResource).catch(handleError);
+}
+
+device.device = _.extend(device.device, {
+    name: 'Smart Home Illuminance Sensor'
+});
+
+function handleError(error) {
+    console.log('Illuminance: Failed to send response with error ' + error +
+    ' and result ' + error.result);
+}
+
+device.platform = _.extend(device.platform, {
+    manufacturerName: 'Intel',
+    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    platformVersion: '1.1.0',
+    firmwareVersion: '0.0.1',
+});
+
+// Enable presence
+device.enablePresence().then(
     function() {
-        console.log('ambientLight: device.configure() successful');
-
-        // Enable presence
-        device.enablePresence().then(
-            function() {
-                console.log('ambientLight: device.enablePresence() successful');
-            },
-            function(error) {
-                console.log('ambientLight: device.enablePresence() failed with: ' + error);
-            });
-
-        // Setup ambient light sensor pin.
+        // Setup Illuminance sensor pin.
         setupHardware();
 
-        console.log('\nCreate Ambient Light resource.');
+        console.log('\nCreate Illuminance sensor resource.');
 
-        // Register ambient light resource
+        // Register illuminance resource
         device.registerResource({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
@@ -146,40 +137,47 @@ device.configure({
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('ambientLight: registerResource() successful');
-                ambientLightResource = resource;
-                device.addEventListener('request', entityHandler);
+                console.log('Illuminance: registerResource() successful');
+                illuminanceResource = resource;
+
+                // Add event handlers for each supported request type
+                device.addEventListener('observerequest', observeHandler);
+                device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('ambientLight: registerResource() failed with: ' +
+                console.log('Illuminance: registerResource() failed with: ' +
                     error);
             });
     },
     function(error) {
-        console.log('ambientLight: device.configure() failed with: ' + error);
+        console.log('Illuminance: device.enablePresence() failed with: ' + error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Ambient Light Resource.');
+    console.log('Delete Illuminance sensor Resource.');
+
+    // Remove event listeners
+    device.removeEventListener('observerequest', observeHandler);
+    device.removeEventListener('retrieverequest', retrieveHandler);
 
     // Unregister resource.
-    device.unregisterResource(ambientLightResource).then(
+    device.unregisterResource(illuminanceResource).then(
         function() {
-            console.log('ambientLight: unregisterResource() successful');
+            console.log('Illuminance: unregisterResource() successful');
         },
         function(error) {
-            console.log('ambientLight: unregisterResource() failed with: ' +
+            console.log('Illuminance: unregisterResource() failed with: ' +
                 error + ' and result ' + error.result);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('ambientLight: device.disablePresence() successful');
+            console.log('Illuminance: device.disablePresence() successful');
         },
         function(error) {
-            console.log('ambientLight: device.disablePresence() failed with: ' + error);
+            console.log('Illuminance: device.disablePresence() failed with: ' + error);
         });
 
     // Exit

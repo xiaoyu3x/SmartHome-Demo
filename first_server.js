@@ -116,12 +116,14 @@ function update(Type, values)
     if (Type in WebCompoints) {
         resourceId = WebCompoints[Type];
         resource = resourcesList[resourceId];
+        if (!resource)
+            return;
 
         console.log('----------------------------------------------');
         console.log('Sending Update to ' + Type + ' resourceId:' + resourceId);
 
         resource.properties = values;
-        device.updateResource(resource);
+        device.update(resource);
     } else {
         console.log('No ' + Type + ' online');
     }
@@ -150,19 +152,7 @@ function obsReqCB(payload, resourceId) {
 // Start iotivity and set up the processing loop
 var notifyObserversTimeoutId,
     resourcehanlde,
-    device = require('iotivity-node')();
-
-device.configure({
-    role: 'client',
-    connectionMode: 'acked'
-}).then(
-    function() {
-        console.log('Client: device.configure() successful');
-        discoverResources();
-    },
-    function(error) {
-        console.log('Client: device.configure() failed with ' + error);
-    });
+    device = require('iotivity-node')("client");
 
 function SensorObserving(event) {
     console.log('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
@@ -179,7 +169,7 @@ function deleteResource(event) {
 
     var resource = resourcesList[id];
     if (resource) {
-        resource.removeEventListener("update", SensorObserving);
+        resource.removeEventListener("change", SensorObserving);
         delete resourcesList[id];
     }
 }
@@ -195,7 +185,7 @@ device.addEventListener('resourcefound', function(event) {
         resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path] = event.resource;
 
         // Start observing the resource.
-        event.resource.addEventListener("update", SensorObserving);
+        event.resource.addEventListener("change", SensorObserving);
 
         // Start observing the resource deletion.
         event.resource.addEventListener("delete", deleteResource);
@@ -215,6 +205,8 @@ function discoverResources() {
     notifyObserversTimeoutId = setTimeout(discoverResources, 5000);
 }
 
+discoverResources();
+
 // Exit gracefully when interrupted
 process.on('SIGINT', function() {
   console.log('SIGINT: Quitting...');
@@ -228,7 +220,10 @@ process.on('SIGINT', function() {
   // Stop observing
   for (var index in resourcesList) {
      var resource = resourcesList[index];
-     resource.removeEventListener("update", SensorObserving);
+     if (resource) {
+         resource.removeEventListener("change", SensorObserving);
+         resource.removeEventListener("delete", deleteResource);
+     }
   }
 
   // Exit
