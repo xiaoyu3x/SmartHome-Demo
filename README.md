@@ -8,6 +8,13 @@ The repository is organised as follows:
 
 ## Home GW dependencies
 
+The demo was built leveraging the [Ostro OS
+Project](https://ostroproject.org/) and we recommend you use it to build your
+own demo.
+Ostro is Linux operating system tailored for IoT
+smart devices and it fulfills many of the software stack requirements to run
+this demo out of the box. 
+
 ### Node.js dependencies
 
 Node.js dependencies can be installed using `npm install <node_module>` (you need a live network connection).
