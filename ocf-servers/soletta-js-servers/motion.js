@@ -132,7 +132,7 @@ device.enablePresence().then(
         console.log( "\nCreate motion resource." );
 
         // Register Motion resource
-        device.registerResource( {
+        device.register( {
             id: {
                 path: resourceInterfaceName
             },
@@ -143,7 +143,7 @@ device.enablePresence().then(
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "motionSensor: registerResource() successful" );
+                console.log( "motionSensor: register() resource successful" );
                 motionResource = resource;
 
                 // Add event handlers for each supported request type
@@ -151,7 +151,7 @@ device.enablePresence().then(
                 device.addEventListener( "retrieverequest", retrieveHandler );
             },
             function( error ) {
-                console.log( "motionSensor: registerResource() failed with: " +
+                console.log( "motionSensor: register() resource failed with: " +
                     error );
             } );
     },
@@ -168,12 +168,12 @@ process.on( "SIGINT", function() {
     device.removeEventListener( "retrieverequest", retrieveHandler );
 
     // Unregister resource.
-    device.unregisterResource( motionResource ).then(
+    device.unregister( motionResource ).then(
         function() {
-            console.log( "motionSensor: unregisterResource() successful" );
+            console.log( "motionSensor: unregister() resource successful" );
         },
         function( error ) {
-            console.log( "motionSensor: unregisterResource() failed with: " +
+            console.log( "motionSensor: unregister() resource failed with: " +
                 error + " and result " + error.result );
         } );
 

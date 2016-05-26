@@ -153,7 +153,7 @@ device.enablePresence().then(
         console.log( "\nCreate Illuminance sensor resource." );
 
         // Register illuminance resource
-        device.registerResource( {
+        device.register( {
             id: {
                 path: resourceInterfaceName
             },
@@ -164,7 +164,7 @@ device.enablePresence().then(
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "Illuminance: registerResource() successful" );
+                console.log( "Illuminance: register() resource successful" );
                 illuminanceResource = resource;
 
                 // Add event handlers for each supported request type
@@ -172,7 +172,7 @@ device.enablePresence().then(
                 device.addEventListener( "retrieverequest", retrieveHandler );
             },
             function( error ) {
-                console.log( "Illuminance: registerResource() failed with: " +
+                console.log( "Illuminance: register() resource failed with: " +
                     error );
             } );
     },
@@ -189,12 +189,12 @@ process.on( "SIGINT", function() {
     device.removeEventListener( "retrieverequest", retrieveHandler );
 
     // Unregister resource.
-    device.unregisterResource( illuminanceResource ).then(
+    device.unregister( illuminanceResource ).then(
         function() {
-            console.log( "Illuminance: unregisterResource() successful" );
+            console.log( "Illuminance: unregister() resource successful" );
         },
         function( error ) {
-            console.log( "Illuminance: unregisterResource() failed with: " +
+            console.log( "Illuminance: unregister() resource failed with: " +
                 error + " and result " + error.result );
         } );
 

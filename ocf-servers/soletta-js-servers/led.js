@@ -124,7 +124,7 @@ device.enablePresence().then(
         console.log( "\nCreate LED resource." );
 
         // Register LED resource
-        device.registerResource( {
+        device.register( {
             id: {
                 path: resourceInterfaceName
             },
@@ -135,7 +135,7 @@ device.enablePresence().then(
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "Led: registerResource() successful" );
+                console.log( "Led: register() resource successful" );
                 ledResource = resource;
 
                 // Add event handlers for each supported request type
@@ -144,7 +144,7 @@ device.enablePresence().then(
                 device.addEventListener( "updaterequest", updateHandler );
             },
             function( error ) {
-                console.log( "Led: registerResource() failed with: " + error );
+                console.log( "Led: register() resource failed with: " + error );
             } );
     },
     function( error ) {
@@ -161,12 +161,12 @@ process.on( "SIGINT", function() {
     device.removeEventListener( "updaterequest", updateHandler );
 
     // Unregister resource.
-    device.unregisterResource( ledResource ).then(
+    device.unregister( ledResource ).then(
         function() {
-            console.log( "Led: unregisterResource() successful" );
+            console.log( "Led: unregister() resource successful" );
         },
         function( error ) {
-            console.log( "Led: unregisterResource() failed with: " + error +
+            console.log( "Led: unregister() resource failed with: " + error +
                 " and result " + error.result );
         } );
 
