@@ -131,10 +131,6 @@ function retrieveHandler( request ) {
     } );
 }
 
-function retrieveHandler( request ) {
-    gasResource.properties = getProperties();
-}
-
 device.device = _.extend( device.device, {
     name: "Smart Home Gas Sensor"
 } );
