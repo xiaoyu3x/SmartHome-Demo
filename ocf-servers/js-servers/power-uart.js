@@ -182,7 +182,7 @@ device.enablePresence().then(
         console.log('\nCreate Power resource.');
 
         // Register Power resource
-        device.registerResource({
+        device.register({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
             interfaces: [ 'oic.if.baseline' ],
@@ -191,7 +191,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('power: registerResource() successful');
+                console.log('power: register() resource successful');
                 powerResource = resource;
 
                 // Add event handlers for each supported request type
@@ -199,7 +199,7 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('power: registerResource() failed with: ' +
+                console.log('power: register() resource failed with: ' +
                     error);
             });
     },
@@ -216,12 +216,12 @@ process.on('SIGINT', function() {
     device.removeEventListener('retrieverequest', retrieveHandler);
 
     // Unregister resource.
-    device.unregisterResource(powerResource).then(
+    device.unregister(powerResource).then(
         function() {
-            console.log('power: unregisterResource() successful');
+            console.log('power: unregister() resource successful');
         },
         function(error) {
-            console.log('power: unregisterResource() failed with: ' +
+            console.log('power: unregister() resource failed with: ' +
                 error + ' and result ' + error.result);
         });
 

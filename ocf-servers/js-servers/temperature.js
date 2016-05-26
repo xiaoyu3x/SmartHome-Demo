@@ -230,7 +230,7 @@ device.enablePresence().then(
         console.log('\nCreate Temperature resource.');
 
         // Register Temperature resource
-        device.registerResource({
+        device.register({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
             interfaces: [ 'oic.if.baseline' ],
@@ -239,7 +239,7 @@ device.enablePresence().then(
             properties: getProperties(units.C)
         }).then(
             function(resource) {
-                console.log('Temperature: registerResource() successful');
+                console.log('Temperature: register() resource successful');
                 temperatureResource = resource;
 
                 // Add event handlers for each supported request type
@@ -248,7 +248,7 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Temperature: registerResource() failed with: ' +
+                console.log('Temperature: register() resource failed with: ' +
                     error);
             });
     },
@@ -266,12 +266,12 @@ process.on('SIGINT', function() {
     device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
-    device.unregisterResource(temperatureResource).then(
+    device.unregister(temperatureResource).then(
         function() {
-            console.log('Temperature: unregisterResource() successful');
+            console.log('Temperature: unregister() resource successful');
         },
         function(error) {
-            console.log('Temperature: unregisterResource() failed with: ' +
+            console.log('Temperature: unregister() resource failed with: ' +
                 error + ' and result ' + error.result);
         });
 
