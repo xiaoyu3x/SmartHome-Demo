@@ -221,7 +221,7 @@ device.enablePresence().then(
         console.log( "\nCreate RGB LED resource." );
 
         // Register RGB LED resource
-        device.registerResource( {
+        device.register( {
             id: {
                 path: resourceInterfaceName
             },
@@ -232,7 +232,7 @@ device.enablePresence().then(
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "rgbled: registerResource() successful" );
+                console.log( "rgbled: register() resource successful" );
                 rgbLEDResource = resource;
 
                 // Add event handlers for each supported request type
@@ -241,7 +241,7 @@ device.enablePresence().then(
                 device.addEventListener( "updaterequest", updateHandler );
             },
             function( error ) {
-                console.log( "rgbled: registerResource() failed with: " + error );
+                console.log( "rgbled: register() resource failed with: " + error );
             } );
     },
     function( error ) {
@@ -266,12 +266,12 @@ process.on( "SIGINT", function() {
     device.removeEventListener( "updaterequest", updateHandler );
 
     // Unregister resource.
-    device.unregisterResource( rgbLEDResource ).then(
+    device.unregister( rgbLEDResource ).then(
         function() {
-            console.log( "rgbled: unregisterResource() successful" );
+            console.log( "rgbled: unregister() resource successful" );
         },
         function( error ) {
-            console.log( "rgbled: unregisterResource() failed with: " + error +
+            console.log( "rgbled: unregister() resource failed with: " + error +
                 " and result " + error.result );
         } );
 

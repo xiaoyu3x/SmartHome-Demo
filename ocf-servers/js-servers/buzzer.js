@@ -130,7 +130,7 @@ device.enablePresence().then(
         console.log('\nCreate Buzzer resource.');
 
         // Register Buzzer resource
-        device.registerResource({
+        device.register({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
             interfaces: [ 'oic.if.baseline' ],
@@ -139,7 +139,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Buzzer: registerResource() successful');
+                console.log('Buzzer: register() resource successful');
                 buzzerResource = resource;
 
                 // Add event handlers for each supported request type
@@ -148,7 +148,7 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Buzzer: registerResource() failed with: ' + error);
+                console.log('Buzzer: register() resource failed with: ' + error);
             });
     },
     function(error) {
@@ -172,12 +172,12 @@ process.on('SIGINT', function() {
     device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
-    device.unregisterResource(buzzerResource).then(
+    device.unregister(buzzerResource).then(
         function() {
-            console.log('Buzzer: unregisterResource() successful');
+            console.log('Buzzer: unregister() resource successful');
         },
         function(error) {
-            console.log('Buzzer: unregisterResource() failed with: ' + error +
+            console.log('Buzzer: unregister() resource failed with: ' + error +
                 ' and result ' + error.result);
         });
 

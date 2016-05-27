@@ -175,7 +175,7 @@ device.enablePresence().then(
         console.log('\nCreate Solar resource.');
 
         // Register Solar resource
-        device.registerResource({
+        device.register({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
             interfaces: [ 'oic.if.baseline' ],
@@ -184,7 +184,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Solar: registerResource() successful');
+                console.log('Solar: register() resource successful');
                 solarResource = resource;
 
                 // Add event handlers for each supported request type
@@ -193,7 +193,7 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Solar: registerResource() failed with: ' + error);
+                console.log('Solar: register() resource failed with: ' + error);
             });
     },
     function(error) {
@@ -213,12 +213,12 @@ process.on('SIGINT', function() {
     device.removeEventListener('updaterequest', updateHandler);
 
     // Unregister resource.
-    device.unregisterResource(solarResource).then(
+    device.unregister(solarResource).then(
         function() {
-            console.log('Solar: unregisterResource() successful');
+            console.log('Solar: unregister() resource successful');
         },
         function(error) {
-            console.log('Solar: unregisterResource() failed with: ' + error +
+            console.log('Solar: unregister() resource failed with: ' + error +
                 ' and result ' + error.result);
         });
 

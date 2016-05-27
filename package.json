@@ -9,7 +9,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": { 
-	"iotivity-node": "^1.1.0-1",
+	"iotivity-node": "^1.1.0-3",
 	"express": "*",
 	"websocket": "*",
 	"http": "*",

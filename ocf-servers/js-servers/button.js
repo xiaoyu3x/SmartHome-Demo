@@ -129,7 +129,7 @@ device.enablePresence().then(
         console.log('\nCreate button resource.');
 
         // Register Button resource
-        device.registerResource({
+        device.register({
             id: { path: resourceInterfaceName },
             resourceTypes: [ resourceTypeName ],
             interfaces: [ 'oic.if.baseline' ],
@@ -138,7 +138,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('button: registerResource() successful');
+                console.log('button: register() resource successful');
                 buttonResource = resource;
 
                 // Add event handlers for each supported request type
@@ -146,7 +146,7 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('button: registerResource() failed with: ' +
+                console.log('button: register() resource failed with: ' +
                     error);
             });
     },
@@ -163,12 +163,12 @@ process.on('SIGINT', function() {
     device.removeEventListener('retrieverequest', retrieveHandler);
 
     // Unregister resource.
-    device.unregisterResource(buttonResource).then(
+    device.unregister(buttonResource).then(
         function() {
-            console.log('button: unregisterResource() successful');
+            console.log('button: unregister() resource successful');
         },
         function(error) {
-            console.log('button: unregisterResource() failed with: ' +
+            console.log('button: unregister() resource failed with: ' +
                 error + ' and result ' + error.result);
         });
 

@@ -132,7 +132,7 @@ device.enablePresence().then(
         console.log( "\nCreate button resource." );
 
         // Register binary switch resource
-        device.registerResource( {
+        device.register( {
             id: {
                 path: resourceInterfaceName
             },
@@ -143,7 +143,7 @@ device.enablePresence().then(
             properties: getProperties()
         } ).then(
             function( resource ) {
-                console.log( "binarySwitch: registerResource() successful" );
+                console.log( "binarySwitch: register() resource successful" );
                 switchResource = resource;
 
                 // Add event handlers for each supported request type
@@ -151,7 +151,7 @@ device.enablePresence().then(
                 device.addEventListener( "retrieverequest", retrieveHandler );
             },
             function( error ) {
-                console.log( "binarySwitch: registerResource() failed with: " +
+                console.log( "binarySwitch: register() resource failed with: " +
                     error );
             } );
     },
@@ -168,12 +168,12 @@ process.on( "SIGINT", function() {
     device.removeEventListener( "retrieverequest", retrieveHandler );
 
     // Unregister resource.
-    device.unregisterResource( switchResource ).then(
+    device.unregister( switchResource ).then(
         function() {
-            console.log( "binarySwitch: unregisterResource() successful" );
+            console.log( "binarySwitch: unregister() resource successful" );
         },
         function( error ) {
-            console.log( "binarySwitch: unregisterResource() failed with: " +
+            console.log( "binarySwitch: unregister() resource failed with: " +
                 error + " and result " + error.result );
         } );
 
