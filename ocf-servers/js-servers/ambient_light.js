@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('ambient_light'),
     _ = require('lodash'),
     illuminanceResource,
     sensorPin,
@@ -15,7 +16,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup ambient light sensor pin.
@@ -65,10 +66,10 @@ function notifyObservers() {
         illuminanceResource.properties = properties;
         hasUpdate = false;
 
-        console.log('\nIlluminance: Send the response - Illuminance: ' + lux);
+        debuglog('Send the lux value: ', lux);
         device.notify(illuminanceResource).catch(
             function(error) {
-                console.log('Illuminance: Failed to notify observers.');
+                debuglog('Failed to notify observers with error: ', error);
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -108,8 +109,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('Illuminance: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -125,7 +125,7 @@ device.enablePresence().then(
         // Setup Illuminance sensor pin.
         setupHardware();
 
-        console.log('\nCreate Illuminance sensor resource.');
+        debuglog('Create Illuminance sensor resource.');
 
         // Register illuminance resource
         device.register({
@@ -137,7 +137,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Illuminance: register() resource successful');
+                debuglog('register() resource successful');
                 illuminanceResource = resource;
 
                 // Add event handlers for each supported request type
@@ -145,17 +145,16 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('Illuminance: register() resource failed with: ' +
-                    error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('Illuminance: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Illuminance sensor Resource.');
+    debuglog('Delete Illuminance sensor Resource.');
 
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
@@ -164,20 +163,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(illuminanceResource).then(
         function() {
-            console.log('Illuminance: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('Illuminance: unregister() resource failed with: ' +
-                error + ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('Illuminance: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('Illuminance: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

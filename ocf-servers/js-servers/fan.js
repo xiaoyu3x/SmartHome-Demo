@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('fan'),
     _ = require('lodash'),
     fanResource,
     sensorPin,
@@ -12,7 +13,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup Fan sensor pin.
@@ -29,7 +30,7 @@ function setupHardware() {
 function updateProperties(properties) {
     sensorState = properties.value;
 
-    console.log('\nFan: Update received. value: ' + sensorState);
+    debuglog('Update received. value: ', sensorState);
 
     if (!mraa)
         return;
@@ -50,7 +51,7 @@ function getProperties() {
         value: sensorState
     };
 
-    console.log('Fan: Send the response. value: ' + sensorState);
+    debuglog('Send the response. value: ', sensorState);
     return properties;
 }
 
@@ -60,11 +61,10 @@ function notifyObservers(request) {
 
     device.notify(fanResource).then(
         function() {
-            console.log('Fan: Successfully notified observers.');
+            debuglog('Successfully notified observers.');
         },
         function(error) {
-            console.log('Fan: Notify failed with ' + error + ' and result ' +
-                error.result);
+            debuglog('Notify failed with error: ', error);
         });
 }
 
@@ -92,8 +92,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('Fan: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -106,12 +105,12 @@ device.platform = _.extend(device.platform, {
 // Enable presence
 device.enablePresence().then(
     function() {
-        console.log('Fan: device.enablePresence() successful');
+        debuglog('device.enablePresence() successful');
 
         // Setup Fan sensor pin.
         setupHardware();
 
-        console.log('\nCreate Fan resource.');
+        debuglog('Create Fan resource.');
 
         // Register Fan resource
         device.register({
@@ -123,7 +122,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Fan: register() esource() successful');
+                debuglog('register() resource successful');
                 fanResource = resource;
 
                 // Add event handlers for each supported request type
@@ -132,16 +131,16 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Fan: register() resource() failed with: ' + error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('Fan: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Fan Resource.');
+    debuglog('Delete Fan Resource.');
 
     // Stop fan before we tear down the resource.
     if (mraa)
@@ -155,19 +154,18 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(fanResource).then(
         function() {
-            console.log('Fan: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('Fan: unregister() resource() failed with: ' + error +
-                ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     device.disablePresence().then(
         function() {
-            console.log('Fan: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('Fan: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit
