@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('temperature'),
     _ = require('lodash'),
     temperatureResource,
     sensorPin,
@@ -24,7 +25,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup Temperature sensor pin.
@@ -69,16 +70,16 @@ function getProperties(tempUnit) {
         switch (tempUnit) {
             case units.F:
                 temperature = Math.round(((Ktemperature - 273.15) * 9.0 / 5.0 + 32.0) * 100) / 100;
-                console.log("Temperature: " + temperature + "° Fahrenheit");
+                debuglog("Temperature in Fahrenheit: ", temperature);
                 break;
             case units.K:
                 temperature = Math.round(Ktemperature * 100) / 100;
-                console.log("Temperature: " + temperature + "K Kelvin");
+                debuglog("Temperature in Kelvin: ", temperature);
                 break;
             case units.C:
             default:
                 temperature = Math.round((Ktemperature - 273.15) * 100) / 100;
-                console.log("Temperature: " + temperature + "° Celsius");
+                debuglog("Temperature in Celsius: ", temperature);
                 break;
         }
 
@@ -88,7 +89,7 @@ function getProperties(tempUnit) {
         // Simulate real sensor behavior. This is useful
         // for testing on desktop without mraa.
         temperature = temperature + 0.1;
-        console.log("Temperature: " + temperature);
+        debuglog("Temperature: ", temperature);
         hasUpdate = true;
     }
 
@@ -113,7 +114,7 @@ function updateProperties(properties) {
         return false;
 
     desiredTemperature = properties.temperature;
-    console.log('\nTemperature: Desired value: ' + desiredTemperature);
+    debuglog('Desired value: ', desiredTemperature);
 
     return true;
 }
@@ -125,10 +126,10 @@ function notifyObservers() {
         temperatureResource.properties = properties;
         hasUpdate = false;
 
-        console.log('Temperature: Send the response: ' + temperature);
+        debuglog('Send the response: ', temperature);
         device.notify(temperatureResource).catch(
             function(error) {
-                console.log('Temperature: Failed to notify observers.');
+                debuglog('Failed to notify observers with error: ', error);
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -209,8 +210,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('Temperature: Failed to send response with error ' +
-    error + ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -227,7 +227,7 @@ device.enablePresence().then(
         // Setup Temperature sensor pin.
         setupHardware();
 
-        console.log('\nCreate Temperature resource.');
+        debuglog('Create Temperature resource.');
 
         // Register Temperature resource
         device.register({
@@ -239,7 +239,7 @@ device.enablePresence().then(
             properties: getProperties(units.C)
         }).then(
             function(resource) {
-                console.log('Temperature: register() resource successful');
+                debuglog('register() resource successful');
                 temperatureResource = resource;
 
                 // Add event handlers for each supported request type
@@ -248,17 +248,16 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Temperature: register() resource failed with: ' +
-                    error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('Temperature: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete temperature Resource.');
+    debuglog('Delete temperature Resource.');
 
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
@@ -268,20 +267,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(temperatureResource).then(
         function() {
-            console.log('Temperature: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('Temperature: unregister() resource failed with: ' +
-                error + ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('Temperature: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('Temperature: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

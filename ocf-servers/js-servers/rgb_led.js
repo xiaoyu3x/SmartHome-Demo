@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('rgb_led'),
     _ = require('lodash'),
     rgbLEDResource,
     sensorPin,
@@ -16,7 +17,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup LED pin.
@@ -119,7 +120,7 @@ function updateProperties(properties) {
     setColourRGB(r, g, b);
     rgbValue = input;
 
-    console.log('\nrgbled: Update received. value: ' + rgbValue);
+    debuglog('Update received. value: ', rgbValue);
 }
 
 // This function construct the payload and returns when
@@ -133,7 +134,7 @@ function getProperties() {
         range: range
     };
 
-    console.log('rgbled: Send the response. value: ' + rgbValue);
+    debuglog('Send the response. value: ', rgbValue);
     return properties;
 }
 
@@ -143,11 +144,10 @@ function notifyObservers(request) {
 
     device.notify(rgbLEDResource).then(
         function() {
-            console.log('rgbled: Successfully notified observers.');
+            debuglog('Successfully notified observers.');
         },
         function(error) {
-            console.log('rgbled: Notify failed with ' + error + ' and result ' +
-                error.result);
+            debuglog('Notify failed with error: ', error);
         });
 }
 
@@ -175,8 +175,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('rgbled: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -192,7 +191,7 @@ device.enablePresence().then(
         // Setup RGB LED sensor pin.
         setupHardware();
 
-        console.log('\nCreate RGB LED resource.');
+        debuglog('Create RGB LED resource.');
 
         // Register RGB LED resource
         device.register({
@@ -204,7 +203,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('rgbled: register() resource successful');
+                debuglog('register() resource successful');
                 rgbLEDResource = resource;
 
                 // Add event handlers for each supported request type
@@ -213,16 +212,16 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('rgbled: register() resource failed with: ' + error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('rgbled: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete RGB LED Resource.');
+    debuglog('Delete RGB LED Resource.');
 
     // Turn off led before we tear down the resource.
     if (mraa) {
@@ -238,20 +237,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(rgbLEDResource).then(
         function() {
-            console.log('rgbled: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('rgbled: unregister() resource failed with: ' + error +
-                ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('rgbled: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('rgbled: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

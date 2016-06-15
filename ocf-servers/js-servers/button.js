@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('button'),
     _ = require('lodash'),
     buttonResource,
     sensorPin,
@@ -15,7 +16,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup Button pin.
@@ -66,10 +67,10 @@ function notifyObservers() {
         buttonResource.properties = properties;
         hasUpdate = false;
 
-        console.log('\nbutton: Send the response: ' + sensorState);
+        debuglog('Send the response: ', sensorState);
         device.notify(buttonResource).catch(
             function(error) {
-                console.log('button: Failed to notify observers.');
+                debuglog('Failed to notify observers: ', error);
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -109,8 +110,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('button: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -126,7 +126,7 @@ device.enablePresence().then(
         // Setup Button pin.
         setupHardware();
 
-        console.log('\nCreate button resource.');
+        debuglog('Create button resource.');
 
         // Register Button resource
         device.register({
@@ -138,7 +138,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('button: register() resource successful');
+                debuglog('register() resource successful');
                 buttonResource = resource;
 
                 // Add event handlers for each supported request type
@@ -146,17 +146,16 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('button: register() resource failed with: ' +
-                    error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('button: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Button Resource.');
+    debuglog('Delete Button Resource.');
 
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
@@ -165,20 +164,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(buttonResource).then(
         function() {
-            console.log('button: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('button: unregister() resource failed with: ' +
-                error + ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('button: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('button: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('buzzer'),
     _ = require('lodash'),
     buzzerResource,
     playNote = false,
@@ -14,7 +15,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup Buzzer sensor pin.
@@ -42,7 +43,7 @@ function playTone() {
 function updateProperties(properties) {
     sensorState = properties.value;
 
-    console.log('\nBuzzer: Update received. value: ' + sensorState);
+    debuglog('Update received. value: ', sensorState);
 
     if (!mraa)
         return;
@@ -67,7 +68,7 @@ function getProperties() {
         value: sensorState
     };
 
-    console.log('Buzzer: Send the response. value: ' + sensorState);
+    debuglog('Send the response. value: ', sensorState);
     return properties;
 }
 
@@ -77,11 +78,10 @@ function notifyObservers(request) {
 
     device.notify(buzzerResource).then(
         function() {
-            console.log('Buzzer: Successfully notified observers.');
+            debuglog('Successfully notified observers.');
         },
         function(error) {
-            console.log('Buzzer: Notify failed with ' + error + ' and result ' +
-                error.result);
+            debuglog('Notify failed with error: ', error);
         });
 }
 
@@ -109,8 +109,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('Buzzer: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -127,7 +126,7 @@ device.enablePresence().then(
         // Setup Buzzer sensor pin.
         setupHardware();
 
-        console.log('\nCreate Buzzer resource.');
+        debuglog('Create Buzzer resource.');
 
         // Register Buzzer resource
         device.register({
@@ -139,7 +138,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Buzzer: register() resource successful');
+                debuglog('register() resource successful');
                 buzzerResource = resource;
 
                 // Add event handlers for each supported request type
@@ -148,16 +147,16 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Buzzer: register() resource failed with: ' + error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('Buzzer: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Buzzer Resource.');
+    debuglog('Delete Buzzer Resource.');
 
     // Stop buzzer before we tear down the resource.
     if (timerId)
@@ -174,20 +173,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(buzzerResource).then(
         function() {
-            console.log('Buzzer: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('Buzzer: unregister() resource failed with: ' + error +
-                ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('Buzzer: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('Buzzer: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

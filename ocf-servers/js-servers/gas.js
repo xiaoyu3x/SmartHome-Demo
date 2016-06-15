@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('gas'),
     _ = require('lodash'),
     gasResource,
     sensorPin,
@@ -16,7 +17,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup Gas sensor pin.
@@ -34,7 +35,7 @@ function getProperties() {
         val = sensorPin.read();
         density = val * 500 / 1024;
 
-        console.log('\ngasSensor: density: ' + density + ' threshold: 70 ');
+        debuglog('density: %d, threshold: 70', density);
         if (density != gasDensity) {
             if (density > 70 && gasDensity < 70) {
                 gasDensity = density;
@@ -70,10 +71,10 @@ function notifyObservers() {
         gasResource.properties = properties;
         hasUpdate = false;
 
-        console.log('gasSensor: Send the response: ' + gasDetected);
+        debuglog('Send the response: ', gasDetected);
         device.notify(gasResource).catch(
             function(error) {
-                console.log('gasSensor: Failed to notify observers.');
+                debuglog('Failed to notify observers with error: ', error);
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -113,8 +114,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('gasSensor: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -130,7 +130,7 @@ device.enablePresence().then(
         // Setup Gas sensor pin.
         setupHardware();
 
-        console.log('\nCreate Gas resource.');
+        debuglog('Create Gas resource.');
 
         // Register Gas resource
         device.register({
@@ -142,7 +142,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('gasSensor: register() resource successful');
+                debuglog('register() resource successful');
                 gasResource = resource;
 
                 // Add event handlers for each supported request type
@@ -150,17 +150,16 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('gasSensor: register() resource failed with: ' +
-                    error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('gasSensor: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Gas Resource.');
+    debuglog('Delete Gas Resource.');
 
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
@@ -169,20 +168,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(gasResource).then(
         function() {
-            console.log('gasSensor: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('gasSensor: unregister() resource failed with: ' +
-                error + ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('gasSensor: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('gasSensor: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

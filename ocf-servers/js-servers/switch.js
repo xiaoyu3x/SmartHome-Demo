@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('switch'),
     _ = require('lodash'),
     switchResource,
     sensorPin,
@@ -15,7 +16,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup binary switch pin.
@@ -66,10 +67,10 @@ function notifyObservers() {
         switchResource.properties = properties;
         hasUpdate = false;
 
-        console.log('\nbinarySwitch: Send the response: ' + sensorState);
+        debuglog('Send the response: ', sensorState);
         device.notify(switchResource).catch(
             function(error) {
-                console.log('binarySwitch: Failed to notify observers.');
+                debuglog('Failed to notify observers with error: ', error);
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -109,8 +110,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('binarySwitch: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -126,7 +126,7 @@ device.enablePresence().then(
         // Setup binary switch pin.
         setupHardware();
 
-        console.log('\nCreate button resource.');
+        debuglog('Create button resource.');
         // Register binary switch resource
         device.register({
             id: { path: resourceInterfaceName },
@@ -137,7 +137,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('binarySwitch: register() resource successful');
+                debuglog('register() resource successful');
                 switchResource = resource;
 
                 // Add event handlers for each supported request type
@@ -145,17 +145,16 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('binarySwitch: register() resource failed with: ' +
-                    error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('binarySwitch: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Switch Resource.');
+    debuglog('Delete Switch Resource.');
 
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
@@ -164,20 +163,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(switchResource).then(
         function() {
-            console.log('binarySwitch: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('binarySwitch: unregister() resource failed with: ' +
-                error + ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('binarySwitch: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('binarySwitch: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

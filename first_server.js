@@ -1,5 +1,6 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http')
+    , debuglog = require('util').debuglog('first_server')
     , express = require('express')
     , app = express()
     , systemd = require('systemd');
@@ -16,15 +17,15 @@ var includeInThisContext = function(path) {
 var rules = require('./gateway-webui/rules_engine');
 
 var fs = require('fs');
-console.log(__dirname + "/data.json");
+debuglog(__dirname + "/data.json");
 
 var server = http.createServer(app);
 var jsonRulesConfig = fs.readFileSync(__dirname + "/data.json", "utf8");
-console.log(jsonRulesConfig);
+debuglog(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
 //var server = http.createServer(function(request, response) {
-//    console.log((new Date()) + ' Received request for ' + request.url);
+//    debuglog((new Date()) + ' Received request for ' + request.url);
 //    response.writeHead(404);
 //    response.end();
 //});
@@ -64,12 +65,12 @@ function updateWebClients(msg, eventType) {
 
     outmesg_list.push(outmesg);
 
-    console.log(JSON.stringify(outmesg_list));
+    debuglog(JSON.stringify(outmesg_list));
     //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
-    //console.log(newEvents);
+    //debuglog(newEvents);
 
     for (var key in connectionList) {
-        console.log(key);
+        debuglog(key);
         var connection = connectionList[key];
         connection.sendUTF(JSON.stringify(outmesg_list));
         //connection.sendUTF();
@@ -80,26 +81,26 @@ wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
       request.reject();
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+      debuglog((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
       return;
     }
 
     var connection = request.accept('echo-protocol', request.origin);
 
-    console.log((new Date()) + ' Connection accepted.');
+    debuglog((new Date()) + ' Connection accepted.');
 
     if (!(connection.remoteAddress in connectionList)) {
       connectionList[connection.remoteAddress] = connection;
 
       connection.on('message', function(message) {
           if (message.type === 'utf8') {
-              console.log('Received Message: ' + message.utf8Data);
+              debuglog('Received Message: ' + message.utf8Data);
 
               parceInComingRequest(JSON.parse(message.utf8Data), connection);
           }
       });
       connection.on('close', function(reasonCode, description) {
-          console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+          debuglog((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
           delete connectionList[connection.remoteAddress];
       });
 
@@ -119,13 +120,13 @@ function update(Type, values)
         if (!resource)
             return;
 
-        console.log('----------------------------------------------');
-        console.log('Sending Update to ' + Type + ' resourceId:' + resourceId);
+        debuglog('----------------------------------------------');
+        debuglog('Sending Update to ' + Type + ' resourceId:' + resourceId);
 
         resource.properties = values;
         device.update(resource);
     } else {
-        console.log('No ' + Type + ' online');
+        debuglog('No ' + Type + ' online');
     }
 }
 
@@ -155,7 +156,7 @@ var notifyObserversTimeoutId,
     device = require('iotivity-node')("client");
 
 function SensorObserving(event) {
-    console.log('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
+    debuglog('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
 
     if ('properties' in event.resource) {
         var resourceId = event.resource.id.deviceId + ":" + event.resource.id.path;
@@ -165,7 +166,7 @@ function SensorObserving(event) {
 
 function deleteResource(event) {
     var id = this.id.deviceId + ":" + this.id.path;
-    console.log('Client: deleteResource: ' + id);
+    debuglog('Client: deleteResource: ' + id);
 
     var resource = resourcesList[id];
     if (resource) {
@@ -181,7 +182,7 @@ device.addEventListener('resourcefound', function(event) {
     var resourceId = resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path];
 
     if (!resourceId) {
-        console.log('Resource found:' + JSON.stringify(event.resource, null, 4));
+        debuglog('Resource found:' + JSON.stringify(event.resource, null, 4));
         resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path] = event.resource;
 
         // Start observing the resource.
@@ -193,13 +194,13 @@ device.addEventListener('resourcefound', function(event) {
 });
 
 function discoverResources() {
-    console.log('Discover resources.');
+    debuglog('Discover resources.');
     device.findResources().then(
         function() {
-            console.log('Client: findResources() successful');
+            debuglog('Client: findResources() successful');
         },
         function(error) {
-            console.log('Client: findResources() failed with ' + error +
+            debuglog('Client: findResources() failed with ' + error +
                 ' and result ' + error.result);
         });
     notifyObserversTimeoutId = setTimeout(discoverResources, 5000);
@@ -209,7 +210,7 @@ discoverResources();
 
 // Exit gracefully when interrupted
 process.on('SIGINT', function() {
-  console.log('SIGINT: Quitting...');
+  debuglog('SIGINT: Quitting...');
 
   // Tear down the processing loop
   if (notifyObserversTimeoutId) {

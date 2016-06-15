@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('solar'),
     _ = require('lodash'),
     solarResource,
     lcdPin,
@@ -15,7 +16,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 var lcd = '';
@@ -23,7 +24,7 @@ try {
     lcd = require('jsupm_i2clcd');
 }
 catch (e) {
-    console.log('No lcd module: ' + e.message);
+    debuglog('No lcd module: ', e.message);
 }
 
 function resetLCDScreen() {
@@ -53,7 +54,7 @@ function setupHardware() {
     pwmPin.enable(true);
 
     pwmPin.write(0.05);
-    console.log('Solar panel initialization completed.');
+    debuglog('Solar panel initialization completed.');
 }
 
 function map(x, in_min, in_max, out_min, out_max) {
@@ -68,8 +69,7 @@ function updateProperties(properties) {
         return;
 
     var val = map(tiltPercentage, 0, 100, .05, .10);
-    console.log('\nSolar: Update received. tiltPercentage: ' +
-            tiltPercentage + ' : ' + val);
+    debuglog('Update received. tiltPercentage: ', tiltPercentage);
     pwmPin.write(val);
 
     if (!lcd)
@@ -100,7 +100,7 @@ function getProperties() {
         lcd2: lcd2
     };
 
-    console.log('Solar: Send the response. tiltPercentage: ' + tiltPercentage);
+    debuglog('Send the response. tiltPercentage: ', tiltPercentage);
     return properties;
 }
 
@@ -122,7 +122,7 @@ function notifyObservers(request) {
 
     device.notify(solarResource).catch(
         function(error) {
-            console.log('Solar: Failed to notify observers.');
+            debuglog('Failed to notify observers with error: ', error);
             noObservers = error.noObservers;
             if (noObservers) {
                 resetLCDScreen();
@@ -155,8 +155,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('Solar: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -172,7 +171,7 @@ device.enablePresence().then(
         // Setup Solar sensor.
         setupHardware();
 
-        console.log('\nCreate Solar resource.');
+        debuglog('Create Solar resource.');
 
         // Register Solar resource
         device.register({
@@ -184,7 +183,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Solar: register() resource successful');
+                debuglog('register() resource successful');
                 solarResource = resource;
 
                 // Add event handlers for each supported request type
@@ -193,16 +192,16 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Solar: register() resource failed with: ' + error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('Solar: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Solar Resource.');
+    debuglog('Delete Solar Resource.');
 
     // Reset LCD screen.
     resetLCDScreen();
@@ -215,20 +214,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(solarResource).then(
         function() {
-            console.log('Solar: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('Solar: unregister() resource failed with: ' + error +
-                ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('Solar: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('Solar: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
 

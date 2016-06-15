@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('led'),
     _ = require('lodash'),
     ledResource,
     sensorPin,
@@ -12,7 +13,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Setup LED sensor pin.
@@ -29,7 +30,7 @@ function setupHardware() {
 function updateProperties(properties) {
     sensorState = properties.value;
 
-    console.log('\nLed: Update received. value: ' + sensorState);
+    debuglog('Update received. value: ', sensorState);
 
     if (!mraa)
         return;
@@ -50,7 +51,7 @@ function getProperties() {
         value: sensorState
     };
 
-    console.log('Led: Send the response. value: ' + sensorState);
+    debuglog('Send the response. value: ', sensorState);
     return properties;
 }
 
@@ -60,11 +61,10 @@ function notifyObservers(request) {
 
     device.notify(ledResource).then(
         function() {
-            console.log('Led: Successfully notified observers.');
+            debuglog('Successfully notified observers.');
         },
         function(error) {
-            console.log('Led: Notify failed with ' + error + ' and result ' +
-                error.result);
+            debuglog('Notify failed with error: ', error);
         });
 }
 
@@ -92,8 +92,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('LED: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('LED: Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -110,7 +109,7 @@ device.enablePresence().then(
         // Setup LED pin.
         setupHardware();
 
-        console.log('\nCreate LED resource.');
+        debuglog('Create LED resource.');
 
         // Register LED resource
         device.register({
@@ -122,7 +121,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('Led: register() resource successful');
+                debuglog('register() resource successful');
                 ledResource = resource;
 
                 // Add event handlers for each supported request type
@@ -131,16 +130,16 @@ device.enablePresence().then(
                 device.addEventListener('updaterequest', updateHandler);
             },
             function(error) {
-                console.log('Led: register() resource failed with: ' + error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('Led: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete LED Resource.');
+    debuglog('Delete LED Resource.');
 
     // Turn off LED before we tear down the resource.
     if (mraa)
@@ -154,20 +153,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(ledResource).then(
         function() {
-            console.log('Led: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('Led: unregister() resource failed with: ' + error +
-                ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('Led: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('Led: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit

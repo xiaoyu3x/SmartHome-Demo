@@ -1,4 +1,5 @@
 var device = require('iotivity-node')('server'),
+    debuglog = require('util').debuglog('power-uart'),
     _ = require('lodash'),
     powerResource,
     uart,
@@ -16,7 +17,7 @@ try {
     mraa = require('mraa');
 }
 catch (e) {
-    console.log('No mraa module: ' + e.message);
+    debuglog('No mraa module: ', e.message);
 }
 
 // Default: MinnowBoard MAX/Turbot, raw mode
@@ -68,11 +69,11 @@ function readJsonFromUart() {
         }
         /* In some cases the reading wont stop, make it stop. */
         if (count >= 4096) {
-          console.log("UART read error.");
+          debuglog("UART read error.");
           break;
         }
     }
-    console.log("read: " + count + " bytes");
+    debuglog("read: %d bytes", count);
     return last;
 }
 
@@ -88,7 +89,7 @@ function getProperties() {
         data = "{\"ch-1\": " + power1++ + ", \"ch-2\": " + power2++ + "}";
     }
     if (data != null && data != "") {
-        console.log(data);
+        debuglog(data);
         hasUpdate = true;
     }
 
@@ -96,7 +97,7 @@ function getProperties() {
         obj = JSON.parse(data);
     }
     catch(e) {
-        console.log("Invalid data: " + e.message);
+        debuglog("Invalid data: ", e.message);
     }
 
     // Format the properties.
@@ -118,10 +119,10 @@ function notifyObservers() {
         powerResource.properties = properties;
         hasUpdate = false;
 
-        console.log('powerSensor: Send observe response.');
+        debuglog('Send observe response.');
         device.notify(powerResource).catch(
             function(error) {
-                console.log('powerSensor: Failed to notify observers.');
+                debuglog('Failed to notify observers with error: ', error);
                 noObservers = error.noObservers;
                 if (noObservers) {
                     if (notifyObserversTimeoutId) {
@@ -161,8 +162,7 @@ device.device = _.extend(device.device, {
 });
 
 function handleError(error) {
-    console.log('power: Failed to send response with error ' + error +
-    ' and result ' + error.result);
+    debuglog('Failed to send response with error: ', error);
 }
 
 device.platform = _.extend(device.platform, {
@@ -179,7 +179,7 @@ device.enablePresence().then(
         // Setup uart
         setupHardware();
 
-        console.log('\nCreate Power resource.');
+        debuglog('Create Power resource.');
 
         // Register Power resource
         device.register({
@@ -191,7 +191,7 @@ device.enablePresence().then(
             properties: getProperties()
         }).then(
             function(resource) {
-                console.log('power: register() resource successful');
+                debuglog('register() resource successful');
                 powerResource = resource;
 
                 // Add event handlers for each supported request type
@@ -199,17 +199,16 @@ device.enablePresence().then(
                 device.addEventListener('retrieverequest', retrieveHandler);
             },
             function(error) {
-                console.log('power: register() resource failed with: ' +
-                    error);
+                debuglog('register() resource failed with: ', error);
             });
     },
     function(error) {
-        console.log('power: device.enablePresence() failed with: ' + error);
+        debuglog('device.enablePresence() failed with: ', error);
     });
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
-    console.log('Delete Power Resource.');
+    debuglog('Delete Power Resource.');
 
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
@@ -218,20 +217,19 @@ process.on('SIGINT', function() {
     // Unregister resource.
     device.unregister(powerResource).then(
         function() {
-            console.log('power: unregister() resource successful');
+            debuglog('unregister() resource successful');
         },
         function(error) {
-            console.log('power: unregister() resource failed with: ' +
-                error + ' and result ' + error.result);
+            debuglog('unregister() resource failed with: ', error);
         });
 
     // Disable presence
     device.disablePresence().then(
         function() {
-            console.log('power: device.disablePresence() successful');
+            debuglog('device.disablePresence() successful');
         },
         function(error) {
-            console.log('power: device.disablePresence() failed with: ' + error);
+            debuglog('device.disablePresence() failed with: ', error);
         });
 
     // Exit
