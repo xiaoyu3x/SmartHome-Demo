@@ -114,9 +114,9 @@ function handleError(error) {
 
 device.platform = Object.assign(device.platform, {
     manufacturerName: 'Intel',
-    manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
+    manufactureDate: new Date('Fri Oct 30 10:04:17 (EET) 2015'),
     platformVersion: '1.1.0',
-    firmwareVersion: '0.0.1',
+    firmwareVersion: '0.0.1'
 });
 
 // Enable presence
