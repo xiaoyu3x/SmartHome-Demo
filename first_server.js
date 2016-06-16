@@ -206,7 +206,13 @@ function discoverResources() {
     notifyObserversTimeoutId = setTimeout(discoverResources, 5000);
 }
 
-discoverResources();
+device.subscribe().then(
+    function() {
+       discoverResources();
+    },
+    function(error) {
+        debuglog('device.subscribe() failed with: ' + error);
+    });
 
 // Exit gracefully when interrupted
 process.on('SIGINT', function() {
