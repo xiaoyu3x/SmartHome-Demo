@@ -1,6 +1,5 @@
 var device = require('iotivity-node')('server'),
     debuglog = require('util').debuglog('motion'),
-    _ = require('lodash'),
     motionResource,
     sensorPin,
     notifyObserversTimeoutId,
@@ -105,7 +104,7 @@ function retrieveHandler(request) {
     request.sendResponse(motionResource).catch(handleError);
 }
 
-device.device = _.extend(device.device, {
+device.device = Object.assign(device.device, {
     name: 'Smart Home Motion Sensor'
 });
 
@@ -113,7 +112,7 @@ function handleError(error) {
     debuglog('Failed to send response with error: ', error);
 }
 
-device.platform = _.extend(device.platform, {
+device.platform = Object.assign(device.platform, {
     manufacturerName: 'Intel',
     manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
     platformVersion: '1.1.0',

@@ -1,5 +1,4 @@
 var device = require( "iotivity-node" )( "server" ),
-    _ = require( "lodash" ),
     illuminanceResource,
     sensorPin,
     notifyObserversTimeoutId,
@@ -127,7 +126,7 @@ function retrieveHandler( request ) {
     } );
 }
 
-device.device = _.extend( device.device, {
+device.device = Object.assign( device.device, {
     name: "Smart Home Illuminance Sensor"
 } );
 
@@ -136,7 +135,7 @@ function handleError( error ) {
         " and result " + error.result );
 }
 
-device.platform = _.extend( device.platform, {
+device.platform = Object.assign( device.platform, {
     manufacturerName: "Intel",
     manufactureDate: new Date( "Fri Oct 30 10:04:17 EEST 2015" ),
     platformVersion: "1.1.0",

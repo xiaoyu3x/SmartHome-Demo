@@ -1,5 +1,4 @@
 var device = require( "iotivity-node" )( "server" ),
-    _ = require( "lodash" ),
     rgbLEDResource,
     resourceTypeName = "oic.r.colour.rgb",
     resourceInterfaceName = "/a/rgbled",
@@ -195,7 +194,7 @@ function updateHandler( request ) {
     setTimeout( notifyObservers, 200 );
 }
 
-device.device = _.extend( device.device, {
+device.device = Object.assign( device.device, {
     name: "Smart Home RGB LED"
 } );
 
@@ -204,7 +203,7 @@ function handleError( error ) {
         " and result " + error.result );
 }
 
-device.platform = _.extend( device.platform, {
+device.platform = Object.assign( device.platform, {
     manufacturerName: "Intel",
     manufactureDate: new Date( "Fri Oct 30 10:04:17 EEST 2015" ),
     platformVersion: "1.1.0",
