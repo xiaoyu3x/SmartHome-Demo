@@ -2,8 +2,7 @@ var WebSocketServer = require('websocket').server;
 var http = require('http')
     , debuglog = require('util').debuglog('first_server')
     , express = require('express')
-    , app = express()
-    , systemd = require('systemd');
+    , app = express();
 
 app.use(express.static(__dirname + '/gateway-webui'));
 
@@ -30,7 +29,14 @@ rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 //    response.end();
 //});
 
-var serverPort = process.env.LISTEN_PID > 0 ? 'systemd' : 8080;
+var serverPort = 8080;
+// systemd socket activation support
+if (process.env.LISTEN_FDS) {
+    // The first passed file descriptor is fd 3
+    var fdStart = 3;
+    serverPort = {fd: fdStart};
+}
+
 server.listen(serverPort);
 
 wsServer = new WebSocketServer({

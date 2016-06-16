@@ -13,7 +13,6 @@
 	"express": "*",
 	"websocket": "*",
 	"http": "*",
-	"systemd": "^0.2.6",
 	"lodash": "^3.10.1"
   }
 }
