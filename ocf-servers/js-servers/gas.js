@@ -1,6 +1,5 @@
 var device = require('iotivity-node')('server'),
     debuglog = require('util').debuglog('gas'),
-    _ = require('lodash'),
     gasResource,
     sensorPin,
     gasDensity = 0,
@@ -109,7 +108,7 @@ function retrieveHandler(request) {
     request.sendResponse(gasResource).catch(handleError);
 }
 
-device.device = _.extend(device.device, {
+device.device = Object.assign(device.device, {
     name: 'Smart Home Gas Sensor'
 });
 
@@ -117,7 +116,7 @@ function handleError(error) {
     debuglog('Failed to send response with error: ', error);
 }
 
-device.platform = _.extend(device.platform, {
+device.platform = Object.assign(device.platform, {
     manufacturerName: 'Intel',
     manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
     platformVersion: '1.1.0',

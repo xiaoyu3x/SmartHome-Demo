@@ -1,6 +1,5 @@
 var device = require('iotivity-node')('server'),
     debuglog = require('util').debuglog('rgb_led'),
-    _ = require('lodash'),
     rgbLEDResource,
     sensorPin,
     sensorState = false,
@@ -170,7 +169,7 @@ function updateHandler(request) {
     setTimeout(notifyObservers, 200);
 }
 
-device.device = _.extend(device.device, {
+device.device = Object.assign(device.device, {
     name: 'Smart Home RGB LED'
 });
 
@@ -178,7 +177,7 @@ function handleError(error) {
     debuglog('Failed to send response with error: ', error);
 }
 
-device.platform = _.extend(device.platform, {
+device.platform = Object.assign(device.platform, {
     manufacturerName: 'Intel',
     manufactureDate: new Date('Fri Oct 30 10:04:17 EEST 2015'),
     platformVersion: '1.1.0',
