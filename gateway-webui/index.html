@@ -64,7 +64,7 @@
             var listOBJ = {};
             var spinningBoxFan = false, boxFan = null; icarus = null;
             var gasSmokeAlarmOn = false, motionSensorOn = false;
-            var solarPanelOn = false;
+            var solarPanelOn = false, solarPanelOpen = true, solarPanelStart = 0;
             var black = new THREE.Color( 0x000000 )
 
             /* Kind of a hack function to find all objects matching a given node
@@ -115,13 +115,10 @@
                 }
             }
 
-            var solarPanelOpen = true, solarPanelStart = 0, solarPanel = null;
+            var solarPanel = null;
             window['icarus_click'] = function(intersection) {
-                listOBJ['solarPanel'].sendUpdate();
+                listOBJ['solar'].sendUpdate();
                 solarPanelOpen = !solarPanelOpen;
-                /*controlLine('Solar panel clicked');*/
-                controlLine('Solar panel is ' + (solarPanelOn ? 'ON' : 'OFF'));
-                controlLine('solar on: ' + solarPanelOn);
                 if (solarPanelStart == 0) {
                     solarPanelStart = Date.now();
                 } else {
@@ -619,7 +616,7 @@
         <script src="objVisibility.js"></script>
         <script src="fan.js"></script>
         <script src="motionSensor.js"></script>
-        <script src="icarus.js"></script>
+        <script src="solar.js"></script>
 
         <script src="gasSensor.js"></script>
         <script src="ceilingFan.js"></script>
