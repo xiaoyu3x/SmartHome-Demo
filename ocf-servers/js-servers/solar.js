@@ -6,8 +6,10 @@ var device = require('iotivity-node')('server'),
     resourceTypeName = 'oic.r.solar',
     resourceInterfaceName = '/a/solar',
     tiltPercentage = 0,
-    lcd1 = "Solar Connected!!",
-    lcd2 = "IOT Tracker";
+    lcd1 = 'Solar Connected!!',
+    lcd2 = '',
+    simulationTimerId = null, noObservers = false, simulationMode = false, updatePos = 0,
+    solarProperties = {};
 
 // Require the MRAA library
 var mraa = '';
@@ -35,7 +37,7 @@ function resetLCDScreen() {
     lcdPin.setCursor(0, 0);
     lcdPin.write('Solar');
     lcdPin.setCursor(1, 0);
-    lcdPin.write('IOT Tracker');
+    lcdPin.write('');
 }
 
 // Setup solar panel.
@@ -60,10 +62,10 @@ function map(x, in_min, in_max, out_min, out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// This function parce the incoming Resource properties
-// and change the sensor state.
-function updateProperties(properties) {
-    tiltPercentage = properties.tiltPercentage;
+function updateSolarPanel(tiltPos, locationInfo, percentage) {
+    if (tiltPos)
+        tiltPercentage = tiltPos;
+
     if (!mraa)
         return;
 
@@ -74,16 +76,77 @@ function updateProperties(properties) {
     if (!lcd)
         return;
 
-    if (properties.lcd1) {
-        lcd1 = properties.lcd1;
+    if (locationInfo) {
+        lcd1 = locationInfo;
         lcdPin.setCursor(0, 0);
         lcdPin.write(lcd1);
     }
 
-    if (properties.lcd2) {
-        lcd2 = properties.lcd2;
+    if (percentage) {
+        lcd2 = percentage;
         lcdPin.setCursor(1, 0);
-        lcdPin.write(properties.lcd2);
+        lcdPin.write(lcd2);
+    }
+}
+
+// Start the solar panel simulation mode.
+function startSimulation(properties) {
+    // Update tiltPercentage
+    if (solarProperties.tiltPercentage <= 0) {
+        solarProperties.lcd1.setHours(8);
+        updatePos = 0.5;
+    } else if (solarProperties.tiltPercentage >= 100) {
+        solarProperties.tiltPercentage = 100;
+        updatePos = -0.5;
+    }
+    solarProperties.tiltPercentage = solarProperties.tiltPercentage + updatePos;
+
+    // Update LCD's first row with time and location.
+    solarProperties.lcd1.setTime(solarProperties.lcd1.getTime() + 4*60*1000);
+    var demoTime = solarProperties.lcd1.toTimeString().split(' ')[0];
+    var locationInfo = demoTime + " " + solarProperties.locationInfo;
+
+    // Update LCD's second row with tilt percentage.
+    var percentage = Math.round(solarProperties.tiltPercentage).toFixed(1) + "%  ";
+
+    updateSolarPanel(solarProperties.tiltPercentage, locationInfo, percentage);
+    if (!noObservers)
+        notifyObservers();
+
+    simulationTimerId = setTimeout(startSimulation, 1000);
+}
+
+// This function parses the incoming resource properties
+// and change the solar panel position.
+function updateProperties(properties) {
+    var tilt = properties.tiltPercentage;
+    simulationMode = properties.simulationMode;
+
+    // Cancel simulation mode before we parse the incoming request.
+    if (simulationTimerId) {
+        clearTimeout(simulationTimerId);
+        simulationTimerId = null;
+    }
+
+    if (simulationMode) {
+        if (isNaN(tilt))
+            solarProperties.tiltPercentage = 0;
+        else
+            solarProperties.tiltPercentage = tilt;
+
+        solarProperties.lcd1 = new Date();
+        var locationInfo;
+        if (properties.lcd2)
+           locationInfo = properties.lcd2.split(' ')[1];
+
+        if (locationInfo && typeof locationInfo === 'string')
+            solarProperties.locationInfo = locationInfo;
+        else
+            solarProperties.locationInfo = "Europe/Helsinki"
+
+        startSimulation();
+    } else {
+        updateSolarPanel(tilt, properties.lcd1, properties.lcd2);
     }
 }
 
@@ -96,7 +159,8 @@ function getProperties() {
         id: 'solar',
         tiltPercentage: tiltPercentage,
         lcd1: lcd1,
-        lcd2: lcd2
+        lcd2: lcd2,
+        simulationMode: simulationMode
     };
 
     debuglog('Send the response. tiltPercentage: ', tiltPercentage);
@@ -132,6 +196,7 @@ function notifyObservers(request) {
 // Event handlers for the registered resource.
 function observeHandler(request) {
     processObserve();
+    noObservers = false;
     request.sendResponse(solarResource).catch(handleError);
     setTimeout(notifyObservers, 200);
 }
@@ -201,6 +266,10 @@ device.enablePresence().then(
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
     debuglog('Delete Solar Resource.');
+
+    // Stop moving solar panel before we tear down the resource.
+    if (simulationTimerId)
+        clearTimeout(simulationTimerId);
 
     // Reset LCD screen.
     resetLCDScreen();

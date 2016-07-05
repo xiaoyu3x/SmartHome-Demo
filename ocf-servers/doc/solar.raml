@@ -17,6 +17,7 @@ traits:
     The tiltPercentage is the value used to moves the actuators.
     The lcd1 is the time information to print on the LCD first row.
     The lcd2 is the tilt percentage to print on the LCD second row.
+    simulationMode is a boolean that controls the solar panel simulation.
   displayName: Solar Panel Controller
   is: [ interface ] # valid for all methods
 
@@ -32,9 +33,10 @@ traits:
               {
                 "rt": "oic.r.solar",
                 "id": "unique_example_id",
-                "tiltPercentage": 9.95
-                "lcd1": "08:26:00 Europe/Dublin"
-                "lcd2": "10.0%"
+                "tiltPercentage": 9.95,
+                "lcd1": "08:26:00 Europe/Dublin",
+                "lcd2": "10.0%",
+                "simulationMode": false
               }
 
   post:
@@ -46,9 +48,10 @@ traits:
         example: |
           {
             "id": "unique_example_id",
-            "tiltPercentage": 9.95
-            "lcd1": "08:26:00 Europe/Dublin"
-            "lcd2": "10.0%"
+            "tiltPercentage": 9.95,
+            "lcd1": "08:26:00 Europe/Dublin",
+            "lcd2": "10.0%",
+            "simulationMode": true
           }
     responses:
       200:
@@ -59,7 +62,8 @@ traits:
               {
                 "rt": "oic.r.solar",
                 "id": "unique_example_id",
-                "tiltPercentage": 9.95
-                "lcd1": "08:26:00 Europe/Dublin"
-                "lcd2": "10.0%"
+                "tiltPercentage": 9.95,
+                "lcd1": "08:26:00 Europe/Dublin",
+                "lcd2": "10.0%",
+                "simulationMode": true
               }

@@ -17,6 +17,10 @@
         "lcd2": {
           "type": "string",
           "description": "Tilt percentage to print on the LCD second row"
+        },
+        "simulationMode": {
+          "type": "boolean",
+          "description": "Indicates whether the solar panel simulation mode is on/off"
         }
       }
     }
