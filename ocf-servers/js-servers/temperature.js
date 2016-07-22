@@ -159,33 +159,28 @@ function observeHandler(request) {
 }
 
 function retrieveHandler(request) {
-    var ret = true;
-    var error = {};
-    // TODO: Enable this when we have queryParameter enabled in JS bindings.
-    /*if (request.res.queryParameter.units && !(request.res.queryParameter.units in units)) {
-        ret = false;
+    if (request.queryOptions.units) {
+        if (!(request.queryOptions.units in units)) {
+            // Format the error properties.
+            var error = {
+                id: 'temperature',
+                units: request.queryOptions.units
+            };
 
-        // Format the error properties.
-        error = {
-            id: 'temperature',
-            units: units.C
-        };
+            request.sendError(error);
+            return;
+        }
+
+        temperatureResource.properties = getProperties(request.queryOptions.units);
     } else {
-        temperatureResource.properties = getProperties(request.res.queryParameter.units);
+        temperatureResource.properties = getProperties(units.C);
     }
 
-    if (!ret) {
-        request.sendError(error);
-        return;
-    }*/
-
-    temperatureResource.properties = getProperties(units.C);
     request.sendResponse(temperatureResource).catch(handleError);
 }
 
 function updateHandler(request) {
-    var ret = true;
-    ret = updateProperties(request.res);
+    var ret = updateProperties(request.res);
 
     if (!ret) {
         // Format the error properties.
