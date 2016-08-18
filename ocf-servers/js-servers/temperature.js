@@ -200,7 +200,9 @@ function updateHandler(request) {
 }
 
 device.device = Object.assign(device.device, {
-    name: 'Smart Home Temperature Sensor'
+    name: 'Smart Home Temperature Sensor',
+    coreSpecVersion: "1.0.0",
+    dataModels: [ "v1.1.0-20160519" ]
 });
 
 function handleError(error) {
