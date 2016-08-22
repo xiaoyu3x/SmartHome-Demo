@@ -104,7 +104,9 @@ function retrieveHandler(request) {
 }
 
 device.device = Object.assign(device.device, {
-    name: 'Smart Home Illuminance Sensor'
+    name: 'Smart Home Illuminance Sensor',
+    coreSpecVersion: "1.0.0",
+    dataModels: [ "v1.1.0-20160519" ]
 });
 
 function handleError(error) {

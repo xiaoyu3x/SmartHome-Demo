@@ -119,7 +119,9 @@ function retrieveHandler(request) {
 }
 
 device.device = Object.assign(device.device, {
-    name: 'Smart Home Button Toggle Sensor'
+    name: 'Smart Home Button Toggle Sensor',
+    coreSpecVersion: "1.0.0",
+    dataModels: [ "v1.1.0-20160519" ]
 });
 
 function handleError(error) {

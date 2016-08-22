@@ -206,7 +206,7 @@ function retrieveHandler(request) {
     request.sendResponse(solarResource).catch(handleError);
 }
 
-function updateHandler(request) {
+function changeHandler(request) {
     updateProperties(request.res);
 
     solarResource.properties = getProperties();
@@ -215,7 +215,9 @@ function updateHandler(request) {
 }
 
 device.device = Object.assign(device.device, {
-    name: 'Smart Home Solar'
+    name: 'Smart Home Solar',
+    coreSpecVersion: "1.0.0",
+    dataModels: [ "v1.1.0-20160519" ]
 });
 
 function handleError(error) {
@@ -253,7 +255,7 @@ device.enablePresence().then(
                 // Add event handlers for each supported request type
                 device.addEventListener('observerequest', observeHandler);
                 device.addEventListener('retrieverequest', retrieveHandler);
-                device.addEventListener('updaterequest', updateHandler);
+                device.addEventListener('changerequest', changeHandler);
             },
             function(error) {
                 debuglog('register() resource failed with: ', error);
@@ -277,7 +279,7 @@ process.on('SIGINT', function() {
     // Remove event listeners
     device.removeEventListener('observerequest', observeHandler);
     device.removeEventListener('retrieverequest', retrieveHandler);
-    device.removeEventListener('updaterequest', updateHandler);
+    device.removeEventListener('changerequest', changeHandler);
 
     // Unregister resource.
     device.unregister(solarResource).then(
