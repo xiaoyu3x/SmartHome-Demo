@@ -1,35 +1,25 @@
-var WebSocketServer = require('websocket').server;
-var http = require('http')
-    , debuglog = require('util').debuglog('first_server')
-    , express = require('express')
-    , app = express();
+var device = require('iotivity-node')('client'),
+    debuglog = require('util').debuglog('first_server'),
+    express = require('express'),
+    fs = require('fs'),
+    http = require('http'),
+    rules = require('./gateway-webui/rules_engine'),
+    webSocketServer = require('websocket').server,
+    connectionList = {},
+    notifyObserversTimeoutId,
+    resourcesList = {},
+    webComponents = {},
+    serverPort = 8080;
 
+var app = express();
 app.use(express.static(__dirname + '/gateway-webui'));
 
-var fs = require('fs');
-var vm = require('vm');
-var includeInThisContext = function(path) {
-    var code = fs.readFileSync(path);
-    vm.runInThisContext(code, path);
-}.bind(this);
-
-var rules = require('./gateway-webui/rules_engine');
-
-var fs = require('fs');
 debuglog(__dirname + "/data.json");
-
-var server = http.createServer(app);
 var jsonRulesConfig = fs.readFileSync(__dirname + "/data.json", "utf8");
 debuglog(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
-//var server = http.createServer(function(request, response) {
-//    debuglog((new Date()) + ' Received request for ' + request.url);
-//    response.writeHead(404);
-//    response.end();
-//});
-
-var serverPort = 8080;
+var server = http.createServer(app);
 // systemd socket activation support
 if (process.env.LISTEN_FDS) {
     // The first passed file descriptor is fd 3
@@ -39,7 +29,7 @@ if (process.env.LISTEN_FDS) {
 
 server.listen(serverPort);
 
-wsServer = new WebSocketServer({
+wsServer = new webSocketServer({
     httpServer: server,
     // You should not use autoAcceptConnections for production
     // applications, as it defeats all standard cross-origin protection
@@ -49,16 +39,14 @@ wsServer = new WebSocketServer({
     autoAcceptConnections: false
 });
 
-var connectionList = {};
-
 function originIsAllowed(origin) {
     // put logic here to detect whether the specified origin is allowed.
     return true;
 }
 
-function parceInComingRequest(message, connection) {
+function parseInComingRequest(message, connection) {
      if (message.Event == "update") {
-         update(message.Type, message.att);
+         updateProperties(message.Type, message.att);
      }
 }
 
@@ -102,7 +90,7 @@ wsServer.on('request', function(request) {
           if (message.type === 'utf8') {
               debuglog('Received Message: ' + message.utf8Data);
 
-              parceInComingRequest(JSON.parse(message.utf8Data), connection);
+              parseInComingRequest(JSON.parse(message.utf8Data), connection);
           }
       });
       connection.on('close', function(reasonCode, description) {
@@ -114,14 +102,11 @@ wsServer.on('request', function(request) {
 });
 
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
-var resourcesList = {},
-    devicesList = {},
-    TAG = "NodeServer";
 
-function update(Type, values)
+function updateProperties(Type, values)
 {
-    if (Type in WebCompoints) {
-        resourceId = WebCompoints[Type];
+    if (Type in webComponents) {
+        resourceId = webComponents[Type];
         resource = resourcesList[resourceId];
         if (!resource)
             return;
@@ -136,15 +121,13 @@ function update(Type, values)
     }
 }
 
-var WebCompoints = {};
 //when a server seends data to gatway
-
 function obsReqCB(payload, resourceId) {
     var eventType;
     if ("id" in payload) {
-        if (!(payload.id in WebCompoints)) {
+        if (!(payload.id in webComponents)) {
             eventType = 'add';
-            WebCompoints[payload.id] = resourceId;
+            webComponents[payload.id] = resourceId;
          } else {
             eventType = 'update';
          }
@@ -156,12 +139,7 @@ function obsReqCB(payload, resourceId) {
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Start iotivity and set up the processing loop
-var notifyObserversTimeoutId,
-    resourcehanlde,
-    device = require('iotivity-node')("client");
-
-function SensorObserving(event) {
+function observeResource(event) {
     debuglog('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
 
     if ('properties' in event.resource) {
@@ -176,7 +154,7 @@ function deleteResource(event) {
 
     var resource = resourcesList[id];
     if (resource) {
-        resource.removeEventListener("change", SensorObserving);
+        resource.removeEventListener("change", observeResource);
         delete resourcesList[id];
     }
 }
@@ -192,7 +170,7 @@ device.addEventListener('resourcefound', function(event) {
         resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path] = event.resource;
 
         // Start observing the resource.
-        event.resource.addEventListener("change", SensorObserving);
+        event.resource.addEventListener("change", observeResource);
 
         // Start observing the resource deletion.
         event.resource.addEventListener("delete", deleteResource);
@@ -212,6 +190,7 @@ function discoverResources() {
     notifyObserversTimeoutId = setTimeout(discoverResources, 5000);
 }
 
+// Start iotivity and set up the processing loop
 device.subscribe().then(
     function() {
        discoverResources();
@@ -234,7 +213,7 @@ process.on('SIGINT', function() {
   for (var index in resourcesList) {
      var resource = resourcesList[index];
      if (resource) {
-         resource.removeEventListener("change", SensorObserving);
+         resource.removeEventListener("change", observeResource);
          resource.removeEventListener("delete", deleteResource);
      }
   }
