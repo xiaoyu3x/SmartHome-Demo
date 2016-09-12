@@ -1,0 +1,24 @@
+{
+    "gasSensor":{
+        "add":{
+        },
+        "update":[
+            {
+                "name":"value",
+                "condition":"new_value === true",
+                "actions":[
+                    { "Type": "boxFan", "att": { "value": true }, "Event": "update" }
+                ]
+            },
+            {
+                "name":"value",
+                "condition": "new_value === false",
+                "actions":[
+                    { "Type": "boxFan", "att": { "value": false }, "Event": "update" }
+                ]
+            }
+        ],
+        "remove":{
+        }
+    }
+}

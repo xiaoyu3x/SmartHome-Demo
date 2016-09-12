@@ -3,7 +3,7 @@ var device = require('iotivity-node')('client'),
     express = require('express'),
     fs = require('fs'),
     http = require('http'),
-    rules = require('./gateway-webui/rules_engine'),
+    rules = require('./rules-engine/rules_engine'),
     webSocketServer = require('websocket').server,
     connectionList = {},
     notifyObserversTimeoutId,
@@ -14,8 +14,8 @@ var device = require('iotivity-node')('client'),
 var app = express();
 app.use(express.static(__dirname + '/gateway-webui'));
 
-debuglog(__dirname + "/data.json");
-var jsonRulesConfig = fs.readFileSync(__dirname + "/data.json", "utf8");
+debuglog(__dirname + "/rules-engine/rules.json");
+var jsonRulesConfig = fs.readFileSync(__dirname + "/rules-engine/rules.json", "utf8");
 debuglog(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
@@ -60,14 +60,18 @@ function updateWebClients(msg, eventType) {
     outmesg_list.push(outmesg);
 
     debuglog(JSON.stringify(outmesg_list));
-    //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
-    //debuglog(newEvents);
+    var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
+    if (newEvents) {
+        var actions = JSON.parse(newEvents);
+        for (var action in actions) {
+            parceInComingRequest(actions[action]);
+        }
+    }
 
     for (var key in connectionList) {
         debuglog(key);
         var connection = connectionList[key];
         connection.sendUTF(JSON.stringify(outmesg_list));
-        //connection.sendUTF();
     }
 }
 

@@ -14,8 +14,6 @@ function addGasSensor(sensor){
 	}
 } 
 
-//TODO: gas sensor animation
-
 function updateGasSensor(sensor){
 	console.log("Updating Gas Sensor: "+ JSON.stringify(sensor));
 	if ('value' in sensor['att']) {
@@ -25,9 +23,6 @@ function updateGasSensor(sensor){
 		            object.visible = true;
 		        });
 		    });
-		    if(!spinningBoxFan){
-		    	sendUpdateFan();
-			}
 		} else {
 		    findObjectsById('smoke_red_button').forEach(function(item) {
 		        item.traverse(function (object) {
