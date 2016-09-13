@@ -42,7 +42,8 @@ Python dependencies can be installed using `pip install <python_module>` (you ne
 3. Start the services: 
 
 ```
-    node first_server.js
+    node first_server.js # Start server with 3D UI and rules engine.
+    node first_server.js -r # Start server with rules engine only.
     python icarus/python/icarus_tracker.py --location <location>
 ```
 

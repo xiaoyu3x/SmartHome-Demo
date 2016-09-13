@@ -1,47 +1,112 @@
 var device = require('iotivity-node')('client'),
     debuglog = require('util').debuglog('first_server'),
-    express = require('express'),
     fs = require('fs'),
-    http = require('http'),
     rules = require('./rules-engine/rules_engine'),
-    webSocketServer = require('websocket').server,
+    args = process.argv.slice(2),
     connectionList = {},
     notifyObserversTimeoutId,
     resourcesList = {},
-    webComponents = {},
-    serverPort = 8080;
+    webComponents = {};
 
-var app = express();
-app.use(express.static(__dirname + '/gateway-webui'));
+var options = {
+    help: false,
+    rulesEngineMode: false
+};
+
+const usage = "Usage: node uart_sample.js [options]\n" +
+    "options: \n" +
+    "  -h, --help \n" +
+    "  -r, --rulesengine\n";
+
+for (var i = 0; i < args.length; i++) {
+    var arg = args[i];
+
+    switch (arg) {
+        case "-h":
+        case "--help":
+            options.help = true;
+            break;
+        case "-r":
+        case "--rulesengine":
+            options.rulesEngineMode = true;
+            break;
+        default:
+            break;
+    }
+}
+
+if (options.help == true) {
+    console.log(usage);
+    process.exit(0);
+}
 
 debuglog(__dirname + "/rules-engine/rules.json");
 var jsonRulesConfig = fs.readFileSync(__dirname + "/rules-engine/rules.json", "utf8");
 debuglog(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
-var server = http.createServer(app);
-// systemd socket activation support
-if (process.env.LISTEN_FDS) {
-    // The first passed file descriptor is fd 3
-    var fdStart = 3;
-    serverPort = {fd: fdStart};
-}
+// Start webserver for 3D UI only in default mode.
+if (!options.rulesEngineMode) {
+    var express = require('express'),
+        http = require('http'),
+        webSocketServer = require('websocket').server,
+        serverPort = 8080,
+        app = express();
+        server = http.createServer(app);
 
-server.listen(serverPort);
+    app.use(express.static(__dirname + '/gateway-webui'));
 
-wsServer = new webSocketServer({
-    httpServer: server,
-    // You should not use autoAcceptConnections for production
-    // applications, as it defeats all standard cross-origin protection
-    // facilities built into the protocol and the browser.  You should
-    // *always* verify the connection's origin and decide whether or not
-    // to accept it.
-    autoAcceptConnections: false
-});
+    // systemd socket activation support
+    if (process.env.LISTEN_FDS) {
+        // The first passed file descriptor is fd 3
+        var fdStart = 3;
+        serverPort = {fd: fdStart};
+    }
+    server.listen(serverPort);
 
-function originIsAllowed(origin) {
-    // put logic here to detect whether the specified origin is allowed.
-    return true;
+    wsServer = new webSocketServer({
+        httpServer: server,
+        // You should not use autoAcceptConnections for production
+        // applications, as it defeats all standard cross-origin protection
+        // facilities built into the protocol and the browser.  You should
+        // *always* verify the connection's origin and decide whether or not
+        // to accept it.
+       autoAcceptConnections: false
+    });
+
+    function originIsAllowed(origin) {
+        // put logic here to detect whether the specified origin is allowed.
+        return true;
+    }
+
+    wsServer.on('request', function(request) {
+        if (!originIsAllowed(request.origin)) {
+            // Make sure we only accept requests from an allowed origin
+            request.reject();
+            debuglog((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+            return;
+        }
+
+        var connection = request.accept('echo-protocol', request.origin);
+
+        debuglog((new Date()) + ' Connection accepted.');
+
+        if (!(connection.remoteAddress in connectionList)) {
+            connectionList[connection.remoteAddress] = connection;
+
+            connection.on('message', function(message) {
+                if (message.type === 'utf8') {
+                    debuglog('Received Message: ' + message.utf8Data);
+
+                    parseInComingRequest(JSON.parse(message.utf8Data), connection);
+                }
+            });
+            connection.on('close', function(reasonCode, description) {
+                debuglog((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+                delete connectionList[connection.remoteAddress];
+            });
+        }
+    });
 }
 
 function parseInComingRequest(message, connection) {
@@ -64,46 +129,18 @@ function updateWebClients(msg, eventType) {
     if (newEvents) {
         var actions = JSON.parse(newEvents);
         for (var action in actions) {
-            parceInComingRequest(actions[action]);
+            parseInComingRequest(actions[action]);
         }
     }
 
-    for (var key in connectionList) {
-        debuglog(key);
-        var connection = connectionList[key];
-        connection.sendUTF(JSON.stringify(outmesg_list));
+    if (!options.rulesEngineMode) {
+        for (var key in connectionList) {
+            debuglog(key);
+            var connection = connectionList[key];
+            connection.sendUTF(JSON.stringify(outmesg_list));
+        }
     }
 }
-
-wsServer.on('request', function(request) {
-    if (!originIsAllowed(request.origin)) {
-      // Make sure we only accept requests from an allowed origin
-      request.reject();
-      debuglog((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-      return;
-    }
-
-    var connection = request.accept('echo-protocol', request.origin);
-
-    debuglog((new Date()) + ' Connection accepted.');
-
-    if (!(connection.remoteAddress in connectionList)) {
-      connectionList[connection.remoteAddress] = connection;
-
-      connection.on('message', function(message) {
-          if (message.type === 'utf8') {
-              debuglog('Received Message: ' + message.utf8Data);
-
-              parseInComingRequest(JSON.parse(message.utf8Data), connection);
-          }
-      });
-      connection.on('close', function(reasonCode, description) {
-          debuglog((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-          delete connectionList[connection.remoteAddress];
-      });
-
-    }
-});
 
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
 
