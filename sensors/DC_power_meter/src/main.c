@@ -63,7 +63,7 @@ int read_reg16(struct device *i2c_dev, uint8_t reg_addr,
 	msgs[0].len = 1;
 	msgs[0].flags = I2C_MSG_WRITE;
 
-	/* Read from device. RESTART as neededm and STOP after this. */
+	/* Read from device. RESTART as needed and STOP after this. */
 	msgs[1].buf = data;
 	msgs[1].len = 2;
 	msgs[1].flags = I2C_MSG_READ | I2C_MSG_RESTART | I2C_MSG_STOP;
@@ -87,7 +87,7 @@ int write_reg16(struct device *i2c_dev, uint8_t reg_addr,
 	msgs[0].len = 1;
 	msgs[0].flags = I2C_MSG_WRITE;
 
-	/* Read from device. RESTART as neededm and STOP after this. */
+	/* Read from device. RESTART as needed and STOP after this. */
 	msgs[1].buf = data;
 	msgs[1].len = 2;
 	msgs[1].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
