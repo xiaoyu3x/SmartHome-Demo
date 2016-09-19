@@ -1,64 +1,117 @@
-var WebSocketServer = require('websocket').server;
-var http = require('http')
-    , debuglog = require('util').debuglog('first_server')
-    , express = require('express')
-    , app = express();
+var device = require('iotivity-node')('client'),
+    debuglog = require('util').debuglog('first_server'),
+    fs = require('fs'),
+    rules = require('./rules-engine/rules_engine'),
+    args = process.argv.slice(2),
+    connectionList = {},
+    notifyObserversTimeoutId,
+    resourcesList = {},
+    webComponents = {};
 
-app.use(express.static(__dirname + '/gateway-webui'));
+var options = {
+    help: false,
+    rulesEngineMode: false
+};
 
-var fs = require('fs');
-var vm = require('vm');
-var includeInThisContext = function(path) {
-    var code = fs.readFileSync(path);
-    vm.runInThisContext(code, path);
-}.bind(this);
+const usage = "Usage: node uart_sample.js [options]\n" +
+    "options: \n" +
+    "  -h, --help \n" +
+    "  -r, --rulesengine\n";
 
-var rules = require('./gateway-webui/rules_engine');
+for (var i = 0; i < args.length; i++) {
+    var arg = args[i];
 
-var fs = require('fs');
-debuglog(__dirname + "/data.json");
+    switch (arg) {
+        case "-h":
+        case "--help":
+            options.help = true;
+            break;
+        case "-r":
+        case "--rulesengine":
+            options.rulesEngineMode = true;
+            break;
+        default:
+            break;
+    }
+}
 
-var server = http.createServer(app);
-var jsonRulesConfig = fs.readFileSync(__dirname + "/data.json", "utf8");
+if (options.help == true) {
+    console.log(usage);
+    process.exit(0);
+}
+
+debuglog(__dirname + "/rules-engine/rules.json");
+var jsonRulesConfig = fs.readFileSync(__dirname + "/rules-engine/rules.json", "utf8");
 debuglog(jsonRulesConfig);
 rulesEngine = rules.createRulesEngine(jsonRulesConfig);
 
-//var server = http.createServer(function(request, response) {
-//    debuglog((new Date()) + ' Received request for ' + request.url);
-//    response.writeHead(404);
-//    response.end();
-//});
+// Start webserver for 3D UI only in default mode.
+if (!options.rulesEngineMode) {
+    var express = require('express'),
+        http = require('http'),
+        webSocketServer = require('websocket').server,
+        serverPort = 8080,
+        app = express();
+        server = http.createServer(app);
 
-var serverPort = 8080;
-// systemd socket activation support
-if (process.env.LISTEN_FDS) {
-    // The first passed file descriptor is fd 3
-    var fdStart = 3;
-    serverPort = {fd: fdStart};
+    app.use(express.static(__dirname + '/gateway-webui'));
+
+    // systemd socket activation support
+    if (process.env.LISTEN_FDS) {
+        // The first passed file descriptor is fd 3
+        var fdStart = 3;
+        serverPort = {fd: fdStart};
+    }
+    server.listen(serverPort);
+
+    wsServer = new webSocketServer({
+        httpServer: server,
+        // You should not use autoAcceptConnections for production
+        // applications, as it defeats all standard cross-origin protection
+        // facilities built into the protocol and the browser.  You should
+        // *always* verify the connection's origin and decide whether or not
+        // to accept it.
+       autoAcceptConnections: false
+    });
+
+    function originIsAllowed(origin) {
+        // put logic here to detect whether the specified origin is allowed.
+        return true;
+    }
+
+    wsServer.on('request', function(request) {
+        if (!originIsAllowed(request.origin)) {
+            // Make sure we only accept requests from an allowed origin
+            request.reject();
+            debuglog((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+            return;
+        }
+
+        var connection = request.accept('echo-protocol', request.origin);
+
+        debuglog((new Date()) + ' Connection accepted.');
+
+        if (!(connection.remoteAddress in connectionList)) {
+            connectionList[connection.remoteAddress] = connection;
+
+            connection.on('message', function(message) {
+                if (message.type === 'utf8') {
+                    debuglog('Received Message: ' + message.utf8Data);
+
+                    parseInComingRequest(JSON.parse(message.utf8Data), connection);
+                }
+            });
+            connection.on('close', function(reasonCode, description) {
+                debuglog((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+                delete connectionList[connection.remoteAddress];
+            });
+        }
+    });
 }
 
-server.listen(serverPort);
-
-wsServer = new WebSocketServer({
-    httpServer: server,
-    // You should not use autoAcceptConnections for production
-    // applications, as it defeats all standard cross-origin protection
-    // facilities built into the protocol and the browser.  You should
-    // *always* verify the connection's origin and decide whether or not
-    // to accept it.
-    autoAcceptConnections: false
-});
-
-var connectionList = {};
-
-function originIsAllowed(origin) {
-    // put logic here to detect whether the specified origin is allowed.
-    return true;
-}
-
-function parceInComingRequest(message, connection) {
+function parseInComingRequest(message, connection) {
      if (message.Event == "update") {
-         update(message.Type, message.att);
+         updateProperties(message.Type, message.att);
      }
 }
 
@@ -72,56 +125,29 @@ function updateWebClients(msg, eventType) {
     outmesg_list.push(outmesg);
 
     debuglog(JSON.stringify(outmesg_list));
-    //var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
-    //debuglog(newEvents);
+    var newEvents = rulesEngine.processEvents(JSON.stringify(outmesg_list));
+    if (newEvents) {
+        var actions = JSON.parse(newEvents);
+        for (var action in actions) {
+            parseInComingRequest(actions[action]);
+        }
+    }
 
-    for (var key in connectionList) {
-        debuglog(key);
-        var connection = connectionList[key];
-        connection.sendUTF(JSON.stringify(outmesg_list));
-        //connection.sendUTF();
+    if (!options.rulesEngineMode) {
+        for (var key in connectionList) {
+            debuglog(key);
+            var connection = connectionList[key];
+            connection.sendUTF(JSON.stringify(outmesg_list));
+        }
     }
 }
 
-wsServer.on('request', function(request) {
-    if (!originIsAllowed(request.origin)) {
-      // Make sure we only accept requests from an allowed origin
-      request.reject();
-      debuglog((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-      return;
-    }
-
-    var connection = request.accept('echo-protocol', request.origin);
-
-    debuglog((new Date()) + ' Connection accepted.');
-
-    if (!(connection.remoteAddress in connectionList)) {
-      connectionList[connection.remoteAddress] = connection;
-
-      connection.on('message', function(message) {
-          if (message.type === 'utf8') {
-              debuglog('Received Message: ' + message.utf8Data);
-
-              parceInComingRequest(JSON.parse(message.utf8Data), connection);
-          }
-      });
-      connection.on('close', function(reasonCode, description) {
-          debuglog((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-          delete connectionList[connection.remoteAddress];
-      });
-
-    }
-});
-
 //------------------------------------------------------------------------------------------------IOT-------------------------------------------------------
-var resourcesList = {},
-    devicesList = {},
-    TAG = "NodeServer";
 
-function update(Type, values)
+function updateProperties(Type, values)
 {
-    if (Type in WebCompoints) {
-        resourceId = WebCompoints[Type];
+    if (Type in webComponents) {
+        resourceId = webComponents[Type];
         resource = resourcesList[resourceId];
         if (!resource)
             return;
@@ -136,15 +162,13 @@ function update(Type, values)
     }
 }
 
-var WebCompoints = {};
 //when a server seends data to gatway
-
 function obsReqCB(payload, resourceId) {
     var eventType;
     if ("id" in payload) {
-        if (!(payload.id in WebCompoints)) {
+        if (!(payload.id in webComponents)) {
             eventType = 'add';
-            WebCompoints[payload.id] = resourceId;
+            webComponents[payload.id] = resourceId;
          } else {
             eventType = 'update';
          }
@@ -156,12 +180,7 @@ function obsReqCB(payload, resourceId) {
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Start iotivity and set up the processing loop
-var notifyObserversTimeoutId,
-    resourcehanlde,
-    device = require('iotivity-node')("client");
-
-function SensorObserving(event) {
+function observeResource(event) {
     debuglog('Resource changed:' + JSON.stringify(event.resource.properties, null, 4));
 
     if ('properties' in event.resource) {
@@ -176,7 +195,7 @@ function deleteResource(event) {
 
     var resource = resourcesList[id];
     if (resource) {
-        resource.removeEventListener("change", SensorObserving);
+        resource.removeEventListener("change", observeResource);
         delete resourcesList[id];
     }
 }
@@ -192,7 +211,7 @@ device.addEventListener('resourcefound', function(event) {
         resourcesList[event.resource.id.deviceId + ":" + event.resource.id.path] = event.resource;
 
         // Start observing the resource.
-        event.resource.addEventListener("change", SensorObserving);
+        event.resource.addEventListener("change", observeResource);
 
         // Start observing the resource deletion.
         event.resource.addEventListener("delete", deleteResource);
@@ -212,6 +231,7 @@ function discoverResources() {
     notifyObserversTimeoutId = setTimeout(discoverResources, 5000);
 }
 
+// Start iotivity and set up the processing loop
 device.subscribe().then(
     function() {
        discoverResources();
@@ -234,7 +254,7 @@ process.on('SIGINT', function() {
   for (var index in resourcesList) {
      var resource = resourcesList[index];
      if (resource) {
-         resource.removeEventListener("change", SensorObserving);
+         resource.removeEventListener("change", observeResource);
          resource.removeEventListener("delete", deleteResource);
      }
   }

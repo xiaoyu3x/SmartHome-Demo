@@ -14,43 +14,21 @@ function addMotionSensor(sensor){
 	}
 } 
 	
-	//TODO: animateMotionSensor akin to
-	//spinningBoxFan = sensor['W_att']['on_off'];
-
-
-
-//sending a message to change the RGB LED colour
-function updateRGBLED(colour){
-    console.log("Sending RGB LED update");
-
-    var payload = {
-        Event:'update',
-        Type:'rgbled',
-        att:{rgbValue: colour}
-    };
-
-    socket.send(JSON.stringify(payload));
-}
-
 //Motion sensor physically changed status --> change model animation
 function recieveUpdate(sensor){
 	//animate iff sensor is on
 	if ('value' in sensor['att']) {
 
 		if (!sensor['att']['value']) {
-			updateRGBLED("0,0,255"); // // Turn LED blue
 			findObjectsById('motion_sensor_red_button').forEach(function(item) {
 			        item.traverse(function (object) {
-			            //object.setRGB(0,77,0);
 			             object.visible = false;
 			    });
 			});
 		}
 		else {
-			updateRGBLED("255,0,0"); // Turn LED red
 			findObjectsById('motion_sensor_red_button').forEach(function(item) {
 			        item.traverse(function (object) {
-			            //object.setRGB(0,77,0);
 			             object.visible = true;
 			        });
 			});
@@ -61,25 +39,8 @@ function recieveUpdate(sensor){
 //sending a message to change fan repr -> server
 function UpdateToServer(){
 	console.log("Sending motion sensor update");
-    
-
-    //onUpdate(test_payload); //commentout
-    //socket.send(JSON.stringify(test_payload));
-
 } 
 
-
-/*function updateMotionSensor(sensor){
-	console.log("Updating motion sensor: "+ JSON.stringify(sensor));
-
-	    var test_payload = {
-        Event:'update',
-        Type:'motionSensor',
-        att:{on_off: motionSensorOn, value: 42}
-    };
-    socket.send(JSON.stringify(test_payload));
-} 
-*/
 //make object invisible in webGL
 function motionSensorVisible (bool) {
 	//makeVisible('security-system_motion-detector', false)
