@@ -52,3 +52,6 @@ to Arduino 101 board:
     $ make pristine && make BOARD=arduino_101_sss_factory
     $ sudo dfu-util -a sensor_core -D outdir/zephyr.bin
 ```
+
+## Supported Zephyr versions:
+The code has been verified to work with Zephyr v1.4.0 and v1.5.0
