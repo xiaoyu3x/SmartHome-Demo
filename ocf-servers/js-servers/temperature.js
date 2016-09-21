@@ -159,7 +159,7 @@ function observeHandler(request) {
 }
 
 function retrieveHandler(request) {
-    if (request.queryOptions.units) {
+    if (request.queryOptions && request.queryOptions.units) {
         if (!(request.queryOptions.units in units)) {
             // Format the error properties.
             var error = {
