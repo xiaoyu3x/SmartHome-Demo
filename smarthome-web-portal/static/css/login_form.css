@@ -1,0 +1,52 @@
+html, body {
+    height: 100%;
+}
+body {
+    background-color: #eeeeee;
+    /*background-image: url('image/login/IoT_Demo_v3.png');*/
+    background-repeat: no-repeat;
+    background-size: 100% auto;
+}
+
+.mdl-textfield__label:after,
+.mdl-button--colored {
+background: #00bcd4 !important;
+}
+
+.mdl-textfield--floating-label.is-focused .mdl-textfield__label,
+.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
+  color: rgba(0,0,0,.26) !important;
+}
+
+.mdl-textfield {
+  width: 100% !important;
+}
+
+.space-holder {
+height: 20%;
+}
+
+#login-text {
+margin-left: 20px;
+text-align: left;
+}
+
+#login-action {
+margin-bottom: 20px;
+}
+
+#login-action > * {
+font-size: 12px;
+}
+
+#login-action a {
+background: #ffffff !important;
+color: #00bcd4;
+}
+
+#logo {
+    position:absolute;
+    top:50px;
+    right:80px;
+    width: 80px;
+}

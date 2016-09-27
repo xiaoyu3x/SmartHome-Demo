@@ -1,0 +1,16 @@
+---
+instances: 1
+timeout: 120
+buildpack: https://github.com/cloudfoundry/cf-buildpack-python.git
+applications:
+- name: smarthome-webportal
+  memory: 2048M
+  services:
+  - webportal-db
+- name: celery-worker
+  memory: 1024MB
+  command: celery -A CeleryTask.celeryapp worker -l info -B
+  no-route: true
+  services:
+  - webportal-mq
+  - webportal-db

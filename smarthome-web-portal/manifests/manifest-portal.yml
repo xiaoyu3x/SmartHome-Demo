@@ -1,0 +1,10 @@
+---
+instances: 1
+timeout: 120
+buildpack: https://github.com/cloudfoundry/buildpack-python.git
+applications:
+- name: smarthome-webportal
+  memory: 1024M
+  command: python initial_db.py && python SHProject.py
+  services:
+  - webportal-db

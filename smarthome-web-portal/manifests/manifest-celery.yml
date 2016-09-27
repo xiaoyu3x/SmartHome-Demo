@@ -1,0 +1,12 @@
+---
+instances: 1
+timeout: 120
+buildpack: https://github.com/cloudfoundry/buildpack-python.git
+applications:
+- name: celery-worker
+  memory: 2048MB
+  command: celery -A CeleryTask.tasks purge -f && python CeleryTask/tasks.py && celery -A CeleryTask.celeryapp worker -l info
+  no-route: true
+  services:
+  - webportal-mq
+  - webportal-db

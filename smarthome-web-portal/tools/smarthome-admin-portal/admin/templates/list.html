@@ -1,0 +1,78 @@
+{% extends 'index.html' %}
+
+{% block header %}
+    <script src="{{ url_for('static', filename='js/sh-list.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+        <section class="mdl-grid section--center">
+            {% for message in get_flashed_messages() %}
+                <script>
+                    var msg = '{{ message | safe }}';
+                    if(msg)
+                        createSnackbar(msg, 'Dismiss');
+                </script>
+            {% endfor %}
+{#            <div class="mdl-card mdl-cell mdl-shadow--2dp" style="left:12%; top: 12%; width: fit-content;">#}
+            <div class="mdl-cell mdl-cell--12-col">
+            <div class="mdl-card mdl-shadow--2dp mdl-cell--12-col">
+{#            <div class="mdl-card mdl-shadow--2dp" style="width: fit-content;">#}
+                <div class="mdl-card__title mdl-card--expand">
+                        <h4 style="margin-left: 4%">Gateways</h4>
+                        <hr>
+                </div>
+{#    <div class="mdl-grid demo-content">#}
+{#                <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="">#}
+                <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp" style="">
+                    <thead >
+                        <tr>
+                            <th style="width: 7%;">ID</th>
+                            <th style="width: 8%;" class="mdl-data-table__cell--non-numeric">Name</th>
+                            <th style="width: 20%;" class="mdl-data-table__cell--non-numeric">Url</th>
+                            <th style="width: 20%;" class="mdl-data-table__cell--non-numeric">Address</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th class="mdl-data-table__cell--non-numeric">Created At</th>
+                            <th style="width: 8%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for gw in gateways %}
+                        <tr>
+                            <td>{{ gw.id }}</td>
+                            <td class="mdl-data-table__cell--non-numeric">{{ gw.name }}</td>
+                            <td class="mdl-data-table__cell--non-numeric">{{ gw.url }}</td>
+{#                            {% if gw.address|length < 35 %}#}
+                            <td class="mdl-data-table__cell--non-numeric">{{ gw.address }}</td>
+{#                            {%  else %}#}
+{#                                {% set addr = gw.address %}#}
+{#                                <td class="mdl-data-table__cell--non-numeric"><span title="{{ addr }}">{{ addr[:20] }}</span></td>#}
+{#                            {% endif %}#}
+                            <td>{{ gw.latitude }}</td>
+                            <td>{{ gw.longitude }}</td>
+                            <td class="mdl-data-table__cell--non-numeric">{{ gw.created_at }}</td>
+                            <td class="mdl-data-table__cell--non-numeric" style="white-space: nowrap;">
+                                    <a class="mdl-navigation__link" href="/gateway/{{ gw.id }}" title="edit"><i class="mdl-color-text--blue-grey-400 material-icons">edit</i></a>
+                                    <form method="post" action="{{ url_for('delete_gw') }}" class="remove">
+                                        <input type="hidden" name="id" value="{{ gw.id }}">
+                                        <a class="mdl-navigation__link" href="" title="delete"><i class="mdl-color-text--blue-grey-400 material-icons" >delete</i></a>
+                                    </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                <div class="mdl-card__actions" style="margin-left: 2%;">
+                    <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" href="/gateway">NEW</a>
+                    <form method="post" action="{{ url_for('delete_gw') }}" class="remove">
+                        <input type="hidden" name="id" id="multi-delete">
+                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">DELETE</a>
+                    </form>
+                </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

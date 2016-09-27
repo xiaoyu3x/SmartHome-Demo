@@ -1,0 +1,9 @@
+---
+instances: 1
+timeout: 120
+buildpack: https://github.com/cloudfoundry/cf-buildpack-python.git
+applications:
+- name: smarthome-adminportal
+  memory: 512M
+  services:
+  - webportal-db
