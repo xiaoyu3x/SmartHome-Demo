@@ -1,0 +1,69 @@
+{% extends 'index.html' %}
+
+{% block header %}
+{#    <script src="{{ url_for('static', filename='js/sh-list.js') }}"></script>#}
+{% endblock %}
+
+{% block content %}
+        <section class="mdl-grid section--center">
+            {% for message in get_flashed_messages() %}
+                <script>
+                    var msg = '{{ message | safe }}';
+                    if(msg)
+                        createSnackbar(msg, 'Dismiss');
+                </script>
+            {% endfor %}
+{#            <div class="mdl-card mdl-cell mdl-shadow--2dp" style="left:12%; top: 12%; width: fit-content;">#}
+            <div class="mdl-cell mdl-cell--12-col">
+            <div class="mdl-card mdl-shadow--2dp mdl-cell--12-col">
+{#            <div class="mdl-card mdl-shadow--2dp" style="width: fit-content;">#}
+                <div class="mdl-card__title mdl-card--expand">
+                        <h4 style="margin-left: 4%">Users</h4>
+                        <hr>
+                </div>
+{#    <div class="mdl-grid demo-content">#}
+{#                <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="">#}
+                <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp" style="">
+                    <thead >
+                        <tr>
+                            <th style="width: 8%;">ID</th>
+                            <th style="width: 12%;" class="mdl-data-table__cell--non-numeric">User Name</th>
+                            <th style="width: 15%;" class="mdl-data-table__cell--non-numeric">Phone Number</th>
+                            <th style="width: 12%;" class="mdl-data-table__cell--non-numeric">Gateway Name</th>
+                            <th style="width: 25%;" class="mdl-data-table__cell--non-numeric">Gateway Url</th>
+                            <th class="mdl-data-table__cell--non-numeric">Created At</th>
+                            <th style="width: 10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td class="mdl-data-table__cell--non-numeric">{{ u.username }}</td>
+                            <td class="mdl-data-table__cell--non-numeric">{{ u.phone }}</td>
+{#                            {% if gw.address|length < 35 %}#}
+                            <td class="mdl-data-table__cell--non-numeric">{{ u.gateway.name }}</td>
+                            <td class="mdl-data-table__cell--non-numeric">{{ u.gateway.url }}</td>
+
+                            <td class="mdl-data-table__cell--non-numeric">{{ u.created_at }}</td>
+                            <td class="mdl-data-table__cell--non-numeric" style="white-space: nowrap;">
+                                    <a class="mdl-navigation__link" href="/user/{{ u.id }}" title="edit"><i class="mdl-color-text--blue-grey-400 material-icons">edit</i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                <div class="mdl-card__actions" style="margin-left: 2%;">
+{#                    <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" href="/gateway">NEW</a>#}
+{#                    <form method="post" action="{{ url_for('delete_gw') }}" class="remove">#}
+{#                        <input type="hidden" name="id" id="multi-delete">#}
+{#                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">DELETE</a>#}
+{#                    </form>#}
+                </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,71 @@
+{%  extends 'left.html' %}
+
+{% block header %}
+<script>
+        $("button").on("click", function() {
+                var form = $(this).closest('form');
+                if(form[0].checkValidity()) {
+                    form.find('input').each(function(i) {
+                        if($(this).val().length == 0 ) {
+                            return false;
+                        }
+                    });
+                }
+                return true;
+        });
+
+        $('form[action="/authenticate"] input').blur(function () {
+            if ($(this).is(":empty")) {
+                $(this).attr('required', true);
+            }
+        });
+</script>
+{% endblock %}
+
+{% block content %}
+    {% if username %}
+        <article style="text-align: center">
+          <header>
+            <h2 style="color: #757575">Welcome to the admin portal</h2>
+          </header>
+        </article>
+    {% else %}
+    <div class="mdl-grid" >
+       <div class="mdl-layout-spacer"></div>
+        <div class="mdl-card mdl-cell mdl-cell--4-col mdl-shadow--2dp" style="background: #ffffff;"/>
+              <div class="mdl-cell mdl-cell--9-col">
+                <div class="mdl-card__title mdl-card--expand">
+                  <h2>Welcome</h2>
+                </div>
+                <form action="/authenticate" method="POST">
+                  <div id="login-text" class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <label for="input_username" class="mdl-textfield__label">Username</label>
+                            <input type="text" name="username" pattern="[a-zA-Z0-9]*" class="mdl-textfield__input"
+                                   id="input_username" />
+                            <span class="mdl-textfield__error">Digits and letters only</span>
+                        </div>
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <label for="input_password" class="mdl-textfield__label">Password</label>
+                            <input type="password" name="password" pattern="[a-zA-Z0-9]*" class="mdl-textfield__input"
+                                   id="input_password" />
+                            <span class="mdl-textfield__error">Digits and letters only</span>
+                        </div>
+                        <div class="textfield__error" style="color:#de3226;">
+                            {% if info %}
+                                 <span id="warn" style="font-size:12px">{{ info }}</span>
+                                 <i class="material-icons md-18 right">warning</i>
+                            {% endif %}
+                        </div>
+                  </div>
+                  <div id="login-action" class="mdl-card__actions">
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
+                            style="color: #ffffff; " type="submit" >SIGN IN</button>
+                  </div>
+                </form>
+            </div>
+        </div>
+       <div class="mdl-layout-spacer"></div>
+    </div>
+    {% endif %}
+{% endblock %}

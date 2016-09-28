@@ -1,0 +1,356 @@
+{% extends "home_base.html" %}
+{% block head %}
+    <style>
+    .mdl-layout__header,
+    .mdl-layout__tab-bar,
+    .mdl-layout__tab-bar-button
+    {
+    	background-color: #263238
+    }
+
+    .mdl-tabs.is-upgraded .mdl-tabs__tab.is-active:after,
+    .mdl-layout.is-upgraded .mdl-layout__tab.is-active::after {
+    	background: #00bcd4
+    }
+
+    .mdl-progress .progressbar {
+       background-color: #263238;
+    }
+
+    .mdl-progress .bufferbar {
+        background-image:
+        linear-gradient(to right,rgba(255,255,255,.1),rgba(255,255,255,.1)),linear-gradient(to right,rgb(0,188,212),rgb(0,188,212));
+    }
+    </style>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9bBaFWuTJ0eh06pTB9kHYnSRHQmf1S7Q&callback=initMap&libraries=places"></script>
+    <script type="text/javascript" src="{{ static_url_prefix }}js/energy.js"></script>
+    <script type="text/javascript" src="{{ static_url_prefix }}js/google_map.js"></script>
+{% endblock %}
+{% block header %}
+    <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+        <!-- Title -->
+            <span class="mdl-layout-title">Energy Dashboard</span>
+            <img id ="logo" src="{{ static_url_prefix }}image/intel_logo.png"/>
+        </div>
+        <!-- Tabs -->
+        <div class="mdl-layout__tab-bar mdl-js-ripple-effect">
+            <a href="#byhouse" class="mdl-layout__tab is-active">Property</a>
+            <!--<a href="#neighbourhood" class="mdl-layout__tab">NEIGHBOURHOOD</a>-->
+            <!--<a href="#city" class="mdl-layout__tab">CITY</a>-->
+        </div>
+    </header>
+	  <div class="mdl-layout__drawer">
+	      <span class="mdl-layout-title">Smart Home</span>
+        <nav class="mdl-navigation">
+            <a class="mdl-navigation__link" href="/index">Home Dashboard</a>
+            <a class="mdl-navigation__link" href="/energy">Energy Dashboard</a>
+	      </nav>
+	  </div>
+{% endblock %}
+{% block main %}
+    <main class="mdl-layout__content">
+        <!-- Welcome-->
+        <div style="width: 100%; background: #ffffff">
+            <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="color: #424242">
+                <div class="mdl-cell mdl-cell--9-col">
+                    <h5 style="margin: 3% 0 5px 0;"><b>Welcome</b></h5>
+                    <h6 style="margin-top: 2px; margin-bottom: 3%">This view allows you to <b>view energy consumption for each household</b></h6>
+                </div>
+                <div class="mdl-cell mdl-cell--3-col" style="text-align: right">
+                    <div class="demo-card-date">
+                    </div>
+                    <div class="demo-card-time">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mdl-layout__tab-panel is-active" id="byhouse">
+            <section class="mdl-grid section--center">
+                <!-- google map -->
+                <div class="mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp">
+                    <div id="map"></div>
+                    <input id="searchTextField" class="search" type="search" placeholder="Search property or account number"></input>
+                </div>
+                <!-- Billing -->
+                <div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #f5f5f5;">
+                    <div id="billingTitle" class="mdl-card__title mdl-card--expand">
+                        <h6>Billing</h6>
+                        <div class="mdl-layout-spacer"></div>
+                        <div class="mdl-card__title mdl-card--expand">
+                            <div class="mdl-card__menu">
+                                <button id="demo-menu-top-right"
+                                    class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                                    <i class="material-icons">more_vert</i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="demo-tabs mdl-tabs mdl-js-tabs">
+                        <div class="mdl-tabs__tab-bar">
+                            <a href="#tab1" class="mdl-tabs__tab is-active">CURRENT BILL</a>
+                            <a href="#tab2" class="mdl-tabs__tab">PAST WEEK</a>
+                            <a href="#tab3" class="mdl-tabs__tab">PAST MONTH</a>
+                            <a href="#tab4" class="mdl-tabs__tab">PAST YEAR</a>
+                        </div>
+                        <div class="mdl-tabs__panel is-active" id="tab1">
+                            <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                                <div id="tab1_today_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab1_current_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab1_items_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="todayChargeBilling_today" class="mdl-cell mdl-cell--4-col">
+                                    <h1 style="font-size: 40px">$0.77</h1>
+                                </div>
+
+                                <div id="todayChargeBilling_current" class="mdl-cell mdl-cell--4-col">
+                                    <h1 style="font-size: 40px">$18.79</h1>
+                                </div>
+                                <div class="mdl-cell mdl-cell--4-col">
+                                    <span class="typo-styles__name">Highest consumption</span>
+                                    <h1 style="font-size: 20px;">HEATER</h1>
+                                </div>
+                                <div id="todayEnergyBilling_today" class="mdl-cell mdl-cell--4-col">
+                                <h6>5.11 KWH</h6>
+                                <span class="typo-styles__name"></span>
+                                </div>
+                                <div id="todayEnergyBilling_current" class="mdl-cell mdl-cell--4-col">
+                                <h6>125.26 KWH</h6>
+                                <span class="typo-styles__name"></span>
+                                </div>
+                                <div id="todayEnergyBilling_heater" class="mdl-cell mdl-cell--4-col">
+                                <h6>2.04 KWH</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mdl-tabs__panel" id="tab2">
+                            <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                                <div id="tab2_today_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab2_current_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab2_items_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="weekChargeBilling_week" class="mdl-cell mdl-cell--4-col">
+                                    <h1 style="font-size: 40px">$5.30</h1>
+                                </div>
+                                <div id="monthChargeBilling_week" class="mdl-cell mdl-cell--4-col">
+                                    <h1 style="font-size: 40px">$23.49</h1>
+                                </div>
+                                <div class="mdl-cell mdl-cell--4-col">
+                                    <span class="typo-styles__name">Highest consumption</span>
+                                    <h1 style="font-size: 20px;">HEATER</h1>
+                                </div>
+                                <div id="weekEnergyBilling_week" class="mdl-cell mdl-cell--4-col">
+                                    <h6>35.33 KWH</h6>
+                                </div>
+                                <div id="monthEnergyBilling_week" class="mdl-cell mdl-cell--4-col">
+                                    <h6>156.58 KWH</h6>
+                                </div>
+                                <div id="yearEnergyBilling_week" class="mdl-cell mdl-cell--4-col">
+                                    <h6>14.13 KWH</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mdl-tabs__panel" id="tab3">
+                            <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                                <div id="tab3_today_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab3_current_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab3_items_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="weekChargeBilling_month" class="mdl-cell mdl-cell--4-col">
+                                    <h1 style="font-size: 40px">$5.30</h1>
+                                </div>
+                                <div id="monthChargeBilling_month" class="mdl-cell mdl-cell--4-col">
+                                    <h1 style="font-size: 40px">$23.49</h1>
+                                </div>
+                                <div class="mdl-cell mdl-cell--4-col">
+                                    <span class="typo-styles__name">Highest consumption</span>
+                                    <h1 style="font-size: 20px;">HEATER</h1>
+                                </div>
+                                <div id="weekEnergyBilling_month" class="mdl-cell mdl-cell--4-col">
+                                    <h6>35.33 KWH</h6>
+                                </div>
+                                <div id="monthEnergyBilling_month" class="mdl-cell mdl-cell--4-col">
+                                    <h6>156.58 KWH</h6>
+                                </div>
+                                <div id="yearEnergyBilling_month" class="mdl-cell mdl-cell--4-col">
+                                    <h6>62.63 KWH</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mdl-tabs__panel" id="tab4">
+                            <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                                <div id="tab4_today_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab4_current_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                <div id="tab4_items_container" class="mdl-cell mdl-cell--4-col" style="height: 180px;">
+                                </div>
+                                        <div id="weekChargeBilling_year" class="mdl-cell mdl-cell--4-col">
+                                            <h1 style="font-size: 40px">$5.30</h1>
+                                        </div>
+                                        <div id="monthChargeBilling_year" class="mdl-cell mdl-cell--4-col">
+                                            <h1 style="font-size: 40px">$23.49</h1>
+                                        </div>
+                                        <div id="yearChargeBilling_year" class="mdl-cell mdl-cell--4-col">
+                                            <h1 style="font-size: 40px">$189.43</h1>
+                        {#                                            <h1 style="font-size: 25px;font-weight: 300;">WASHING<br> MACHINE</h1>#}
+                                        </div>
+                                        <div id="weekEnergyBilling_year" class="mdl-cell mdl-cell--4-col">
+                                            <h6>35.33 KWH</h6>
+                                        </div>
+                                        <div id="monthEnergyBilling_year" class="mdl-cell mdl-cell--4-col">
+                                            <h6>156.58 KWH</h6>
+                                        </div>
+                                        <div id="yearEnergyBilling_year" class="mdl-cell mdl-cell--4-col">
+                                            <h6>1262.86 KWH</h6>
+                                        </div>
+                                  </div>
+                        </div>
+                    </div>
+                    <div class="mdl-card__actions mdl-card--border">
+                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                            Contact customer
+                        </a>
+                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">View account details</a>
+                    </div>
+                </div>
+                <!-- Solar -->
+                <div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #ffffff;">
+			              <div class="mdl-card__title mdl-card--expand">
+                        <h6>Solar energy</h6>
+                        <div class="mdl-layout-spacer"></div>
+                        <button id="demo-menu-top-right"
+                            class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                            <i class="material-icons">more_vert</i>
+                        </button>
+                    </div>
+                    <div class="demo-tabs mdl-tabs mdl-js-tabs">
+						<div class="mdl-tabs__tab-bar">
+                            <a href="#solar-tab1" class="mdl-tabs__tab is-active">PAST WEEK</a>
+                            <a href="#solar-tab2" class="mdl-tabs__tab">PAST MONTH</a>
+                            <a href="#solar-tab3" class="mdl-tabs__tab">PAST YEAR</a>
+						</div>
+                        <div class="mdl-tabs__panel is-active" id="solar-tab1">
+                                <div class="mdl-grid mdl-grid--no-spacing">
+                                    <div id="weekSumSolar" class=" mdl-cell mdl-cell--4-col" style="text-align:center;">
+                                <h1 style="padding: 0px 30px;">11.82</h1>
+                                </div>
+                                <div class=" mdl-cell mdl-cell--3-col" style="text-align:left;">
+                                    <h6 style="margin:50px 0px 0px 0px;font-size:13px;"><strong>KWH</strong></h6>
+                                    <h6 style="margin:0px;font-size:13px;">Created on Tuesday</h6>
+                                </div>
+                                <div class="mdl-cell mdl-cell--12-col" >
+                                    <div id="container" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                        </div>
+						<div class="mdl-tabs__panel" id="solar-tab2">
+                            <div class="mdl-grid mdl-grid--no-spacing">
+                                <div id="monthSumSolar" class=" mdl-cell mdl-cell--4-col" style="text-align:center;">
+                                    <h1 style="padding:0px 30px;">51.49</h1>
+                                </div>
+                                <div class=" mdl-cell mdl-cell--3-col" style="text-align:left;">
+                                    <h6 style="margin:50px 0px 0px 0px;font-size:13px;"><strong>KWH</strong></h6>
+                                    <h6 style="margin:0px;font-size:13px;">Created on January</h6>
+                                </div>
+                                <div class="mdl-cell mdl-cell--12-col" >
+                                    <div id="container_a" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                        </div>
+						<div class="mdl-tabs__panel" id="solar-tab3">
+                            <div class="mdl-grid mdl-grid--no-spacing">
+                                <div id="yearSumSolar" class=" mdl-cell mdl-cell--5-col" style="text-align:center;">
+                                    <h1 style="padding: 0px 30px;">1090.96</h1>
+                                </div>
+                                <div class=" mdl-cell mdl-cell--3-col" style="text-align:left;">
+                                    <h6 style="margin:50px 0px 0px 0px;font-size:13px;"><strong>KWH</strong></h6>
+                                    <h6 style="margin:0px;font-size:13px;">Created on 2015</h6>
+                                </div>
+                                <div class="mdl-cell mdl-cell--12-col" >
+                                    <div id="container_b" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+{#			              <div class="mdl-card__actions mdl-card--border">#}
+{#                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">#}
+{#                            Contact customer#}
+{#                        </a>#}
+{#                    </div>#}
+			          </div>
+                <!-- Grid -->
+                <div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #ffffff;">
+			        <div class="mdl-card__title mdl-card--expand">
+                        <h6>Grid energy</h6>
+                        <div class="mdl-layout-spacer"></div>
+                        <button id="demo-menu-top-right"
+                          class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                        <i class="material-icons">more_vert</i>
+                        </button>
+                    </div>
+                    <div class="demo-tabs mdl-tabs mdl-js-tabs">
+						<div class="mdl-tabs__tab-bar">
+                            <a href="#grid-tab1" class="mdl-tabs__tab is-active">PAST WEEK</a>
+                            <a href="#grid-tab2" class="mdl-tabs__tab">PAST MONTH</a>
+                            <a href="#grid-tab3" class="mdl-tabs__tab">PAST YEAR</a>
+                        </div>
+						<div class="mdl-tabs__panel is-active" id="grid-tab1">
+                            <div class="mdl-grid mdl-grid--no-spacing">
+                                <div id="weekSumGrid" class=" mdl-cell mdl-cell--4-col" style="text-align:center;">
+                                    <h1 style="padding: 0px 30px;">35.33</h1>
+                                </div>
+                                <div class=" mdl-cell mdl-cell--3-col" style="text-align:left;">
+                                    <h6 style="margin:50px 0px 0px 0px;font-size:13px;"><strong>KWH</strong></h6>
+                                    <h6 style="margin:0px;font-size:13px;">Consumed this week</h6>
+                                </div>
+                                <div class="mdl-cell mdl-cell--12-col" >
+                                    <div id="container1" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                        </div>
+						<div class="mdl-tabs__panel" id="grid-tab2">
+                            <div class="mdl-grid mdl-grid--no-spacing">
+                                <div id="monthSumGrid" class=" mdl-cell mdl-cell--4-col" style="text-align:center;">
+                                    <h1 style="padding: 0px 30px;">156.58</h1>
+                                </div>
+                                <div class=" mdl-cell mdl-cell--3-col" style="text-align:left;">
+                                    <h6 style="margin:50px 0px 0px 0px;font-size:13px;"><strong>KWH</strong></h6>
+                                    <h6 style="margin:0px;font-size:13px;">Consumed this month</h6>
+                                </div>
+                                <div class="mdl-cell mdl-cell--12-col" >
+                                    <div id="container1_a" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                        </div>
+						<div class="mdl-tabs__panel" id="grid-tab3">
+                            <div class="mdl-grid mdl-grid--no-spacing">
+                                <div id="yearSumGrid" class=" mdl-cell mdl-cell--5-col" style="text-align:center;">
+                                    <h1 style="padding: 0px 30px;">1262.86</h1>
+                                </div>
+                                <div class=" mdl-cell mdl-cell--3-col" style="text-align:left;">
+                                    <h6 style="margin:50px 0px 0px 0px;font-size:13px;"><strong>KWH</strong></h6>
+                                    <h6 style="margin:0px;font-size:13px;">Consumed this year</h6>
+                                </div>
+                                <div class="mdl-cell mdl-cell--12-col" >
+                                    <div id="container1_b" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+{#			              <div class="mdl-card__actions mdl-card--border">#}
+{#                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">#}
+{#                        Contact customer#}
+{#                      </a>#}
+{#                    </div>#}
+			          </div>
+            </section>
+        </div>
+    </main>
+{% endblock %}
