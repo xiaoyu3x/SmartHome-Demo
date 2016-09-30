@@ -62,8 +62,6 @@ RUN git clone --progress "https://$git_token@$git_url" /opt/SmartHome-Demo
 
 ADD web-portal.conf /etc/supervisor/conf.d/web-portal.conf
 
-# ADD initial_db.py /opt/smarthome-web-portal/initial_db.py
-
 WORKDIR /opt/SmartHome-Demo/smarthome-web-portal
 
 # install portal dependencies
@@ -82,7 +80,7 @@ ADD utils.py tools/smarthome-admin-portal/admin/utils.py
 ENV http_proxy ""
 ENV https_proxy ""
 
-ENV PYTHONPATH $PYTHONPATH:/opt/smarthome-web-portal
+ENV PYTHONPATH $PYTHONPATH:/opt/SmartHome-Demo/smarthome-web-portal
 
 # start supervisor
 CMD ["/usr/bin/supervisord", "-n"]
