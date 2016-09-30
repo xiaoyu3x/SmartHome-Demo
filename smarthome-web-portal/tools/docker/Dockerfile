@@ -10,7 +10,7 @@ ENV http_proxy ${http_proxy}
 
 ENV https_proxy ${https_proxy}
 
-ENV git_url "https://github.com/01org/SmartHome-Demo.git"
+ENV git_url "github.com/01org/SmartHome-Demo.git"
 
 RUN echo $https_proxy 
 
