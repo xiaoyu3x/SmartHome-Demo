@@ -29,14 +29,14 @@
                 "name":"value",
                 "condition":"new_value === true",
                 "actions":[
-                    { "Type": "rgbled", "att": { "rgbValue": "255,0,0" }, "Event": "update" }
+                    { "Type": "rgbled", "att": { "rgbValue": [255,0,0] }, "Event": "update" }
                 ]
             },
             {
                 "name":"value",
                 "condition": "new_value === false",
                 "actions":[
-                    { "Type": "rgbled", "att": { "rgbValue": "0,0,255" }, "Event": "update" }
+                    { "Type": "rgbled", "att": { "rgbValue": [0,0,255] }, "Event": "update" }
                 ]
             }
         ],

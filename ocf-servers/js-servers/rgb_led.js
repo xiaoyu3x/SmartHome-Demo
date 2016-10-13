@@ -5,8 +5,8 @@ var device = require('iotivity-node')('server'),
     sensorState = false,
     resourceTypeName = 'oic.r.colour.rgb',
     resourceInterfaceName = '/a/rgbled',
-    range = "0,255",
-    rgbValue = "0,0,0",
+    range = [0,255],
+    rgbValue = [0,0,0],
     clockPin,
     dataPin;
 
@@ -92,9 +92,8 @@ function setColourRGB(red, green, blue) {
 }
 
 function checkColour(colour) {
-    var range_temp = range.split(',');
-    var min = parseInt(range_temp[0]);
-    var max = parseInt(range_temp[1]);
+    var min = range[0];
+    var max = range[1];
 
     if (colour >= min && colour <= max)
         return true;
@@ -109,10 +108,9 @@ function updateProperties(properties) {
     if (!input || !mraa)
         return;
 
-    var rgb = input.split(',');
-    var r = parseInt(rgb[0]);
-    var g = parseInt(rgb[1]);
-    var b = parseInt(rgb[2]);
+    var r = parseInt(input[0]);
+    var g = parseInt(input[1]);
+    var b = parseInt(input[2]);
     if (!checkColour(r) || !checkColour(g) || !checkColour(b))
         return;
 
@@ -226,7 +224,7 @@ process.on('SIGINT', function() {
 
     // Turn off led before we tear down the resource.
     if (mraa) {
-        rgbValue = "0,0,0";
+        rgbValue = [0,0,0];
         setColourRGB(0, 0, 0);
     }
 
