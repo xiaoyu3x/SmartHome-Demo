@@ -61,6 +61,7 @@ RUN echo "https://$git_token@$git_url"
 RUN git clone --progress "https://$git_token@$git_url" /opt/SmartHome-Demo
 
 ADD web-portal.conf /etc/supervisor/conf.d/web-portal.conf
+ADD start-service.sh /opt/SmartHome-Demo/smarthome-web-portal/start-service.sh
 
 WORKDIR /opt/SmartHome-Demo/smarthome-web-portal
 
