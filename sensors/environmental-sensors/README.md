@@ -67,8 +67,18 @@ to Arduino 101 board:
     $ sudo dfu-util -a x86_app -D outdir/zephyr.bin
 ```
 
-## Data flow
-The sensor app uses standard BLE's ESS (Environmental Sensing Service) service and attributes to send data. It acts as a BLE peripheral device that any connected clients can have the data via "read" or "notify" methods. On Android or iOS devices with BLE support, BLE apps like nRF Connect can be used to communicate and receive sensor data. In the SmartHome-Demo system, an OCF resource is being constructed to connect, receive data from the sensor and share to other devices in the same network.
+## Data flow and usage
+The sensor app uses standard BLE's ESS (Environmental Sensing Service) service and attributes to send data. It acts as a BLE peripheral device advertising itself as a "Zephyr Environmental Sensor" that any client can scan, connect and have the data via "read" or "notify" methods. On Android or iOS devices with BLE support, BLE apps like nRF Connect can be used to communicate and receive sensor data. In the SmartHome-Demo system, a remote OCF resource server using BLE connects, receives data from the sensor and shares to other devices in the same network.
+
+The OCF resource server is implemented in "ocf-servers/js-servers/environmental_sensor.js". Use the following command to launch it:
+```
+    $ node <path>/environmental_sensor.js
+```
+
+Please note that it requires noble to run. noble can be installed by using following command in the SmartHome-Demo folder:
+```
+    $ npm install noble
+```
 
 ## Supported Zephyr versions:
 The code has been verified to work with Zephyr v1.4.0 and v1.5.0
