@@ -6,6 +6,7 @@ import logging
 import json
 from RestClient.api.IoTClient import IoTClient
 from utils.config import config
+from DB.api import sensor_type
 
 logger = logging.getLogger(__name__)
 
@@ -13,27 +14,28 @@ logger = logging.getLogger(__name__)
 class Sensor(object):
     _client = None
 
-    _object_map = {
-        '/a/pir': None,
-        '/a/gas': None,
-        '/a/fan': None,
-        '/a/solar': None,
-        '/a/illuminance': None,
-        '/a/led': None,
-        '/a/rgbled': None,
-        '/a/buzzer': None,
-        '/a/temperature': None,
-        '/a/button': None,
-        '/a/power': None
-    }
-
     def __init__(self, uuid, path, username):
         self.path = path
         self.id = uuid
         self.resp = None
+        self._object_map = Sensor.get_sensor_types_map()
         if self.path not in self._object_map.keys():
             raise Exception("Unsupported query path: {}. ". format(self.path))
         self.connect(username)
+
+    @staticmethod
+    def get_sensor_types_map():
+        types = sensor_type.get_all_types()
+        mapping = dict()
+        for typ_dict in types:
+            if typ_dict['type'] == 'motion':
+                pth = '/a/pir'
+            elif typ_dict['type'] == 'environment':
+                pth = '/a/env'
+            else:
+                pth = '/a/' + typ_dict['type']
+            mapping[pth] = int(typ_dict['id'])
+        return mapping
 
     def connect(self, username):
         """

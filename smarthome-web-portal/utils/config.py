@@ -7,8 +7,7 @@ import os
 import json
 import ConfigParser
 from util import get_full_path
-
-CONFIG_FILE_NAME = 'SHProject.conf'
+from utils.settings import CONFIG_FILE_NAME
 
 
 class SingletonMixin(object):

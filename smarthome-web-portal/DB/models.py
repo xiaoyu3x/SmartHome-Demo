@@ -5,7 +5,6 @@ Model definitions and its Mixins
 import datetime
 import json
 from sqlalchemy import *
-# from sqlalchemy import event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.dialects.mysql import DOUBLE
@@ -361,6 +360,31 @@ class Energy(Base, HelperMixin, DefaultMixin):
     def __repr__(self):
         return "<Energy(id='%s',uuid='%s',value='%s',gateway_id='%s',created_at='%s')>" % (
             str(self.id), self.uuid, str(self.value), str(self.gateway_id), str(self.created_at))
+
+
+class Environment(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'environment'
+
+    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    temperature = Column(FLOAT)
+    humidity = Column(FLOAT)
+    pressure = Column(FLOAT)
+    uv_index = Column(FLOAT)
+    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+
+    def __init__(self, uuid=None, temperature=None, humidity=None, pressure=None, uv_index=None, gateway_id=None):
+        self.temperature = temperature
+        self.humidity = humidity
+        self.pressure = pressure
+        self.uv_index = uv_index
+        self.uuid = uuid
+        self.gateway_id = gateway_id
+
+    def __repr__(self):
+        return "<Environment(id='%s',uuid='%s',temperature='%s',humidity='%s',pressure='%s',uvIndex='%s'," \
+               "gateway_id='%s',created_at='%s')>" % (str(self.id), self.uuid, str(self.temperature),
+                                                      str(self.humidity), str(self.pressure), str(self.uv_index),
+                                                      str(self.gateway_id), str(self.created_at))
 
 
 class EventLog(Base, HelperMixin, DefaultMixin):

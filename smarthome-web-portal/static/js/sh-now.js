@@ -346,41 +346,50 @@ $(function() {
 			</div>', bgcolor))
 
 		},
-		update_sensor_data: function(title, value) {
-			//var html = '';
-            var unit = '';
-            if(title == 'AMBIENT LIGHT')
-                unit = 'lm';
-            else if (title == 'CURRENT ENERGY CONSUMPTION')
-                unit = 'Watt';
-			//if(title == 'AMBIENT LIGHT')
+        update_sensor_data_without_unit: function(title, value) {
+		    this.update_data(title, value, '');
+        },
+        update_temperature_data: function(title, value, uuid) {
+            this.update_data(title, value, '', uuid);
+        },
+        update_sensor_data: function(title, value, unit) {
+            this.update_data(title, value, unit, '');
+        },
+		update_data: function(title, value, unit, uuid) {
+			var show_uuid = '';
+            if(uuid)
+                show_uuid = '<span class="mdl-card__subtitle-text" style="font-size: 70%">UUID: ' + uuid + '</span>';
 			var	html = String.format('<div class="sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
-                    <div class="mdl-card__title mdl-card--expand">\
+                    <div class="mdl-card__title" style="display: block">\
 			  	        <h6>{0}</h6>\
+			  	        {1}\
                     </div>\
                     <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
                         <div class="mdl-cell" style="text-align:left;width: auto;">\
-                            <h1>{1}</h1>\
+                            <h1>{2}</h1>\
                         </div>\
                         <div class="mdl-cell" style="display: flex; align-items: flex-end;">\
-								<h6 style="padding: 5px;">{2}</h6>\
+								<h6 style="padding: 5px;">{3}</h6>\
                         </div>\
                     </div>\
-                </div>',title, value, unit);
-			//else
-			//	html = String.format('<div class="sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
-             //       <div class="mdl-card__title mdl-card--expand">\
-			//  	        <h6>{0}</h6>\
-             //       </div>\
-             //       <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-             //           <div class="mdl-cell mdl-cell--10-col" style="text-align: left">\
-             //               <h1>{1}</h1>\
-             //           </div>\
-             //       </div>\
-             //   </div>', title, value);
+                </div>',title, show_uuid, value, unit);
 
 			$("#data-container").append(html);
 		},
+        get_temperature_in_timezone: function(value) {
+		    var house_temp = null;
+            var temp_unit = "°";
+            //console.log('index: ' + timezone.indexOf("America") + " tz: " + timezone);
+            if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
+                house_temp = convertToF(parseFloat(value), 1);
+                temp_unit += "F";
+            }
+            else {
+                house_temp = parseFloat(value).toFixed(1);
+                temp_unit += "C";
+            }
+            return house_temp.toString() + temp_unit;
+        },
 		update_portal: function() {
 			if(window.panel != 1) return;
             $.ajax({
@@ -418,7 +427,7 @@ $(function() {
                             default:
                                 console.error("Unknown alert sensor type: " + key);
                         }
-                        console.log("number of alert cards " + alert_card_number);
+                        // console.log("number of alert cards " + alert_card_number);
                         if(alert_card_number == 1)
                         {
                             $("#alert-status-title-quiet").hide();
@@ -444,27 +453,25 @@ $(function() {
                         switch (key) {
                             case 'temperature':
                                 //$.sh.now.update_sensor_data('HOUSE TEMPERATURE', convertToF(parseFloat(value)).toFixed(1).toString() + '°F');
-                                var house_temp = null;
-                                var temp_unit = "°";
-                                //console.log('index: ' + timezone.indexOf("America") + " tz: " + timezone);
-                                if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
-                                    house_temp = convertToF(parseFloat(value), 1);
-                                    temp_unit += "F";
-                                }
-                                else {
-                                    house_temp = parseFloat(value).toFixed(1);
-                                    temp_unit += "C";
-                                }
-								$.sh.now.update_sensor_data('HOUSE TEMPERATURE', house_temp.toString() + temp_unit);
+                                var values = JSON.parse(value);
+                                var house_temp = $.sh.now.get_temperature_in_timezone(values.temperature);
+								$.sh.now.update_temperature_data('HOUSE TEMPERATURE', house_temp, values.uuid);
                                 break;
                             case 'solar':
-                                $.sh.now.update_sensor_data('SOLAR PANEL TILT', value + '%');
+                                $.sh.now.update_sensor_data('SOLAR PANEL TILT', value, '%');
                                 break;
                             case 'illuminance':
-                                $.sh.now.update_sensor_data('AMBIENT LIGHT', value);
+                                $.sh.now.update_sensor_data('AMBIENT LIGHT', value, 'lm');
                                 break;
                             case 'power':
-                                $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', value/1000);
+                                $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', value/1000, 'Watt');
+                                break;
+                            case 'environment':
+                                var values = JSON.parse(value);
+                                $.sh.now.update_temperature_data('HOUSE TEMPERATURE', $.sh.now.get_temperature_in_timezone(values.temperature), values.uuid);
+                                $.sh.now.update_sensor_data_without_unit('HOUSE HUMIDITY', values.humidity + '%');
+                                $.sh.now.update_sensor_data('PRESSURE', values.pressure,'hPa');
+                                $.sh.now.update_sensor_data_without_unit('UV INDEX', values.uv_index);
                                 break;
                             default:
                                 console.error("Unknown sensor data type: " + key);

@@ -4,10 +4,11 @@ Module to provider util functions in all compass code
 """
 import datetime
 import logging
-from os.path import join, dirname
+from os.path import join
 import re
 import sys
 from pytz import timezone, all_timezones
+from utils.settings import PROJECT_ROOT
 
 
 def get_utc_now():
@@ -182,9 +183,6 @@ def dict_to_str(item):
     return ret_str
 
 
-PROJECT_ROOT = dirname(dirname(__file__))
-
-
 def get_full_path(*path):
     return join(PROJECT_ROOT, *path)
 
@@ -210,3 +208,5 @@ def get_class(kls):
         msg = 'Module "%s" does not define a "%s" attribute/class' % (
             m.__name__, comp)
         raise ImportError(msg)
+
+

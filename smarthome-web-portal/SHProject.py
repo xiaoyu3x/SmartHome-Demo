@@ -18,6 +18,7 @@ from utils.config import config
 from DB.api import resource, user, gateway
 from RestClient.sensor import Sensor
 from RestClient.api import ApiClient
+from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, UPDATE_GRP, TAP_ENV_VARS
 
 try:
     import pymysql
@@ -29,9 +30,6 @@ except ImportError:
 static_url_prefix = ''
 app = Flask(__name__, static_url_path='')
 
-"""random secret key"""
-KEY_SIZE = 32
-SECRET_KEY = os.urandom(KEY_SIZE)
 app.config['SECRET_KEY'] = SECRET_KEY
 
 logger = logging.getLogger(__name__)
@@ -116,12 +114,6 @@ def test_disconnect():
 def error_handler_chat(e):
     print e
 
-# Divide sensors into groups
-ALERT_GRP = ['motion', 'gas', 'buzzer', 'button']
-STATUS_GRP = ['led', 'fan', 'rgbled']
-DATA_GRP = ['temperature', 'solar', 'illuminance', 'power', 'energy']
-UPDATE_GRP = ['fan']  # controllable sensors
-
 
 def _get_sensor_data(token_dict):
     res = resource.list_resource(status=1, gateway_id=session['gateway_id'])
@@ -155,13 +147,19 @@ def _get_sensor_data(token_dict):
         elif typ in DATA_GRP:
             data = None
             if typ == 'temperature':
-                data = str(latest_data.get('temperature'))
+                key_words = {'temperature', 'uuid'}
+                val_dict = {k: str(latest_data[k]) for k in latest_data.keys() if k in key_words}
+                data = json.dumps(val_dict)
             elif typ == 'solar':
                 data = str(latest_data.get('tiltpercentage'))
             elif typ == 'illuminance':
                 data = str(latest_data.get('illuminance'))
             elif typ == 'power':
                 data = str(latest_data.get('value'))
+            elif typ == 'environment':
+                key_words = ['temperature', 'humidity', 'pressure', 'uv_index', 'uuid']
+                val_dict = {k: latest_data[k] for k in latest_data.keys() if k in key_words}
+                data = json.dumps(val_dict)
             ret['data'].update({typ: data})
     return ret
 
@@ -270,7 +268,6 @@ def _get_cf_instance_number():
     return str(num)
 
 
-ENV_VARS = ['INSTANCE_ID', 'VERSION', 'NAME', 'URIS']
 @app.route('/cf_instance')
 @login_required
 def get_instance():
@@ -286,7 +283,7 @@ def get_instance():
 
         env_dict = json.loads(env_str)
         for key in sorted(env_dict.keys()):
-            if str(key).upper() in ENV_VARS:
+            if str(key).upper() in TAP_ENV_VARS:
                 inst[key] = env_dict[key]
     return jsonify({'cf_instance': inst}), 201
 

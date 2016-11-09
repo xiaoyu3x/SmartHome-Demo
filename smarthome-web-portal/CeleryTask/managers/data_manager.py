@@ -8,7 +8,7 @@ from random import randint
 from RestClient import sensor as client
 from RestClient import Resource as rsclient
 from RestClient.api.IoTClient import IoTClient
-from DB.api import resource
+from DB.api import resource, sensor_type
 from CeleryTask.managers import base
 from RestClient.api.iotError import IoTConnectionError
 from utils.util import get_class
@@ -136,13 +136,25 @@ class FetchData(threading.Thread):
                     new_rgb = data.get('properties').get('rgbValue')
                     if new_rgb:
                         content.update({
-                            'rgbvalue': new_rgb,
-                            'range': data.get('properties').get('range'),
+                            'rgbvalue': str(new_rgb),
+                            'range': str(data.get('properties').get('range')),
                         })
                         # add_method(content)
                         print 'update rdbled: {}'.format(str(add_method(content)))
                     else:
                         print "Unable to get Rgbled status ."
+                elif sensor == 'environment':
+                    env_data = data.get('properties')
+                    if env_data:
+                        content.update({
+                            'temperature': env_data.get('temperature'),
+                            'pressure': env_data.get('pressure'),
+                            'humidity': env_data.get('humidity'),
+                            'uv_index': env_data.get('uvIndex'),
+                        })
+                        print 'update environment: {}'.format(str(add_method(content)))
+                    else:
+                        print "Unable to get Environment sensor status ."
                 else:
                     obj = status_method(gateway_id, uuid)
                     status = bool(obj.get('status')) if obj else None
@@ -165,24 +177,25 @@ class DataManager(base.BaseTask):
     RESOURCE_UPDATE_INTERVAL = 10
     MAX_THREAD = 20
 
-    _sensor_type_map = {
-        '/a/fan': 1,
-        '/a/pir': 2,
-        '/a/gas': 3,
-        '/a/solar': 4,
-        '/a/illuminance': 5,
-        '/a/buzzer': 6,
-        '/a/temperature': 7,
-        '/a/rgbled': 8,
-        '/a/led': 9,
-        '/a/button': 10,
-        '/a/power': 11,
-    }
-
     def __init__(self, username):
         self._client = None
+        self._sensor_type_map = DataManager.get_sensor_types_map()
         self.username = username
         self.gateway_id = IoTClient.get_gatewayid_by_user(username)
+
+    @staticmethod
+    def get_sensor_types_map():
+        types = sensor_type.get_all_types()
+        mapping = dict()
+        for typ_dict in types:
+            if typ_dict['type'] == 'motion':
+                pth = '/a/pir'
+            elif typ_dict['type'] == 'environment':
+                pth = '/a/env'
+            else:
+                pth = '/a/' + typ_dict['type']
+            mapping[pth] = int(typ_dict['id'])
+        return mapping
 
     def _connect(self):
         if not self._client:
