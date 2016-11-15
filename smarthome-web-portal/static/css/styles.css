@@ -280,12 +280,16 @@ body {
 
 .demo-card-event > .mdl-card__title {
     align-items: flex-start;
-    padding: 8%;
-    padding-bottom: 0.5%;
-  }
+    padding: 8% 8% 0% 8%;
+}
+
+.demo-card-event > .mdl-card__subtitle-text {
+    padding: 0% 8% 8% 8%;
+}
 
 .demo-card-event > .mdl-card__title > h6 {
     margin-top: 0;
+    margin-bottom: 0;
     font-weight: bold;
     color: #ed0042;
 }
@@ -412,13 +416,17 @@ body {
 
 .status-card {
     min-height: 15% !important;
-    height: 15% !important;
+    /*height: 15% !important;*/
     display: block !important;
 }
 
 .sensor-card > .mdl-card__supporting-text,
 .status-card > .mdl-card__supporting-text {
     margin-bottom:0px !important;
+}
+
+.status-card > .mdl-card__supporting-text > .mdl-cell--10-col {
+    padding: 8% 0 8% 2%;
 }
 
 .sensor-card > .mdl-card__supporting-text > .mdl-cell > h6,
@@ -432,7 +440,7 @@ body {
 
 .sensor-card {
     min-height: 25% !important;
-    height: 180px !important;
+    /*height: 180px !important;*/
 }
 
 .sensor-card  .mdl-card__title h6
@@ -450,14 +458,17 @@ body {
     color: #455a64;
 }
 
+.sensor-card > .mdl-card__supporting-text > .mdl-cell > h6{
+    /*margin-left: 3%;*/
+}
+
 .sensor-card  .mdl-card__title {
     margin-left: 3%;
 }
 
-.sensor-card  .mdl-card__supporting-text .mdl-cell h5 {
-    font-weight: 600;
-    margin-top: 5px;
-    margin-left:8px;
+.sensor-card > .mdl-card__supporting-text > .mdl-cell {
+    vertical-align: bottom;
+    display: inline-block;
 }
 
 .material-icons.green { color: #00e676; }
@@ -498,7 +509,6 @@ body {
     margin-top: 40%;
     font-size: 15px;
 }
-
 
 #map
 {

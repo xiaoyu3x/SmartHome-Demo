@@ -230,15 +230,17 @@ toggle_status = function(type, obj) {
     //console.log("checked: " + obj.checked);
     var status = obj.checked;
     var status_str = status?'on':'off';
-    console.log('The fan will turn ' + status_str + '.');
+    var uuid = obj.id;
+    console.log('The fan ' + uuid + 'will turn ' + status_str + '.');
     $.ajax({
         type: "PUT",
         url: "/update_sensor",
         contentType: 'application/json',
         data: JSON.stringify({
             "href": "/a/" + type,
+            "uuid": uuid,
             "data": {
-                "value": status
+                "value": status,
             }
         }),
         success: function(data) {

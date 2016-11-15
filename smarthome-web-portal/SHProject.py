@@ -115,8 +115,39 @@ def error_handler_chat(e):
     print e
 
 
+def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, result):
+    """
+    :param sensor_type: the sensor type
+    :param latest_data: the latest sensor data record
+    :param record_key: the keyword stores the data in table
+    :param result_key: the key name in the return data dict
+    :param result: the return data dict
+    :return:
+    """
+    val_dict = {
+        'uuid': latest_data.get('uuid'),
+    }
+    if isinstance(record_key, dict):
+        val_dict.update({
+            'value': record_key,
+        })
+    elif latest_data.get(record_key):
+        val_dict.update({
+            'value': str(latest_data.get(record_key)) if result_key == "data" else latest_data.get(record_key),
+        })
+    else:
+        val_dict.update({
+            'value': "",
+        })
+    if result[result_key].get(sensor_type) is None:
+        result[result_key].update({sensor_type: [val_dict, ]})
+    else:
+        result[result_key][sensor_type].append(val_dict)
+
+
 def _get_sensor_data(token_dict):
     res = resource.list_resource(status=1, gateway_id=session['gateway_id'])
+    default_token = util.format_datetime(util.get_utc_now() - datetime.timedelta(minutes=1))
     ret = {
         'alert': {},
         'status': {},
@@ -124,43 +155,46 @@ def _get_sensor_data(token_dict):
     }
     for sensor in res:
         typ = sensor.get('sensor_type').get('type')
+        uuid = sensor.get("uuid")
         if typ in ALERT_GRP:
-            latest_data = util.get_class("DB.api.{}.get_latest_alert_by_gateway_uuid".format(typ))(gateway_id=session['gateway_id'],
-                                                                                                   uuid=sensor.get('uuid'),
-                                                                                                   token=token_dict[typ+'-token'])
+            token = token_dict.get(uuid) if uuid in token_dict.keys() and token_dict.get(uuid) else default_token
+            latest_data = util.get_class("DB.api.{}.get_latest_alert_by_gateway_uuid"
+                                         .format(typ))(gateway_id=session['gateway_id'],
+                                                       uuid=uuid,
+                                                       token=token)
+            latest_data = latest_data if latest_data else {"uuid": uuid}
         elif typ == 'power':
             latest_data = util.get_class("DB.api.energy.get_latest_by_gateway_uuid")(gateway_id=session['gateway_id'],
-                                                                                     uuid=sensor.get('uuid'))
+                                                                                     uuid=uuid)
         else:
-            latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(gateway_id=session['gateway_id'],
-                                                                                             uuid=sensor.get('uuid'))
+            latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid"
+                                         .format(typ))(gateway_id=session['gateway_id'],
+                                                       uuid=uuid)
         if latest_data is None:
             continue
         if typ in ALERT_GRP:
-            ret['alert'].update({typ: latest_data.get('created_at')})
+            _compose_sensor_data(typ, latest_data, 'created_at', 'alert', ret)
         elif typ in STATUS_GRP:
             if typ == "rgbled":
                 val = True if latest_data.get('rgbvalue') == "255,0,0" else False
-                ret['status'].update({typ: val})
+                _compose_sensor_data(typ, latest_data, {'uuid': latest_data.get('uuid'), 'status': val}, 'status', ret)
             else:
-                ret['status'].update({typ: latest_data.get('status')})
+                _compose_sensor_data(typ, latest_data, 'status', 'status', ret)
         elif typ in DATA_GRP:
-            data = None
-            if typ == 'temperature':
-                key_words = {'temperature', 'uuid'}
-                val_dict = {k: str(latest_data[k]) for k in latest_data.keys() if k in key_words}
-                data = json.dumps(val_dict)
+            # extract values from the db query result
+            if typ in ['temperature', 'illuminance']:
+                key_words = [typ]
             elif typ == 'solar':
-                data = str(latest_data.get('tiltpercentage'))
-            elif typ == 'illuminance':
-                data = str(latest_data.get('illuminance'))
+                key_words = ['tiltpercentage']
             elif typ == 'power':
-                data = str(latest_data.get('value'))
+                key_words = ['value']
             elif typ == 'environment':
-                key_words = ['temperature', 'humidity', 'pressure', 'uv_index', 'uuid']
-                val_dict = {k: latest_data[k] for k in latest_data.keys() if k in key_words}
-                data = json.dumps(val_dict)
-            ret['data'].update({typ: data})
+                key_words = ['temperature', 'humidity', 'pressure', 'uv_index']
+
+            for key in key_words:
+                sensor_type = typ if typ != "environment" else key
+                _compose_sensor_data(sensor_type, latest_data, key, 'data', ret)
+
     return ret
 
 
@@ -170,13 +204,8 @@ def get_sensor():
     """
     Get sensor data by token
     """
-    token_dict = {}
-    default_token = util.format_datetime(util.get_utc_now() - datetime.timedelta(minutes=1))
-    # print default_token
-    tlist = [name+'-token' for name in ALERT_GRP]
-    for t in tlist:
-        token_dict.update({t: request.headers.get(t) if request.headers.get(t) else default_token})
-    # print str(token_dict)
+    token_header = request.headers.get('token')
+    token_dict = json.loads(token_header) if token_header else dict()
     ret = _get_sensor_data(token_dict)
     return jsonify({'data': ret}), 201
 
@@ -202,13 +231,12 @@ def update_sensor():
     content = request.get_json(silent=True)
     path = content.get('href')
     data = content.get('data')
+    uuid = content.get('uuid')
     path_list = ['/a/' + typ for typ in UPDATE_GRP]
     # validate put parameters
     if not content or not path or not data or path not in path_list:
         abort(400)
     print "content: " + str(content)
-    res = resource.get_resource(path=path, gateway_id=session.get('gateway_id'), status=True)
-    uuid = res.get('uuid')
     sensor = Sensor(uuid=uuid, path=path, username=session.get('username'))
     sts = sensor.update_status(data)
     return jsonify({'status': sts}), 201

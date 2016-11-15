@@ -23,10 +23,8 @@ $(function() {
     var timezone = null;
     var utc_offset = null;
 
-    var tb; //token for buzzer
-    var tg; //token for gas
-    var tc; //token for car
-    var tm; //token for motion
+    // the token dict to store the last alert time for motion, gas, buzz and button sensors
+    var alert_token = {};
 
     $.sh = {
         init: function() {
@@ -165,20 +163,32 @@ $(function() {
 			$("#status-container").html('');
 			$("#data-container").html('');
 		},
-		update_car_alert: function(time) {
-			if($(".mdl-card__title h6:contains('ELECTRIC CAR')").length > 0){
-				//find car card and update time
-				var txt = $(".section__circle-container > h4:contains('Charge')");
-				txt.text("Charge car in time for tomorrow " + time);
+		update_car_alert: function(data, show_uuid) {
+            var uuid_txt = "";
+            var time = "";
+            if(data.value.length == 0 ) return;
+            time = getTime(data.value, utc_offset, timezone);
+            if(show_uuid)
+                uuid_txt = 'UUID: ' + data.uuid;
+
+			if($("#" + data.uuid).length > 0){
+				//find the car card and update time
+                if(time) {
+                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Charge')");
+                    txt.text("Charge car in time for tomorrow " + time);
+                }
+                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                uid.text(uuid_txt);
 			}
 			else {
-					$("#alert-container").append(String.format('<div class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
+					$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand">\
 					<h6>ELECTRIC CAR</h6>\
 				  </div>\
+				  <span class="mdl-card__subtitle-text" style="font-size: 70%">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
 					<div class="section__circle-container mdl-cell mdl-cell--8-col">\
-						<h4>Charge car in time for tomorrow {0}</h4>\
+						<h4>Charge car in time for tomorrow {2}</h4>\
 					</div>\
 					<div class="section__text mdl-cell mdl-cell--4-col" style="text-align:center;">\
 						<img src="image/car-icon.png" style="width: 75%; height:75%;">\
@@ -190,7 +200,7 @@ $(function() {
 					</a>\
 					<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" style="color: #000">SET TIMER</a>\
 				  </div>\
-				</div>', time));
+				</div>', data.uuid, uuid_txt, time));
                 alert_card_number++;
 			}
 		},
@@ -204,20 +214,32 @@ $(function() {
                 $("#alert-status-title-alerts").hide();
             }
         },
-		update_motion_alert: function(time){
-			if($(".mdl-card__title h6:contains('MOTION SENSOR')").length > 0){
-				//find motion card and update time
-				var txt = $(".section__circle-container > h4:contains('Someone')");
-				txt.text("Someone is at the front door " + time);
+		update_motion_alert: function(data, show_uuid){
+            var uuid_txt = "";
+            var time = "";
+            if(data.value.length == 0 ) return;
+            time = getTime(data.value, utc_offset, timezone);
+            if(show_uuid)
+                uuid_txt = 'UUID: ' + data.uuid;
+
+			if($("#" + data.uuid).length > 0){
+				//find the motion card and update time
+                if(time) {
+                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Someone')");
+                    txt.text("Someone is at the front door " + time);
+                }
+                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                uid.text(uuid_txt);
 			}
 			else {
-					$("#alert-container").append(String.format('<div class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
+					$("#alert-container").append(String.format('<div id ="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand">\
 					<h6>MOTION SENSOR</h6>\
 				  </div>\
+				  <span class="mdl-card__subtitle-text" style="font-size: 70%">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
 					<div class="section__circle-container mdl-cell mdl-cell--8-col">\
-						<h4>Someone is at the front door {0}</h4>\
+						<h4>Someone is at the front door {2}</h4>\
 					</div>\
 					<div class="section__text mdl-cell mdl-cell--4-col" style="text-align:center;">\
 						<img src="image/motion-icon.png">\
@@ -228,26 +250,37 @@ $(function() {
 					  DISMISS\
 					</a>\
 				  </div>\
-				</div>', time));
+				</div>', data.uuid, uuid_txt, time));
                 alert_card_number++;
 			}
 		},
-		update_gas_alert: function(time){
-			if($(".mdl-card__title h6:contains('CO2 SENSOR')").length > 0)
-			{
-				//find gas card and update time
-				var txt = $(".section__circle-container > h4:contains('Gas')");
-				if(!txt) console.log("not find gas card" + txt.length);
-				txt.text("Gas detected in kitchen area " + time);
+		update_gas_alert: function(data, show_uuid){
+		    var uuid_txt = "";
+            var time = "";
+
+            if(data.value.length == 0 ) return;
+            time = getTime(data.value, utc_offset, timezone);
+            if(show_uuid)
+                uuid_txt = 'UUID: ' + data.uuid;
+
+			if($("#" + data.uuid).length > 0){
+				//find the gas card and update time
+                if(time) {
+                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Gas')");
+                    txt.text("Gas detected in kitchen area " + time);
+                }
+                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                uid.text(uuid_txt);
 			}
 			else {
-				$("#alert-container").append(String.format('<div class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp" style="background: #ed0042;">\
+				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp" style="background: #ed0042;">\
 				  <div class="mdl-card__title mdl-card--expand">\
 					<h6 style="color: #fff;">CO2 SENSOR</h6>\
 				  </div>\
+				  <span class="mdl-card__subtitle-text" style="font-size: 70%; color: #fff;">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
 					<div class="section__circle-container mdl-cell mdl-cell--8-col">\
-						<h4 style="color: #fff;">Gas detected in kitchen area {0}</h4>\
+						<h4 style="color: #fff;">Gas detected in kitchen area {2}</h4>\
 					</div>\
 					<div class="section__text mdl-cell mdl-cell--4-col" style="text-align:center;">\
 						<img src="image/gas-icon.png">\
@@ -259,25 +292,38 @@ $(function() {
 					</a>\
 					<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"  style="color: #fff;">EMERGENCY</a>\
 				  </div>\
-				</div>', time));
+				</div>', data.uuid, uuid_txt, time));
                 alert_card_number++;
 			}
 		},
-		update_buzzer_alert: function(time) {
-			if($(".mdl-card__title h6:contains('BUZZER')").length > 0)
-			{
-				//find gas card and update time
-				var txt = $(".section__circle-container > h1");
-				txt.text(time);
-			}
+		update_buzzer_alert: function(data, show_uuid) {
+		    var uuid_txt = "";
+            var time = "";
+
+            if(data.value.length == 0 ) return;
+            time = getTime(data.value, utc_offset, timezone);
+
+            if(show_uuid)
+                uuid_txt = 'UUID: ' + data.uuid;
+
+			if($("#" + data.uuid).length > 0) {
+                //find the buzzer card and update time
+                if(time) {
+                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h1");
+                    txt.text(time);
+                }
+                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                uid.text(uuid_txt);
+            }
 			else {
-				$("#alert-container").append(String.format('<div class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
+				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand">\
 					<h6>BUZZER</h6>\
 				  </div>\
+				  <span class="mdl-card__subtitle-text" style="font-size: 70%">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
 					<div class="section__circle-container mdl-cell mdl-cell--8-col">\
-						<h1>{0}</h1>\
+						<h1>{2}</h1>\
 					</div>\
 					<div class="section__text mdl-cell mdl-cell--4-col" style="text-align:center;">\
 						<img src="image/buzzer-icon.png">\
@@ -288,68 +334,83 @@ $(function() {
 					  DISMISS\
 					</a>\
 				  </div>\
-				</div>', time));
+				</div>', data.uuid, uuid_txt, time));
                 alert_card_number++;
 			}
 		},
-		update_status: function(type, status) {
-			var color = "gray"
-			if (status)
+		update_status: function(type, data, show_uuid) {
+			var color = "gray";
+            var uuid_cell = "";
+			if (data.value)
 				color = "green";
 
-			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-						<div class="mdl-cell mdl-cell--12-col" style="text-align: left">\
-							<h6>{0}</h6>\
-						</div>\
-					  <div class="mdl-card__menu">\
-						  <i class="material-icons {1}">done</i>\
-					  </div>\
-				  </div>\
-				</div>', type, color))
-		},
-		update_fan_status: function(status) {
-			var is_checked = "";
-			if(status)
-				is_checked = "checked";
+            if(show_uuid)
+                uuid_cell = '<div class="mdl-cell mdl-cell--10-col" style="font-size: 0.6vw; color: grey;" >UUID: ' + data.uuid + '</div>';
 
 			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-						<div class="mdl-cell mdl-cell--12-col" style="text-align: left">\
+						<div class="mdl-cell mdl-cell--2-col" style="text-align: left">\
+							<h6>{0}</h6>\
+						</div>\
+						{1}\
+					  <div class="mdl-card__menu">\
+						  <i class="material-icons {2}">done</i>\
+					  </div>\
+				  </div>\
+				</div>', type, uuid_cell, color))
+		},
+		update_fan_status: function(data, show_uuid) {
+			var is_checked = "";
+            var uuid_cell = "";
+			if(data.value)
+				is_checked = "checked";
+
+            if(show_uuid)
+                uuid_cell = '<div class="mdl-cell mdl-cell--10-col" style="font-size: 0.6vw; color: grey;" >UUID: ' + data.uuid + '</div>';
+
+			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
+				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
+						<div class="mdl-cell mdl-cell--2-col" style="text-align: left">\
 							<h6>FAN</h6>\
 						</div>\
+						{0}\
 					  <div class="mdl-card__menu">\
-						  <label title="switch on/off" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="switch-2">\
-      						<input type="checkbox" id="switch-2" class="mdl-switch__input" {0} onclick="return toggle_status(\'fan\', this);">\
+						  <label title="switch on/off" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="{2}">\
+      						<input type="checkbox" id="{2}" class="mdl-switch__input" {1} onclick="return toggle_status(\'fan\', this);">\
       						<span class="mdl-switch__label"></span>\
     					  </label>\
 					  </div>\
 				  </div>\
-				</div>', is_checked));
+				</div>', uuid_cell, is_checked, data.uuid));
             // Expand all new MDL elements
             componentHandler.upgradeDom();
 		},
-		update_rgb_status: function(status) {
+		update_rgb_status: function(data, show_uuid) {
 			var bgcolor = "bg-blue";
-			if(status)
+            var uuid_cell = "";
+			if(data.value)
 				bgcolor = "bg-red";
+
+            if(show_uuid)
+                uuid_cell = '<div class="mdl-cell mdl-cell--9-col" style="font-size: 0.6vw; color: grey;" >UUID: ' + data.uuid + '</div>';
 
 			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
 			  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-					<div class="mdl-cell mdl-cell--12-col" style="text-align: left">\
+					<div class="mdl-cell mdl-cell--3-col" style="text-align: left">\
 						<h6>RGB LED</h6>\
 					</div>\
+					{1}\
 				  <div class="mdl-card__menu">\
 					  <i class="material-icons {0}">lightbulb_outline</i>\
 				  </div>\
 			  </div>\
-			</div>', bgcolor))
+			</div>', bgcolor, uuid_cell))
 
 		},
         update_sensor_data_without_unit: function(title, value) {
 		    this.update_data(title, value, '');
         },
-        update_temperature_data: function(title, value, uuid) {
+        update_multiply_sensors_without_unit: function(title, value, uuid) {
             this.update_data(title, value, '', uuid);
         },
         update_sensor_data: function(title, value, unit) {
@@ -365,11 +426,11 @@ $(function() {
 			  	        {1}\
                     </div>\
                     <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-                        <div class="mdl-cell" style="text-align:left;width: auto;">\
-                            <h1>{2}</h1>\
+                        <div class="mdl-cell" style="text-align:left; width: auto;">\
+                            <h1 style="font-size: 3.8vw;">{2}</h1>\
                         </div>\
-                        <div class="mdl-cell" style="display: flex; align-items: flex-end;">\
-								<h6 style="padding: 5px;">{3}</h6>\
+                        <div class="mdl-cell" style="display: flex; align-items: center;">\
+								<h6 style="font-size: 0.8vw;">{3}</h6>\
                         </div>\
                     </div>\
                 </div>',title, show_uuid, value, unit);
@@ -397,32 +458,49 @@ $(function() {
                 url: "/get_sensor",
                 dataType: 'json',
                 headers: {
-                    'buzzer-token': tb,
-                    'motion-token': tm,
-                    'button-token':tc,
-                    'gas-token': tg,
+                    "token": JSON.stringify(alert_token),
                 },
                 success: function(data){
                     console.log(data);
                     var sensors = data.data;
                     $.sh.now.clear_data();
-                    $.each(sensors['alert'], function (key, value) {
+                    $.each(sensors['alert'], function (key, value_list) {
                         switch (key) {
                             case 'buzzer':
-                                $.sh.now.update_buzzer_alert(getTime(value, utc_offset, timezone));
-                                tb = value;
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_buzzer_alert(data, show_uuid);
+                                    alert_token[data.uuid] = data.value;
+                                });
                                 break;
                             case 'motion':
-                                $.sh.now.update_motion_alert(getTime(value, utc_offset, timezone));
-                                tm = value;
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_motion_alert(data, show_uuid);
+                                    alert_token[data.uuid] = data.value;
+                                });
                                 break;
                             case 'gas':
-                                $.sh.now.update_gas_alert(getTime(value, utc_offset, timezone));
-                                tg = value;
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_gas_alert(data, show_uuid);
+                                    alert_token[data.uuid] = data.value;
+                                });
                                 break;
 							case 'button':
-                                $.sh.now.update_car_alert(getTime(value, utc_offset, timezone));
-                                tc = value;
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_car_alert(data, show_uuid);
+                                    alert_token[data.uuid] = data.value;
+                                });
                                 break;
                             default:
                                 console.error("Unknown alert sensor type: " + key);
@@ -434,44 +512,94 @@ $(function() {
                             $("#alert-status-title-alerts").show();
                         }
                     });
-                    $.each(sensors['status'], function (key, value) {
+                    $.each(sensors['status'], function (key, value_list) {
                         switch (key) {
                             case 'fan':
-                                $.sh.now.update_fan_status(value);
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_fan_status(data, show_uuid);
+                                });
                                 break;
                             case 'led':
-                                $.sh.now.update_status('LED', value);
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_status('LED', data, show_uuid);
+                                });
                                 break;
                             case 'rgbled':
-                                $.sh.now.update_rgb_status(value);
+                                value_list.forEach(function(data) {
+                                    var show_uuid = false;
+                                    if(value_list.length > 1)
+                                        show_uuid = true;
+                                    $.sh.now.update_rgb_status(data, show_uuid);
+                                });
                                 break;
                             default:
                                 console.error("Unknown status sensor type: " + key);
                         }
                     });
-                    $.each(sensors['data'], function (key, value) {
+                    $.each(sensors['data'], function (key, value_list) {
                         switch (key) {
                             case 'temperature':
-                                //$.sh.now.update_sensor_data('HOUSE TEMPERATURE', convertToF(parseFloat(value)).toFixed(1).toString() + '°F');
-                                var values = JSON.parse(value);
-                                var house_temp = $.sh.now.get_temperature_in_timezone(values.temperature);
-								$.sh.now.update_temperature_data('HOUSE TEMPERATURE', house_temp, values.uuid);
+                                value_list.forEach(function(data){
+                                    var house_temp = $.sh.now.get_temperature_in_timezone(data.value);
+                                    if(value_list.length > 1)
+								        $.sh.now.update_multiply_sensors_without_unit('TEMPERATURE', house_temp, data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data_without_unit('TEMPERATURE', house_temp);
+                                });
                                 break;
                             case 'solar':
-                                $.sh.now.update_sensor_data('SOLAR PANEL TILT', value, '%');
+                                value_list.forEach(function(data){
+                                    if(value_list.length > 1)
+								        $.sh.now.update_data('SOLAR PANEL TILT', data.value, '%', data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data('SOLAR PANEL TILT', data.value, '%');
+                                });
                                 break;
                             case 'illuminance':
-                                $.sh.now.update_sensor_data('AMBIENT LIGHT', value, 'lm');
+                                value_list.forEach(function(data){
+                                    if (value_list.length > 1)
+                                        $.sh.now.update_data('AMBIENT LIGHT', data.value, 'lm', data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data('AMBIENT LIGHT', data.value, 'lm');
+                                });
                                 break;
                             case 'power':
-                                $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', value/1000, 'Watt');
+                                value_list.forEach(function(data){
+                                    if (value_list.length > 1)
+                                        $.sh.now.update_data('CURRENT ENERGY CONSUMPTION', data.value/1000, 'Watt', data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', data.value/1000, 'Watt');
+                                });
                                 break;
-                            case 'environment':
-                                var values = JSON.parse(value);
-                                $.sh.now.update_temperature_data('HOUSE TEMPERATURE', $.sh.now.get_temperature_in_timezone(values.temperature), values.uuid);
-                                $.sh.now.update_sensor_data_without_unit('HOUSE HUMIDITY', values.humidity + '%');
-                                $.sh.now.update_sensor_data('PRESSURE', values.pressure,'hPa');
-                                $.sh.now.update_sensor_data_without_unit('UV INDEX', values.uv_index);
+                            case 'humidity':
+                                value_list.forEach(function(data){
+                                    if (value_list.length > 1)
+                                        $.sh.now.update_multiply_sensors_without_unit('HUMIDITY', data.value, '%', data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data_without_unit('HUMIDITY', data.value + '%');
+                                });
+                                break;
+                            case 'pressure':
+                                value_list.forEach(function(data){
+                                    if (value_list.length > 1)
+                                        $.sh.now.update_data('PRESSURE', data.value, 'hPa', data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data('PRESSURE', data.value, 'hPa');
+                                });
+                                break;
+                            case 'uv_index':
+                                value_list.forEach(function(data){
+                                    if (value_list.length > 1)
+                                        $.sh.now.update_multiply_sensors_without_unit('UV INDEX', data.value, data.uuid);
+                                    else
+                                        $.sh.now.update_sensor_data_without_unit('UV INDEX', data.value);
+                                });
                                 break;
                             default:
                                 console.error("Unknown sensor data type: " + key);
