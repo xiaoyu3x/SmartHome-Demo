@@ -44,7 +44,7 @@ The connector listed below was derived from the corresponding `*.js` files. Plea
 * 1x [Solar Panel]
 * 1x [Line Actuator]
 * 1x [Actuator Control Board]
-* 1x [Grove LCD RGB panel] (http://www.seeedstudio.com/wiki/Grove_-_LCD_RGB_Backlight)
+* 1x [Grove LCD RGB panel]
 
 ### Setting up the Solar Panel HW components
 1. Mount the [Solar Panel] and [Line Actuator] as shown in the following pictures (the [Actuator Control Board] is not visible in those pictures, refer to point 2 below for more details on how to connect all three components together):
@@ -52,13 +52,17 @@ The connector listed below was derived from the corresponding `*.js` files. Plea
 ![solar-panel-2](./.pics/solar-panel-2.png)
 ![solar-panel-3](./.pics/solar-panel-3.png)
 2. Connect the [Line Actuator] to the [Actuator Control Board] as follows: ![control-to-actuator] (./.pics/control-to-actuator.png)
-3. Connect the [Actuator Control Board] to the Edison using the `RC` connector as follows: ![control-to-edison] (./.pics/control-to-edison.png) and following the table below:
+3. Connect the [Actuator Control Board] to the [Intel® Edison Board for Arduino] using the `RC` connector as follows: ![control-to-edison] (./.pics/control-to-edison.png) and following the table below:
 
-| Actuator | Edison |
-|:---:|:---:|
-| **-** | `GND` |
-| **+** | `5V` |
-| **RC** | `Digital PWM pin 3` |
+  | Actuator | Edison |
+  |:---:|:---:|
+  | **-** | `GND` |
+  | **+** | `5V` |
+  | **RC** | `Digital PWM pin 3` |
+
+4. Connect the [Grove LCD RGB panel] to any `I2C` connector on the [Grove Base Shield] that is installed on your [Intel® Edison Board for Arduino] as highlighted in the green circle on the following picture. Please make sure that the `Vcc` power switch (highlighted in red on the picture below) on the [Grove Base Shield] is set to 5V to ensure proper operation of the [Grove LCD RGB panel].
+
+  ![lcd-to-edison](./.pics/lcd-to-edison.png)
 
 ### Starting the Smart Solar Panel OCF server
 In order to get all components to work correctly, you will also need to make sure the following JavaScript bindings are available:
@@ -75,3 +79,6 @@ Once you are all set, start the OCF server as follows: **`node solar.js &`**
 [Solar Panel]: http://www.adafruit.com/products/200
 [Line Actuator]: http://www.robotshop.com/en/firgelli-technologies-l12-30-210-12-p.html
 [Actuator Control Board]: http://www.robotshop.com/en/firgelli-technologies-linear-actuator-control-board.html
+[Grove LCD RGB panel]: http://www.seeedstudio.com/wiki/Grove_-_LCD_RGB_Backlight
+[Grove Base Shield]: https://www.seeedstudio.com/base-shield-v13-p-1378.html?cPath=132_134
+[Intel® Edison Board for Arduino]: http://www.intel.com/content/www/us/en/support/boards-and-kits/intel-edison-boards/intel-edison-board-for-arduino.html
