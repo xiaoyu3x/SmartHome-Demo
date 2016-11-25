@@ -4,24 +4,20 @@ ARG http_proxy
 
 ARG https_proxy
 
-ARG git_token
-
 ENV http_proxy ${http_proxy}
 
 ENV https_proxy ${https_proxy}
 
-ENV git_url "github.com/01org/SmartHome-Demo.git"
-
-RUN echo $https_proxy 
+RUN echo $https_proxy
 
 RUN echo $http_proxy
 
 # update apt source.list
-COPY sources.list /etc/apt
+COPY tools/docker/sources.list /etc/apt
 
 RUN rm /var/lib/apt/lists/* -vf
 
-RUN apt-get clean && apt-get update 
+RUN apt-get clean && apt-get update
 
 # install python dependencies
 RUN apt-get -y install gcc build-essential checkinstall libreadline-gplv2-dev \
@@ -38,7 +34,7 @@ WORKDIR Python-2.7.10
 
 RUN ./configure && make altinstall
 
-# forward port 
+# forward port
 EXPOSE 3000 4000
 
 RUN echo "alias python='/usr/local/bin/python2.7'" > ~/.bash_aliases
@@ -50,32 +46,26 @@ RUN apt-get install -y debconf-utils libmysqlclient-dev \
     && echo "mysql-server-5.6 mysql-server/root_password password intel123" | debconf-set-selections \
     && echo "mysql-server-5.6 mysql-server/root_password_again password intel123" | debconf-set-selections \
     && apt-get -y install mysql-server-5.6 \
-    && sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf 
+    && sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
 # Install rabbitmq
 RUN apt-get install -y rabbitmq-server git python-pip python-dev ca-certificates git-core ssh supervisor
 
-# checkout source code
-RUN echo "https://$git_token@$git_url"
+# Install source code
+COPY . /opt/SmartHome-Demo/smarthome-web-portal/
 
-RUN git clone --progress "https://$git_token@$git_url" /opt/SmartHome-Demo
-
-ADD web-portal.conf /etc/supervisor/conf.d/web-portal.conf
-ADD start-service.sh /opt/SmartHome-Demo/smarthome-web-portal/start-service.sh
+COPY tools/docker/web-portal.conf /etc/supervisor/conf.d/web-portal.conf
+COPY tools/docker/start-service.sh /opt/SmartHome-Demo/smarthome-web-portal/start-service.sh
 
 WORKDIR /opt/SmartHome-Demo/smarthome-web-portal
 
 # install portal dependencies
-#RUN pip install -r requirements.txt -t /usr/local/lib/python2.7/site-packages/
-
 RUN pip install -r requirements.txt
-
 RUN pip install Flask-SQLAlchemy==2.1
 
 # configure portal settings
-ADD SHProject.conf utils/SHProject.conf
-
-ADD utils.py tools/smarthome-admin-portal/admin/utils.py
+COPY tools/docker/SHProject.conf utils/SHProject.conf
+COPY tools/docker/utils.py tools/smarthome-admin-portal/admin/utils.py
 
 # unset proxy
 ENV http_proxy ""
