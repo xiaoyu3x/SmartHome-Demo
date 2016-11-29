@@ -7,32 +7,32 @@ function addCeilingFan(sensor){
 	//print the attributes
 	if (debug) {
 		for (var att in sensor.att){
-    		if (typeof sensor.att[att] !== 'function') {
-         		console.log("Key: " + att + ", value: " + sensor.att[att]);
-    		}
+			if (typeof sensor.att[att] !== 'function') {
+				console.log("Key: " + att + ", value: " + sensor.att[att]);
+			}
 		}
 
 	}
 	//TODO: animation
 	//spinningCeilingFan = sensor['W_att']['on_off'];
-} 
+}
 function updateCeilingFan(sensor){
 	console.log("Updating ceiling fan: "+ JSON.stringify(sensor));
-} 
+}
 
 function ceilingFanVisible (bool){
 	console.log("Dropping ceiling fan");
 	//TODO: makeVisible("name", false)
-    findObjectsById('group_5').forEach(function(item) {
-    	item.traverse(function (object) {
-        	object.visible = bool;
-    	});
+	findObjectsById('group_5').forEach(function(item) {
+		item.traverse(function (object) {
+			object.visible = bool;
+		});
 	});
 
-    findObjectsById('Ceiling_Fan6').forEach(function(item) {
-    	item.traverse(function (object) {
-        	object.visible = bool;
-    	});
+	findObjectsById('Ceiling_Fan6').forEach(function(item) {
+		item.traverse(function (object) {
+			object.visible = bool;
+		});
 	});
 
 }

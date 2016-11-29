@@ -1,5 +1,5 @@
 var device = require('iotivity-node')('client'),
-    debuglog = require('util').debuglog('first_server'),
+    debuglog = require('util').debuglog('gateway-server'),
     fs = require('fs'),
     rules = require('./rules-engine/rules_engine'),
     args = process.argv.slice(2),
@@ -54,7 +54,7 @@ if (!options.rulesEngineMode) {
         app = express();
         server = http.createServer(app);
 
-    app.use(express.static(__dirname + '/gateway-webui'));
+    app.use(express.static(__dirname + '/webui'));
 
     // systemd socket activation support
     if (process.env.LISTEN_FDS) {

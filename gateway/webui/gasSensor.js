@@ -7,12 +7,12 @@ function addGasSensor(sensor){
 	//print attributes
 	if (debug) {
 		for (var att in sensor.att){
-    		if (typeof sensor.att[att] !== 'function') {
-         		console.log("Key: " + att + ", value: " + sensor.att[att]);
-    		}
+			if (typeof sensor.att[att] !== 'function') {
+				console.log("Key: " + att + ", value: " + sensor.att[att]);
+			}
 		}
 	}
-} 
+}
 
 function updateGasSensor(sensor){
 	console.log("Updating Gas Sensor: "+ JSON.stringify(sensor));
@@ -31,8 +31,7 @@ function updateGasSensor(sensor){
 		    });
 		}
 	}
-
-} 
+}
 
 //make object invisible in webGL
 function gasSensorVisible (bool) {
@@ -41,10 +40,11 @@ function gasSensorVisible (bool) {
 	if(!bool){
 		console.log("Dropping Gas Sensor");
 	}
-    findObjectsById('_445CTmine').forEach(function(item) {
-    	item.traverse(function (object) {
-        	object.visible = bool;
-    	});
+
+	findObjectsById('_445CTmine').forEach(function(item) {
+		item.traverse(function (object) {
+			object.visible = bool;
+		});
 	});
 }
 

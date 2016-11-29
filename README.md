@@ -1,50 +1,14 @@
-# SmartHome "Dollhouse" demo
+# The IoT to Cloud SmartHome demo
 
-This repository provides source code that allows to set-up and demonstrate a SmartHome scenario leveraging [OCF](http://openconnectivity.org/) and [IoTivity](https://www.iotivity.org/) to communicate between smart appliances (OCF servers) and a Home GW (OCF client). The User Interface (UI) is a 3D model of the house (<insert reference here>) that is exposed through a webserver running on the HomeGW.
+This repository provides source code that allows to set-up and demonstrate an IoT to Cloud SmartHome demo leveraging [OCF](http://openconnectivity.org/) and [IoTivity](https://www.iotivity.org/) to communicate between smart appliances (OCF servers), a Home GW (OCF client) and a cloud-based portal (using the [IoT REST API Server](https://github.com/01org/iot-rest-api-server/)). The user can interact with the various devices via both an Android companion app (when on the local network) and via the cloud portal. For a more comprehensive overview of the architecture and a detailed step-by-step guide on how to put it all together, please take a look at our online [tutorial](https://01.org/smarthome).
 
 The repository is organised as follows:
-* root: the root folder is the code code running on the HomeGW
-* `ocf-servers`: provides a number of OCF server implementations in JavaScript (located in `js-servers`). The documentation for these servers is availabe in the `doc/` folder. These are not strictly part of the code running on the gateway but are provided here as a convenience.
+* `gateway`: code running on the Home Gateway
+* `ocf-servers`: OCF server implementations in JavaScript (located in `js-servers`).
+   * Generic documentation on how to set them up is available [here](ocf-servers/js-servers/README.md)
+   * The specifications for the OCF servers is availabe in the `ocf-servers/doc/` folder
+* `ostro-config`: a collection of `systemd` service files that can help automatically start the Home GW software (on the Home Gateway) and OCF servers (on the OCF server hardware). (*note:* these require manual adaptation and not all OCF servers have an associated service file available)
+* `sensors`: source code for the various Smart Devices that are based on the [Zephyr Project](https://www.zephyrproject.org/)
+* `smarthome-web-portal`: code for the cloud portal
 
-## Home GW dependencies
-
-The demo was built leveraging the [Ostro OS
-Project](https://ostroproject.org/) and we recommend you use it to build your
-own demo.
-Ostro is Linux operating system tailored for IoT
-smart devices and it fulfills many of the software stack requirements to run
-this demo out of the box. 
-
-### Node.js dependencies
-
-Node.js dependencies can be installed using `npm install <node_module>` (you need a live network connection).
-* [Express](https://www.npmjs.com/package/express)
-* [http](https://www.npmjs.com/package/http)
-* [WebScoket](https://www.npmjs.com/package/websocket)
-* [IoTivity-node](https://www.npmjs.com/package/iotivity-node)
-
-### Python dependencies
-Python dependencies can be installed using `pip install <python_module>` (you need a live network connection).
-* [Autobahn](http://autobahn.ws/python/): version 0.10.9
-* [Icarus](https://github.com/tripzero/icarus)
-* [Pysolar](http://pysolar.org/): version 0.6
-* [Pytz](http://pytz.sourceforge.net/): version 2015.7
-* [setuptools](https://pypi.python.org/pypi/setuptools): version 18.2
-* [Six](https://pypi.python.org/pypi/six): version 1.10.0 
-* [Twisted](https://twistedmatrix.com/): version 15.4.0
-* [txaio](https://pypi.python.org/pypi/txaio): version 2.0.4
-* [zope.interface](https://pypi.python.org/pypi/zope.interface): version 4.1.3
-
-## How to start the Home GW SW
-
-1. Transfer the content of this repo (minus the `ocf-servers` folder that you don't need)
-2. Install all `node.js` and `Python` dependencies (see above)
-3. Start the services: 
-
-```
-    node first_server.js # Start server with 3D UI and rules engine.
-    node first_server.js -r # Start server with rules engine only.
-    python icarus/python/icarus_tracker.py --location <location>
-```
-
-***To Be Completed***
+You will find dedicated README.md files in most of these subfolders that will explain in more details how to use their respective contents.
