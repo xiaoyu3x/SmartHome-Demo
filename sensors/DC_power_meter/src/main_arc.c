@@ -20,9 +20,17 @@
 #include <string.h>
 #include <misc/printk.h>
 
+#include <ipm.h>
+#include <ipm/ipm_quark_se.h>
 #include <device.h>
 #include <i2c.h>
 #include <display/grove_lcd.h>
+
+/* ID of IPM channel */
+#define CONSUMPTION_CHANNEL	101
+#define SOLAR_CHANNEL		102
+
+QUARK_SE_IPM_DEFINE(power_ipm, 0, QUARK_SE_IPM_OUTBOUND);
 
 /**
  * @file Sample app using the TI INA219 through I2C.
@@ -100,7 +108,7 @@ int write_reg16(struct device *i2c_dev, uint8_t reg_addr,
 
 void main(void)
 {
-	struct device *i2c_dev, *glcd;
+	struct device *i2c_dev, *glcd, *ipm;
 	uint8_t data[2];
 	uint32_t power1, power2;
 
@@ -122,7 +130,7 @@ void main(void)
 	glcd = device_get_binding(GROVE_LCD_NAME);
 
 	if (glcd) { /* Now configure the LCD the way we want it */
-		set_config = GLCD_FS_ROWS_2 
+		set_config = GLCD_FS_ROWS_2
 				| GLCD_FS_DOT_SIZE_LITTLE
 				| GLCD_FS_8BIT_MODE;
 
@@ -134,6 +142,12 @@ void main(void)
 		glcd_cursor_pos_set(glcd, 0, 0);
 	} else {
 		printk("Grove LCD: Device not found.\n");
+	}
+
+	/* Initialize the IPM */
+	ipm = device_get_binding("power_ipm");
+	if (!ipm) {
+		printk("IPM: Device not found.\n");
 	}
 
 	while (1) {
@@ -159,6 +173,15 @@ void main(void)
 		power2 = (data[0] << 8) | data[1];
 		power2 *= PWR_LSB;
 
+		// send data over ipm to x86 side
+		if (ipm) {
+			if (ipm_send(ipm, 1, CONSUMPTION_CHANNEL, &power1, sizeof(power1)) ||
+				ipm_send(ipm, 1, SOLAR_CHANNEL, &power2, sizeof(power2)))
+			{
+				printk("Failed to send sensor data over ipm\n");
+			}
+		}
+
 		if (glcd) {
 			glcd_clear(glcd);
 			glcd_cursor_pos_set(glcd, 0, 0);
@@ -168,10 +191,10 @@ void main(void)
 			sprintf(str, "Solar: %d mM", power2 / 1000);
 			glcd_print(glcd, str, strlen(str));
 		}
-		
+
 		// print out in JSON format
 		printk("{\"ch-1\": %d, \"ch-2\": %d}\n", power1 / 1000, power2 / 1000);
-		
+
 		/* wait a while */
 		nano_task_timer_start(&timer, SLEEPTICKS);
 		nano_task_timer_test(&timer, TICKS_UNLIMITED);

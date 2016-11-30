@@ -10,26 +10,151 @@ var device = require('iotivity-node')('server'),
     power1 = 100,  // For simulation only
     power2 = 1000; // Ditto
 
-// Require the MRAA library
-var mraa = '';
+var BLE_DEV_NAME = 'Zephyr DC Power Meter',
+    powerServiceUUID = '9c10c448308244cd853d08266c070be5',
+    consumptionCharacteristicUUID = '71c9e918830247aa89d37bf67152237a',
+    solarCharacteristicUUID = '0609e802afd24d56b61c12ba1f80ccb6',
+    blePeripheral = null;
+
+var noble = '';
 try {
-    mraa = require('mraa');
+    noble = require('noble');
 }
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+catch(e) {
+    console.log('No noble module: ' + e.message + '. Switching to wire connection.');
 }
 
-// Default: MinnowBoard MAX/Turbot, raw mode
-var dev = "/dev/ttyUSB0";
-// e.g., node power-uart.js /dev/ttyS0
-var args = process.argv.slice(2);
-args.forEach(function(entry) {
-    dev = entry;
-});
+// Require the MRAA library
+var mraa = '',
+    serialDev = '/dev/ttyUSB0',
+    args;
 
-// Setup UART
-function setupHardware() {
+if (!noble) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+    }
+
     if (mraa) {
+        /* Default: MinnowBoard MAX/Turbot, raw mode
+         * or specify the port, e.g, "$ node power-uart.js /dev/ttyS0
+         */
+        args = process.argv.slice(2);
+        args.forEach(function(entry) {
+            dev = entry;
+        });
+    }
+}
+
+// Setup BLE or UART
+function setupHardware() {
+    if (noble) {
+        // intitialize BLE, make sure BT is enabled with 'rfkill unblock bluetooth'
+        noble.on('stateChange', function(state) {
+            debuglog('on -> stateChange');
+            if (state == 'poweredOn') {
+                // only search for devices with custom power service UUID
+                //noble.startScanning([powerServiceUUID], true);
+                noble.startScanning();
+            } else {
+                noble.stopScanning();
+            }
+        });
+
+        noble.on('scanStart', function() {
+            debuglog('on -> scanStart');
+        });
+
+        noble.on('scanStop', function() {
+            debuglog('on -> scanStop');
+        });
+
+        noble.on('discover', function(peripheral) {
+            debuglog('on -> discover: ' + peripheral);
+            if (peripheral.advertisement.localName == BLE_DEV_NAME) {
+                debuglog('serviceUuids = ' + peripheral.advertisement.serviceUuids);
+
+                blePeripheral = peripheral;
+
+                noble.stopScanning();
+
+                peripheral.on('connect', function() {
+                    debuglog('on -> connect');
+                    this.discoverServices();
+                });
+
+                peripheral.on('disconnect', function() {
+                    debuglog('on -> disconnect');
+                    blePeripheral = null;
+                    noble.startScanning();
+                });
+
+                peripheral.connect(function(error) {
+                    if (error) {
+                        debuglog('Connection error');
+                    }
+                });
+
+                peripheral.on('servicesDiscover', function(services) {
+                    var powerService = null;
+
+                    for (var i in services) {
+                        debuglog('on -> service discovery: ' + i + ' uuid: ' + services[i].uuid);
+                        if (services[i].uuid == powerServiceUUID) {
+                            powerService = services[i];
+                        }
+                    }
+
+                    if (powerService) {
+                        powerService.on('characteristicsDiscover', function(characteristics) {
+                            var consumptionCharacteristic = null;
+                            var solarCharacteristic = null;
+
+                            if (characteristics.length != 2) {
+                                debuglog('WARNING: Number of characternistics is different!');
+                            }
+
+                            for (var i = 0; i < characteristics.length; i++) {
+                                if (characteristics[i].uuid == consumptionCharacteristicUUID) {
+                                    consumptionCharacteristic = characteristics[i];
+                                }
+                                else if (characteristics[i].uuid == solarCharacteristicUUID) {
+                                    solarCharacteristic = characteristics[i];
+                                }
+                            }
+
+                            if (consumptionCharacteristic) {
+                                consumptionCharacteristic.on('read', function(data, isNotification) {
+                                    power1 = data.readUInt32LE(0) / 1000;
+                                    debuglog('Consumption = ', power1 + ' mW');
+                                });
+
+                                consumptionCharacteristic.notify(true, function(error) {
+                                    debuglog('Consumption notification ON');
+                                });
+                            }
+
+                            if (solarCharacteristic) {
+                                solarCharacteristic.on('read', function(data, isNotification) {
+                                    power2 = data.readUInt32LE(0) / 1000;
+                                    debuglog('Solar = ', power2 + ' mW');
+                                });
+
+                                solarCharacteristic.notify(true, function(error) {
+                                    debuglog('Solar notification ON');
+                                });
+                            }
+                        });
+
+                        powerService.discoverCharacteristics();
+                    }
+                });
+            }
+        });
+    }
+    else if (mraa) {
         uart = new mraa.Uart(dev);
         uart.setBaudRate(115200);
         uart.setMode(8, 0, 1);
@@ -82,7 +207,9 @@ function getProperties() {
     var data = null;
     var obj = {"ch-1": 0, "ch-2": 0};
 
-    if (mraa) {
+    if (noble) {
+        data = "{\"ch-1\": " + power1 + ", \"ch-2\": " + power2 + "}";
+    } else if (mraa) {
         data = readJsonFromUart();
     } else {
         data = "{\"ch-1\": " + power1++ + ", \"ch-2\": " + power2++ + "}";
@@ -209,6 +336,15 @@ device.enablePresence().then(
 
 // Cleanup on SIGINT
 process.on('SIGINT', function() {
+    debuglog('Disconnect any existing BLE connection');
+    if (blePeripheral) {
+        blePeripheral.disconnect(function(err) {
+            if (err) {
+                debuglog('Disconnection error: ' + err);
+            }
+        });
+    }
+
     debuglog('Delete Power Resource.');
 
     // Remove event listeners
