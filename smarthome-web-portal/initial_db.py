@@ -54,7 +54,7 @@ DEFAULT_USERS = [
 
 SENSOR_TYPES = [
     'fan',
-    'pir',
+    'motion',
     'gas',
     'solar',
     'illuminance',
