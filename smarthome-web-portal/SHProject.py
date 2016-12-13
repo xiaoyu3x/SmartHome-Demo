@@ -12,13 +12,14 @@ from flask import redirect, url_for, abort
 from flask import request, session, make_response
 from flask import Flask, render_template, jsonify
 from flask.ext.socketio import SocketIO, emit, disconnect
+from decimal import Decimal
 from utils import logsettings
 from utils import util
 from utils.config import config
 from DB.api import resource, user, gateway
 from RestClient.sensor import Sensor
 from RestClient.api import ApiClient
-from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, UPDATE_GRP, TAP_ENV_VARS
+from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, TAP_ENV_VARS
 
 try:
     import pymysql
@@ -124,21 +125,39 @@ def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, resul
     :param result: the return data dict
     :return:
     """
+
     val_dict = {
-        'uuid': latest_data.get('uuid'),
+        'uuid': latest_data.get('resource').get('uuid') if latest_data.get('resource') else None,
+        'resource_id': latest_data.get('resource').get('id') if latest_data.get('resource')
+        else latest_data.get('resource_id'),
+        'path': latest_data.get('resource').get('path') if latest_data.get('resource') else None,
+        'tag': latest_data.get('resource').get('tag') if latest_data.get('resource') else None,
     }
+    # decouple the tag field for environmental sensors
+    if latest_data.get('resource') and latest_data.get('resource').get('tag'):
+        # a pure digit string will be treated as json
+        tag = latest_data.get('resource').get('tag')
+        if util.is_json(tag) and not tag.strip().lstrip('-').isdigit():
+            tag_dict = json.loads(tag)
+            val_dict.update({
+                "tag": tag_dict.get(sensor_type),
+            })
+
     if isinstance(record_key, dict):
         val_dict.update({
-            'value': record_key,
+            'value': record_key.get('value'),
         })
-    elif latest_data.get(record_key):
+    elif latest_data.get(record_key) is not None:
+        val = latest_data.get(record_key)
         val_dict.update({
-            'value': str(latest_data.get(record_key)) if result_key == "data" else latest_data.get(record_key),
+            'value': str(val) if isinstance(val, (float, Decimal)) else val,
         })
     else:
         val_dict.update({
             'value': "",
         })
+    # if sensor_type == 'rgbled':
+    #     print str(val_dict) + " " + str(record_key)
     if result[result_key].get(sensor_type) is None:
         result[result_key].update({sensor_type: [val_dict, ]})
     else:
@@ -154,30 +173,27 @@ def _get_sensor_data(token_dict):
         'data': {}
     }
     for sensor in res:
-        typ = sensor.get('sensor_type').get('type')
-        uuid = sensor.get("uuid")
+        typ = sensor.get('sensor_type').get('mapping_class')
+        resource_id = sensor.get("id")
         if typ in ALERT_GRP:
-            token = token_dict.get(uuid) if uuid in token_dict.keys() and token_dict.get(uuid) else default_token
+            token = token_dict.get(str(resource_id)) if str(resource_id) in token_dict.keys() \
+                                                        and token_dict.get(str(resource_id)) else default_token
             latest_data = util.get_class("DB.api.{}.get_latest_alert_by_gateway_uuid"
-                                         .format(typ))(gateway_id=session['gateway_id'],
-                                                       uuid=uuid,
+                                         .format(typ))(resource_id=resource_id,
                                                        token=token)
-            latest_data = latest_data if latest_data else {"uuid": uuid}
+            latest_data = latest_data if latest_data else {"resource_id": resource_id}
         elif typ == 'power':
-            latest_data = util.get_class("DB.api.energy.get_latest_by_gateway_uuid")(gateway_id=session['gateway_id'],
-                                                                                     uuid=uuid)
+            latest_data = util.get_class("DB.api.energy.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
         else:
-            latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid"
-                                         .format(typ))(gateway_id=session['gateway_id'],
-                                                       uuid=uuid)
+            latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
         if latest_data is None:
             continue
         if typ in ALERT_GRP:
             _compose_sensor_data(typ, latest_data, 'created_at', 'alert', ret)
         elif typ in STATUS_GRP:
             if typ == "rgbled":
-                val = True if latest_data.get('rgbvalue') == "255,0,0" else False
-                _compose_sensor_data(typ, latest_data, {'uuid': latest_data.get('uuid'), 'status': val}, 'status', ret)
+                val = True if latest_data.get('rgbvalue') == "[255, 0, 0]" else False
+                _compose_sensor_data(typ, latest_data, {'value': val}, 'status', ret)
             else:
                 _compose_sensor_data(typ, latest_data, 'status', 'status', ret)
         elif typ in DATA_GRP:
@@ -194,7 +210,6 @@ def _get_sensor_data(token_dict):
             for key in key_words:
                 sensor_type = typ if typ != "environment" else key
                 _compose_sensor_data(sensor_type, latest_data, key, 'data', ret)
-
     return ret
 
 
@@ -208,6 +223,47 @@ def get_sensor():
     token_dict = json.loads(token_header) if token_header else dict()
     ret = _get_sensor_data(token_dict)
     return jsonify({'data': ret}), 201
+
+
+def _compose_sensor_tag(data):
+    res = resource.get_resource(id=data["resource_id"])
+    sensor_type = res.get("sensor_type").get("mapping_class")
+
+    if sensor_type == "environment" and "tag" in data["value"]:
+        new_tag = data["value"]['tag']
+        tag = res.get("tag")
+        sensor_type = data["type"]
+        if sensor_type:
+            sensor_type = sensor_type.replace(" ", "_")
+        try:
+            tag_dict = json.loads(tag)
+        except:
+            tag_dict = {}
+        tag_dict.update({
+            sensor_type: new_tag
+        })
+        data["value"].update({
+            "tag": json.dumps(tag_dict)
+        })
+
+
+@app.route('/update_sensor_attr', methods=['POST'])
+@login_required
+def update_sensor_attr():
+    """
+    Update sensor properties
+    :return: uuid and status code
+    """
+    data = request.json
+    if "resource_id" not in data.keys() \
+            or "value" not in data.keys() \
+            or not data.get("resource_id") \
+            or not data.get("value") \
+            or not isinstance(data.get("value"), dict):
+        abort(400)
+    _compose_sensor_tag(data)
+    updated_res = resource.update_resource(id=data['resource_id'], **data["value"])
+    return json.dumps({"resource_id": updated_res.get("id")}), 200
 
 
 @app.route('/get_geo_location')
@@ -224,20 +280,22 @@ def update_sensor():
     """
     update sensor status
     Http PUT: {
-                'href': '/a/fan',
+                'resource_id': '5',
                 'data': { 'value': false}
                 }
     """
     content = request.get_json(silent=True)
-    path = content.get('href')
+    resource_id = content.get('resource_id')
     data = content.get('data')
-    uuid = content.get('uuid')
-    path_list = ['/a/' + typ for typ in UPDATE_GRP]
-    # validate put parameters
-    if not content or not path or not data or path not in path_list:
+    if not resource_id or not isinstance(resource_id, int):
         abort(400)
+    try:
+        res = resource.get_resource(id=resource_id)
+    except:
+        abort(404)
     print "content: " + str(content)
-    sensor = Sensor(uuid=uuid, path=path, username=session.get('username'))
+    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'),
+                    resource_type=res.get('sensor_type').get('type'), username=session.get('username'))
     sts = sensor.update_status(data)
     return jsonify({'status': sts}), 201
 
@@ -362,3 +420,4 @@ if __name__ == '__main__':
     logger.info('init SMART HOME project ...')
     port = os.getenv('PORT', '3000')
     socketio.run(app, debug=False, port=int(port), host="0.0.0.0")
+

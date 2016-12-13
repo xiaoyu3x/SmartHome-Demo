@@ -4,6 +4,7 @@ Module to provider util functions in all compass code
 """
 import datetime
 import logging
+import json
 from os.path import join
 import re
 import sys
@@ -210,3 +211,14 @@ def get_class(kls):
         raise ImportError(msg)
 
 
+def is_json(myjson):
+    """
+    Check whether a string is a json object.
+    :param myjson: the string to check
+    :return: True/False
+    """
+    try:
+        json_object = json.loads(myjson)
+    except ValueError, e:
+        return False
+    return True

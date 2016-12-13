@@ -21,7 +21,6 @@ CONFIG_FILE_NAME = 'SHProject.conf'
 ALERT_GRP = ['motion', 'gas', 'buzzer', 'button']
 STATUS_GRP = ['led', 'fan', 'rgbled']
 DATA_GRP = ['temperature', 'solar', 'illuminance', 'power', 'energy', 'environment']
-UPDATE_GRP = ['fan']  # controllable sensors
 
 TAP_ENV_VARS = ['INSTANCE_ID', 'VERSION', 'NAME', 'URIS']
 

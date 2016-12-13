@@ -8,12 +8,12 @@ from DB.models import Gas
 from DB.api import dbutils as utils
 from sqlalchemy import func
 
-RESP_FIELDS = ['id', 'uuid', 'status', 'gateway_id', 'created_at']
+RESP_FIELDS = ['id', 'status', 'resource', 'created_at']
 SRC_EXISTED_FIELD = {
     'id': 'id',
-    'uuid': 'uuid',
+    # 'uuid': 'uuid',
     'status': 'status',
-    'gateway_id': 'gateway_id',
+    'resource_id': 'resource_id',
     'created_at': 'created_at'
 }
 
@@ -26,37 +26,37 @@ def new(session, src_dic, content={}):
     return utils.add_db_object(session, Gas, **content)
 
 
-def _get_gas(session, gateway_id, uuid, order_by=[], limit=None, **kwargs):
-    if isinstance(uuid, basestring):
-        ids = {'eq': uuid}
-    elif isinstance(uuid, list):
-        ids = {'in': uuid}
+def _get_gas(session, resource_id, order_by=[], limit=None, **kwargs):
+    if isinstance(resource_id, int):
+        resource_ids = {'eq': resource_id}
+    elif isinstance(resource_id, list):
+        resource_ids = {'in': resource_id}
     else:
-        raise exception.InvalidParameter('parameter uuid format are not supported.')
+        raise exception.InvalidParameter('parameter resource id format are not supported.')
     return \
-        utils.list_db_objects(session, Gas, order_by=order_by, limit=limit, gateway_id=gateway_id, uuid=ids, **kwargs)
+        utils.list_db_objects(session, Gas, order_by=order_by, limit=limit, resource_id=resource_id, **kwargs)
 
 
 @database.run_in_session()
 @utils.wrap_to_dict(RESP_FIELDS)  # wrap the raw DB object into dict
-def get_gas_by_gateway_uuid(session, gateway_id, uuid):
-    return _get_gas(session, gateway_id, uuid)
+def get_gas_by_gateway_uuid(session, resource_id):
+    return _get_gas(session, resource_id)
 
 
 # get the latest true status if exists
 @database.run_in_session()
 @utils.wrap_to_dict(RESP_FIELDS)      # wrap the raw DB object into dict
-def get_latest_alert_by_gateway_uuid(session, gateway_id, uuid, token):
+def get_latest_alert_by_gateway_uuid(session, resource_id, token):
     date_range = {'gt': token}
-    gas = _get_gas(session, gateway_id, uuid, order_by=[('id', True)], limit=1, status=True, created_at=date_range)
+    gas = _get_gas(session, resource_id, order_by=[('id', True)], limit=1, status=True, created_at=date_range)
     return gas[0] if len(gas) else None
 
 
 # get the latest status if exists
 @database.run_in_session()
 @utils.wrap_to_dict(RESP_FIELDS)      # wrap the raw DB object into dict
-def get_latest_by_gateway_uuid(session, gateway_id, uuid, ):
-    gas = _get_gas(session, gateway_id, uuid, order_by=[('id', True)], limit=1)
+def get_latest_by_gateway_uuid(session, resource_id, ):
+    gas = _get_gas(session, resource_id, order_by=[('id', True)], limit=1)
     return gas[0] if len(gas) else None
 
 

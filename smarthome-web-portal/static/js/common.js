@@ -16,6 +16,36 @@ String.format = function() {
   return s;
 };
 
+// Determine whether an array contains a value
+if (![].includes) {
+  Array.prototype.includes = function(searchElement /*, fromIndex*/ ) {
+    'use strict';
+    var O = Object(this);
+    var len = parseInt(O.length) || 0;
+    if (len === 0) {
+      return false;
+    }
+    var n = parseInt(arguments[1]) || 0;
+    var k;
+    if (n >= 0) {
+      k = n;
+    } else {
+      k = len + n;
+      if (k < 0) {k = 0;}
+    }
+    var currentElement;
+    while (k < len) {
+      currentElement = O[k];
+      if (searchElement === currentElement ||
+         (searchElement !== searchElement && currentElement !== currentElement)) {
+        return true;
+      }
+      k++;
+    }
+    return false;
+  };
+}
+
 //dismiss remove mdl-card from page
 dismiss = function(obj) {
 	$(obj).closest('.mdl-cell').remove();
@@ -63,12 +93,7 @@ getFormattedDateString = function(dt, offset){
     var weekday = date.format('dddd').toUpperCase();
     var month = date.format('MMMM').toUpperCase();
     var day = date.format('D');
-    var year = date.format('YYYY')
-
-    //if(day == '1' || day == '21' || day == '31') day += 'st';
-    //else if(day == '2' || day == '22') day += 'nd';
-    //else if(day == '3' || day == '23') day += 'rd';
-    //else day += 'th';
+    var year = date.format('YYYY');
 
     return weekday + " " + month + " " + day + ", " + year;
 }
@@ -226,19 +251,20 @@ createSnackbar = (function() {
   };
 })();
 
-toggle_status = function(type, obj) {
-    //console.log("checked: " + obj.checked);
+toggle_status = function(resource_id, obj) {
+    console.log("checked: " + obj.checked);
     var status = obj.checked;
     var status_str = status?'on':'off';
-    var uuid = obj.id;
-    console.log('The fan ' + uuid + 'will turn ' + status_str + '.');
+    // var uuid = obj.id;
+    console.log('The fan ' + resource_id + ' will be turned ' + status_str + '.');
     $.ajax({
         type: "PUT",
         url: "/update_sensor",
         contentType: 'application/json',
         data: JSON.stringify({
-            "href": "/a/" + type,
-            "uuid": uuid,
+            // "href": "/a/" + type,
+            // "uuid": uuid,
+            "resource_id": resource_id,
             "data": {
                 "value": status,
             }

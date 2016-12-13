@@ -53,18 +53,18 @@ DEFAULT_USERS = [
 ]
 
 SENSOR_TYPES = [
-    'fan',
-    'motion',
-    'gas',
-    'solar',
-    'illuminance',
-    'buzzer',
-    'temperature',
-    'rgbled',
-    'led',
-    'button',
-    'power',
-    'environment',
+    ('fan', 'oic.r.fan'),
+    ('motion', 'oic.r.sensor.motion'),
+    ('gas', 'oic.r.sensor.carbondioxide'),
+    ('solar', 'oic.r.solar'),
+    ('illuminance', 'oic.r.sensor.illuminance'),
+    ('buzzer', 'oic.r.buzzer'),
+    ('temperature', 'oic.r.temperature'),
+    ('rgbled', 'oic.r.colour.rgb'),
+    ('led', 'oic.r.led'),
+    ('button', 'oic.r.button'),
+    ('power', 'oic.r.energy.consumption'),
+    ('environment', 'oic.r.sensor.environment'),
 ]
 
 
@@ -96,7 +96,7 @@ def init_data():
         user.add_user(usr)
     print "Init sensor type data ..."
     for st in SENSOR_TYPES:
-        sensor_type.add_sensor_type({'type': st})
+        sensor_type.add_sensor_type({'type': st[1], 'mapping_class': st[0]})
     print "Done."
 
 

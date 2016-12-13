@@ -7,12 +7,12 @@ from DB import exception
 from DB.models import Fan
 from DB.api import dbutils as utils
 
-RESP_FIELDS = ['id', 'uuid', 'status', 'gateway_id', 'created_at']
+RESP_FIELDS = ['id', 'resource', 'status', 'created_at']
 SRC_EXISTED_FIELD = {
     'id': 'id',
-    'uuid': 'uuid',
+    # 'uuid': 'uuid',
     'status': 'status',
-    'gateway_id': 'gateway_id',
+    'resource_id': 'resource_id',
     'created_at': 'created_at'
 }
 
@@ -25,27 +25,27 @@ def new(session, src_dic, content={}):
     return utils.add_db_object(session, Fan, **content)
 
 
-def _get_fan(session, gateway_id, uuid, order_by=[], limit=None, **kwargs):
-    if isinstance(uuid, basestring):
-        ids = {'eq': uuid}
-    elif isinstance(uuid, list):
-        ids = {'in': uuid}
+def _get_fan(session, resource_id, order_by=[], limit=None, **kwargs):
+    if isinstance(resource_id, int):
+        resource_ids = {'eq': resource_id}
+    elif isinstance(resource_id, list):
+        resource_ids = {'in': resource_id}
     else:
-        raise exception.InvalidParameter('parameter uuid format are not supported.')
+        raise exception.InvalidParameter('parameter resource id format are not supported.')
     return \
-        utils.list_db_objects(session, Fan, order_by=order_by, limit=limit, gateway_id=gateway_id, uuid=ids, **kwargs)
+        utils.list_db_objects(session, Fan, order_by=order_by, limit=limit, resource_id=resource_ids, **kwargs)
 
 
 @database.run_in_session()
 @utils.wrap_to_dict(RESP_FIELDS)      # wrap the raw DB object into dict
-def get_fan_by_gateway_uuid(session, gateway_id, uuid):
-    return _get_fan(session, gateway_id, uuid)
+def get_fan_by_gateway_uuid(session, resource_id):
+    return _get_fan(session, resource_id)
 
 
 @database.run_in_session()
 @utils.wrap_to_dict(RESP_FIELDS)      # wrap the raw DB object into dict
-def get_latest_by_gateway_uuid(session, gateway_id, uuid, ):
-    fan = _get_fan(session, gateway_id, uuid, order_by=[('id', True)], limit=1)
+def get_latest_by_gateway_uuid(session, resource_id, ):
+    fan = _get_fan(session, resource_id, order_by=[('id', True)], limit=1)
     return fan[0] if len(fan) else None
 
 

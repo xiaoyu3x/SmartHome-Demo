@@ -420,6 +420,39 @@ body {
     display: block !important;
 }
 
+.edit {
+    /*page-break-after: always;*/
+    margin-left: 0.6em;
+    font-size:50%;
+    color: #455a64;
+}
+
+.tooltiptext {
+    display: block;
+    width: 15em;
+    background-color: #313131;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 5px;
+    font-size: small;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltiptext::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #313131 transparent;
+}
+
 .sensor-card > .mdl-card__supporting-text,
 .status-card > .mdl-card__supporting-text {
     margin-bottom:0px !important;

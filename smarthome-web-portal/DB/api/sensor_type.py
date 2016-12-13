@@ -6,10 +6,11 @@ from DB.api import database
 from DB.models import SensorType
 from DB.api import dbutils as utils
 
-RESP_FIELDS = ['id', 'type']
+RESP_FIELDS = ['id', 'type', 'mapping_class']
 SRC_EXISTED_FIELD = {
     'id': 'id',
     'type': 'type',
+    'mapping_class': 'mapping_class',
 }
 
 

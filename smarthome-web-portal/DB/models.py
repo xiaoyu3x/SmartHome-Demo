@@ -146,245 +146,260 @@ class User(Base, HelperMixin, DefaultMixin):
 class Fan(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'fan'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="fan", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None):
+    def __init__(self, status=None, resource_id=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Fan(id='%s',uuid='%s',status='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.status), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.status), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Button(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'button'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="button", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None):
+    def __init__(self, resource_id=None, status=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        self.resource_id = resource_id
+        # self.gateway_id = gateway_id
 
     def __repr__(self):
         return "<Button(id='%s',uuid='%s',status='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.status), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.status), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Temperature(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'temperature'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     temperature = Column(DOUBLE(precision=20, scale=15))
     units = Column(VARCHAR(10))
     range = Column(VARCHAR(20))
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="temperature", lazy=False)
 
-    def __init__(self, uuid=None, temperature=None, units=None, range=None, gateway_id=None):
+    def __init__(self, temperature=None, units=None, range=None, resource_id=None):
         self.temperature = temperature
         self.units = units
         self.range = range
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Temperature(id='%s',uuid='%s',temperature='%s',units='%s',range='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.temperature), str(self.units), str(self.range), str(self.gateway_id),
-            str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.temperature), str(self.units), str(self.range),
+            str(self.resource.gateway_id), str(self.created_at))
 
 
 class Rgbled(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'rgbled'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     rgbvalue = Column(VARCHAR(20))
     range = Column(VARCHAR(20))
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="rgbled", lazy=False)
 
-    def __init__(self, uuid=None, rgbvalue=None, range=None, gateway_id=None):
+    def __init__(self, rgbvalue=None, range=None, resource_id=None):
         self.rgbvalue = rgbvalue
         self.range = range
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Rgbled(id='%s',uuid='%s',rgbvalue='%s',range='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.rgbvalue), str(self.range), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.rgbvalue), str(self.range), str(self.resource.gateway_id),
+            str(self.created_at))
 
 
 class Led(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'led'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="led", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None):
+    def __init__(self, status=None, resource_id=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Led(id='%s',uuid='%s',status='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.status), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.status), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Buzzer(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'buzzer'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="buzzer", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None):
+    def __init__(self, status=None, resource_id=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Buzzer(id='%s',uuid='%s',status='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.status), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.status), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Illuminance(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'illuminance'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     illuminance = Column(Float)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="illuminance", lazy=False)
 
-    def __init__(self, uuid=None, illuminance=None, gateway_id=None):
+    def __init__(self, illuminance=None, resource_id=None):
         self.illuminance = illuminance
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Illuminance(id='%s',uuid='%s',illuminance='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.illuminance), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.illuminance), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Motion(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'motion'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="motion", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None):
+    def __init__(self, status=None, resource_id=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Motion(id='%s',uuid='%s',status='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.status), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.status), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Gas(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'gas'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="gas", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None):
+    def __init__(self, status=None, resource_id=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Gas(id='%s',uuid='%s',status='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.status), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.status), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Solar(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'solar'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     tiltpercentage = Column(Float)
     lcd_first = Column(VARCHAR(30))
     lcd_second = Column(VARCHAR(30))
+    resource = relation('Resource', backref="solar", lazy=False)
 
-    def __init__(self, uuid=None, status=None, gateway_id=None, tiltpercentage=None, lcd_first=None, lcd_second=None):
+    def __init__(self, status=None, tiltpercentage=None, lcd_first=None, lcd_second=None, resource_id=None):
         self.status = status
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
         self.tiltpercentage = tiltpercentage
         self.lcd_first = lcd_first
         self.lcd_second = lcd_second
 
     def __repr__(self):
         return "<Solar(id='%s',uuid='%s',status='%s',gateway_id='%s',tiltpercentage='%s',lcd_first='%s'," \
-               "lcd_second='%s',created_at='%s')>" % (str(self.id), self.uuid, str(self.status),
-                                                      str(self.gateway_id), str(self.tiltpercentage),
+               "lcd_second='%s',created_at='%s')>" % (str(self.id), self.resource.uuid, str(self.status),
+                                                      str(self.resource.gateway_id), str(self.tiltpercentage),
                                                       self.lcd_first, str(self.lcd_second), str(self.created_at))
 
 
 class Power(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'power'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     value = Column(Integer)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="power", lazy=False)
 
-    def __init__(self, uuid=None, value=None, gateway_id=None):
+    def __init__(self, value=None, resource_id=None):
         self.value = value
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Power(id='%s',uuid='%s',value='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.value), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.value), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Energy(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'energy'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     value = Column(Integer)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="energy", lazy=False)
 
-    def __init__(self, uuid=None, value=None, gateway_id=None):
+    def __init__(self, value=None, resource_id=None):
         self.value = value
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Energy(id='%s',uuid='%s',value='%s',gateway_id='%s',created_at='%s')>" % (
-            str(self.id), self.uuid, str(self.value), str(self.gateway_id), str(self.created_at))
+            str(self.id), self.resource.uuid, str(self.value), str(self.resource.gateway_id), str(self.created_at))
 
 
 class Environment(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'environment'
 
-    uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     temperature = Column(FLOAT)
     humidity = Column(FLOAT)
     pressure = Column(FLOAT)
     uv_index = Column(FLOAT)
-    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relation('Resource', backref="environment", lazy=False)
 
-    def __init__(self, uuid=None, temperature=None, humidity=None, pressure=None, uv_index=None, gateway_id=None):
+    def __init__(self, temperature=None, humidity=None, pressure=None, uv_index=None, resource_id=None):
         self.temperature = temperature
         self.humidity = humidity
         self.pressure = pressure
         self.uv_index = uv_index
-        self.uuid = uuid
-        self.gateway_id = gateway_id
+        # self.uuid = uuid
+        self.resource_id = resource_id
 
     def __repr__(self):
         return "<Environment(id='%s',uuid='%s',temperature='%s',humidity='%s',pressure='%s',uvIndex='%s'," \
-               "gateway_id='%s',created_at='%s')>" % (str(self.id), self.uuid, str(self.temperature),
+               "gateway_id='%s',created_at='%s')>" % (str(self.id), self.resource.uuid, str(self.temperature),
                                                       str(self.humidity), str(self.pressure), str(self.uv_index),
-                                                      str(self.gateway_id), str(self.created_at))
+                                                      str(self.resource.gateway_id), str(self.created_at))
 
 
 class EventLog(Base, HelperMixin, DefaultMixin):
@@ -451,6 +466,7 @@ class Resource(Base, HelperMixin, DefaultMixin):
     status = Column(Boolean)
     gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     path = Column(VARCHAR(60), nullable=False)
+    tag = Column(VARCHAR(200), nullable=True)
     sensor_type = relation('SensorType', backref='resource', lazy=False)
 
     def __init__(self, uuid=None, sensor_type_id=None, path=None, status=None):
@@ -467,10 +483,12 @@ class Resource(Base, HelperMixin, DefaultMixin):
 class SensorType(Base, HelperMixin):
     __tablename__ = 'sensor_type'
     id = Column(Integer, primary_key=True)
-    type = Column(VARCHAR(20), nullable=False)
+    type = Column(VARCHAR(30), nullable=False)
+    mapping_class = Column(VARCHAR(20), nullable=False)
 
-    def __init__(self, sensor_type=None):
+    def __init__(self, sensor_type=None, mapping_class=None):
         self.type = sensor_type
+        self.mapping_class = mapping_class
 
     def __repr__(self):
         return "<SensorType(id='%s', type='%s')>" % (str(self.id), self.type)

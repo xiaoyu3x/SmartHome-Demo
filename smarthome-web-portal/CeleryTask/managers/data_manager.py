@@ -17,14 +17,18 @@ from RestClient.api.NexmoClient import NexmoClient
 
 
 class FetchData(threading.Thread):
-    """Threaded device ata observer and parser. """
-    def __init__(self, username, href, dev_id):
+    """Threaded device ata observer and parser.
+    Username: username
+    Resource_info: (href, dev_id, resource_type, resource_id)
+    """
+    def __init__(self, username, resource_info):
         threading.Thread.__init__(self)
         self.username = username
         self.gateway_id = IoTClient.get_gatewayid_by_user(username)
-        self.href = href
-        self.dev_id = dev_id
-        self.name = dev_id
+        self.href = resource_info[0]
+        self.dev_id = resource_info[1]
+        self.name = resource_info[3]
+        self.resource_type = resource_info[2]
         self.client_conn = None
         self.start()
 
@@ -32,25 +36,26 @@ class FetchData(threading.Thread):
         return "%s" % self.href
 
     def connect(self):
-        self.client_conn = client.Sensor(self.dev_id, self.href, self.username)
+        self.client_conn = client.Sensor(self.dev_id, self.href, self.resource_type, self.username)
 
     def run(self):
         try:
             # grabs urls of hosts and print data
-            typ = self.href
+            path = self.href
             dev_id = self.dev_id
-            print "{}?di={}".format(typ, dev_id)
+            print("{}?di={}".format(path, dev_id))
             # ret = self.client.get("{}?di={}".format(typ, dev_id), {'obs': 1}, stream=True)
             self.connect()
-            res = resource.get_resource(exception_when_missing=False, path=typ, uuid=dev_id, status=True)
+            res = resource.get_resource(exception_when_missing=False, path=path, uuid=dev_id, status=True)
             kargs = {
-                'sensor': res.get('sensor_type').get('type'),
+                'sensor': res.get('sensor_type').get('mapping_class'),
+                'resource_id': res.get('id'),
                 'uuid': self.dev_id,
-                'gateway_id': self.gateway_id
+                'gateway_id': self.gateway_id,
             }
             self.client_conn.get_data(stream=True, callback=self.parse_data, **kargs)
         except IoTConnectionError as e:
-            raise Exception("There was an error connecting to %s: %r" % (dev_id, e))
+            raise Exception("There was an error connecting to %s: %s : %r" % (dev_id, path, e))
 
     def kill(self):
         self.client_conn.terminate()
@@ -62,6 +67,7 @@ class FetchData(threading.Thread):
             sensor = kargs.get('sensor')
             uuid = kargs.get('uuid')
             gateway_id = kargs.get('gateway_id')
+            resource_id = kargs.get('resource_id')
             if sensor == 'power':
                 power_add = get_class("DB.api.power.new")
                 energy_add = get_class("DB.api.energy.new")
@@ -71,103 +77,101 @@ class FetchData(threading.Thread):
 
                 if new_power != 0:
                     content = {
-                            'uuid': uuid,
-                            'gateway_id': gateway_id,
+                            'resource_id': resource_id,
                             'value': new_power,
-
                     }
                     # power_add(content)
-                    print 'update power: {}'.format(str(power_add(content)))
+                    print('update power: {}'.format(str(power_add(content))))
 
                 if new_energy != 0:
                     content = {
-                            'uuid': uuid,
-                            'gateway_id': gateway_id,
+                            # 'uuid': uuid,
+                            'resource_id': resource_id,
                             'value': new_energy,
 
                     }
                     # energy_add(content)
-                    print 'update energy: {}'.format(str(energy_add(content)))
+                    print('update energy: {}'.format(str(energy_add(content))))
             else:
                 # sensor = data.get('properties').get('id')
                 add_method = get_class("DB.api.{}.new".format(sensor))
                 status_method = get_class("DB.api.{}.get_latest_by_gateway_uuid".format(sensor))
 
                 content = {
-                    'uuid': uuid,
-                    'gateway_id': gateway_id,
+                    'resource_id': resource_id,
                 }
                 # obj = status_method(gateway_id, uuid)
                 if sensor == 'solar':
                     new_tilt = data.get('properties').get('tiltPercentage')
-                    if new_tilt:
+                    if new_tilt is not None:
                         content.update({
                             'tiltpercentage': new_tilt,
                             'lcd_first': data.get('properties').get('lcd1'),
                             'lcd_second': data.get('properties').get('lcd2'),
                         })
                         # add_method(content)
-                        print 'update tilt percentage: {}'.format(str(add_method(content)))
+                        print('update tilt percentage: {}'.format(str(add_method(content))))
                     else:
-                        print "Unable to get tilt percentage."
+                        print("Unable to get tilt percentage.")
                 elif sensor == 'illuminance':
                     new_ill = data.get('properties').get('illuminance')
-                    if new_ill:
+                    if new_ill is not None:
                         content.update({
                             'illuminance': new_ill,
                         })
                         # add_method(content)
-                        print 'update illuminance: {}'.format(str(add_method(content)))
+                        print('update illuminance: {}'.format(str(add_method(content))))
                     else:
-                        print "Unable to get Illuminance status."
+                        print("Unable to get Illuminance status.")
                 elif sensor == 'temperature':
                     new_temp = data.get('properties').get('temperature')
-                    if new_temp:
+                    if new_temp is not None:
                         content.update({
                             'temperature': new_temp,
                             'units': data.get('properties').get('units'),
                             'range': data.get('properties').get('range'),
                         })
                         # add_method(content)
-                        print 'update temperature: {}'.format(str(add_method(content)))
+                        print('update temperature: {}'.format(str(add_method(content))))
                     else:
-                        print "Unable to get Temperature status."
+                        print("Unable to get Temperature status.")
                 elif sensor == 'rgbled':
                     new_rgb = data.get('properties').get('rgbValue')
-                    if new_rgb:
+                    if new_rgb is not None:
                         content.update({
                             'rgbvalue': str(new_rgb),
                             'range': str(data.get('properties').get('range')),
                         })
                         # add_method(content)
-                        print 'update rdbled: {}'.format(str(add_method(content)))
+                        print('update rdbled: {}'.format(str(add_method(content))))
                     else:
-                        print "Unable to get Rgbled status ."
+                        print("Unable to get Rgbled status .")
                 elif sensor == 'environment':
                     env_data = data.get('properties')
-                    if env_data:
+                    if env_data is not None:
                         content.update({
                             'temperature': env_data.get('temperature'),
                             'pressure': env_data.get('pressure'),
                             'humidity': env_data.get('humidity'),
                             'uv_index': env_data.get('uvIndex'),
                         })
-                        print 'update environment: {}'.format(str(add_method(content)))
+                        # add_method(content)
+                        print('update environment: {}'.format(str(add_method(content))))
                     else:
-                        print "Unable to get Environment sensor status ."
+                        print("Unable to get Environment sensor status .")
                 else:
-                    obj = status_method(gateway_id, uuid)
+                    obj = status_method(resource_id)
                     status = bool(obj.get('status')) if obj else None
                     new_sts = bool(data.get('properties').get('value'))
                     if status != new_sts:
                         content.update({
                             'status': new_sts,
                         })
-                        print 'update {} data: {}'.format(sensor, str(add_method(content)))
+                        print('update {} data: {}'.format(sensor, str(add_method(content))))
                         if new_sts and NexmoClient.send_message(gateway_id, uuid, sensor):
-                            print 'Sent text alert to users for {} status is True.'.format(sensor)
+                            print('Sent text alert to users for {} status is True.'.format(sensor))
                     else:
-                        print "{} status {} has not been changed.".format(sensor, new_sts)
+                        print("{} status {} has not been changed.".format(sensor, new_sts))
 
 
 class DataManager(base.BaseTask):
@@ -186,15 +190,7 @@ class DataManager(base.BaseTask):
     @staticmethod
     def get_sensor_types_map():
         types = sensor_type.get_all_types()
-        mapping = dict()
-        for typ_dict in types:
-            if typ_dict['type'] == 'motion':
-                pth = '/a/pir'
-            elif typ_dict['type'] == 'environment':
-                pth = '/a/env'
-            else:
-                pth = '/a/' + typ_dict['type']
-            mapping[pth] = int(typ_dict['id'])
+        mapping = {t_dict['type']: t_dict['id'] for t_dict in types}
         return mapping
 
     def _connect(self):
@@ -212,35 +208,37 @@ class DataManager(base.BaseTask):
     def update_resource(self, active_resource=[]):
         """
         Pull resource and update their status in db
-        :param: active_resource: tuple, (uuid, device_ type)
+        :param: active_resource: tuple, (uuid, href, resource_type)
         """
         active_resource_ids = []
-        for uuid, typ in active_resource:
+        for i, v in enumerate(active_resource):
+            uuid, href, typ = v[0], v[1], v[2]
             if typ not in self._sensor_type_map.keys():
-                self.log.error("Unsupported query path: {}.".format(typ))
+                self.log.error("Unsupported resource type: {}.".format(typ))
                 continue
 
             try:
-                ret = resource.get_resource(exception_when_missing=False, path=typ, uuid=uuid)
+                ret = resource.get_resource(exception_when_missing=False, path=href, uuid=uuid)
             except IoTConnectionError:
                 continue
 
             if not ret:
-                rs = resource.add_resource({
+                ret = resource.add_resource({
                     'uuid': uuid,
                     'sensor_type_id': self._sensor_type_map[typ],
                     'gateway_id': self.gateway_id,
                     'status': True,
-                    'path': typ,
+                    'path': href,
                 })
-                self.log.info('Resource {} is added.'.format(str(rs)))
-                active_resource_ids.append(rs.get('id'))
+                self.log.info('Resource {} is added.'.format(str(ret)))
+                active_resource_ids.append(ret.get('id'))
             elif not ret.get('status'):
                 # update resource status
                 resource.update_resource(ret.get('id'), status=True)
                 active_resource_ids.append(ret.get('id'))
             else:
                 active_resource_ids.append(ret.get('id'))
+            active_resource[i] = v + (ret.get('id'), )
         self._update_resource(active_resource_ids)
 
     def _update_resource(self, active_resource_ids=[]):
@@ -268,28 +266,29 @@ class DataManager(base.BaseTask):
             # remove dead threads in the conn pool
             main_thread = threading.currentThread()
             running_id = [th.getName() for th in threading.enumerate() if th is not main_thread and th.is_alive()]
-            self.log.info('running ids: {}, total: {}'.format(str([rid.split('-')[-1] for rid in running_id]), len(running_id)))
+            self.log.info('running ids: {}, total: {}'.format(str([rid for rid in running_id]), len(running_id)))
 
             dead_id = set(connections.keys()) - set(running_id)
-            for di in dead_id:
-                self.log.info("Thread {} is dead. Remove it from the connection pool. ".format(di))
-                del connections[di]
+            for rid in dead_id:
+                self.log.info("Thread {} is dead. Remove it from the connection pool. ".format(rid))
+                del connections[rid]
             self.log.info('dead ids: ' + str(dead_id))
 
             # latest resource ids pulled from the gateway
-            existing_di_list = [di for di, href in ls]
+            existing_id_list = [str(rid) for di, href, rt, rid in ls]
 
             # find threads with obsolete ids and remove them
-            zombie_di = set(connections.keys()) - set(existing_di_list)
-            for di in zombie_di:
-                self.log.info("kill zombie threads: {}".format(di))
-                connections[di].kill()
-                del connections[di]
+            zombie_id = set(connections.keys()) - set(existing_id_list)
+            for rid in zombie_id:
+                self.log.info("kill zombie threads: {}".format(rid))
+                connections[rid].kill()
+                del connections[rid]
 
-            self.log.info('active threads: {}, total: {}'.format(str([rid.split('-')[-1] for rid in connections.keys()]), len(connections.keys())))
+            self.log.info('active threads: {}, total: {}'.format(str([rid for rid in connections.keys()]),
+                                                                 len(connections.keys())))
 
-            for di, href in ls:
-                if di not in connections.keys() and di not in running_id:
+            for di, href, rt, rid in ls:
+                if str(rid) not in connections.keys() and str(rid) not in running_id:
                     if len(connections) >= self.MAX_THREAD:
                         # quit the loop cos it exceeds max threads limit
                         self.log.info("Exceeded maximal thread threshold {}, queuing request "
@@ -297,8 +296,8 @@ class DataManager(base.BaseTask):
                         self.log.info(connections.keys())
                         break
                     time.sleep(randint(0, 5))
-                    t = FetchData(self.username, href, di)
-                    connections[di] = t
+                    t = FetchData(self.username, (href, di, rt, rid))
+                    connections[str(rid)] = t
                     self.log.info('threads in the pool: ' + str(connections))
                 # logging.debug('end of for.')
 

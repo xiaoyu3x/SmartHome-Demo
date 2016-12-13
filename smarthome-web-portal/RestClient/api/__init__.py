@@ -129,6 +129,7 @@ class IoTResponse(object):
         self.response = response
         self.stream = stream
         self._stop = False
+        self.content = None
         if not self.stream:
             try:
                 self.content = self.response.json()

@@ -14,27 +14,20 @@ logger = logging.getLogger(__name__)
 class Sensor(object):
     _client = None
 
-    def __init__(self, uuid, path, username):
+    def __init__(self, uuid, path, resource_type, username):
         self.path = path
         self.id = uuid
+        self.resource_type = resource_type.strip() if resource_type else None
         self.resp = None
         self._object_map = Sensor.get_sensor_types_map()
-        if self.path not in self._object_map.keys():
-            raise Exception("Unsupported query path: {}. ". format(self.path))
+        if self.resource_type not in self._object_map:
+            raise Exception("Unsupported resource type: {}. ". format(self.path))
         self.connect(username)
 
     @staticmethod
     def get_sensor_types_map():
         types = sensor_type.get_all_types()
-        mapping = dict()
-        for typ_dict in types:
-            if typ_dict['type'] == 'motion':
-                pth = '/a/pir'
-            elif typ_dict['type'] == 'environment':
-                pth = '/a/env'
-            else:
-                pth = '/a/' + typ_dict['type']
-            mapping[pth] = int(typ_dict['id'])
+        mapping = [t_dict['type'] for t_dict in types]
         return mapping
 
     def connect(self, username):
@@ -45,7 +38,6 @@ class Sensor(object):
             self._client = IoTClient(username, proxies=config.get_all_proxy())
 
     def get_data(self, stream=False, callback=None, **kargs):
-        # obj = self._object_map[self.path]
         data = {'obs': 1} if stream else {}
         uri = "{}?di={}".format(self.path, self.id)
         self.resp = self._client.get(uri, data=data, stream=stream)
@@ -55,7 +47,8 @@ class Sensor(object):
             return self.resp.content if self.resp.ok() else None
 
     def terminate(self):
-        self.resp.close()
+        if self.resp:
+            self.resp.close()
 
     def update_status(self, data):
         ret = False

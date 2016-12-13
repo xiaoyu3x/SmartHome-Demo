@@ -158,32 +158,179 @@ $(function() {
 				$(this).parent().prev().find("h1").html(temp + '°');
 			});
 
+            $("#data-container, #alert-container").on('mouseover mouseout', '.mdl-card__title', function(e){
+                // show edit icon on mouse over
+                if(e.type == "mouseover")
+                    $(this).children(".edit").show();
+                else
+                    $(this).children(".edit").hide();
+            });
+
+            $("#status-container").on('mouseover mouseout', '.mdl-card__supporting-text .mdl-cell', function(e) {
+                // show edit icon on mouse over
+                if(e.type == "mouseover")
+                    $(this).children(".edit").show();
+                else
+                    $(this).children(".edit").hide();
+            });
+
+            $("#alert-container, #status-container, #data-container").on('click', '.edit', function(event) {
+                // show text field
+                var text = $(this).prev().text();
+
+                var input = $('<input type="text" maxlength="30" value="' + text + '" required="required" />');
+                input.data("initial", text);
+                $(this).prev().text('').append(input);
+                input.select();
+
+                input.keydown(function() {
+                    var title=$(this).parent().data("title");
+                    var field=this;
+                    setTimeout(function () {
+                        if(field.value.indexOf(title) !== 0) {
+                            $(field).val(title);
+                        }
+                    }, 1);
+                });
+
+                input.on("change focus blur", function() {
+                    var prefix=$(this).parent().data("title");
+                    var text = $(this).val();
+                    var oldVal = $(this).data("initial");
+                    var titleObj = $(this).parent();
+                    var title = "Only alpha, digits, space, underscore, hyphen and dot are allowed.";
+                    if(oldVal == text) {
+                        $(this).parent().text(text);
+                        $(this).remove();
+                        return;
+                    }
+
+                    // validate the input
+                    var regex = new RegExp('^[a-zA-Z]+[-A-Za-z0-9_. ]{1,30}$');
+                    if (!regex.test(text)) {
+                        console.error("Input validation failed, try again.");
+                        $(this).select();
+                        $(this).after('<span class="tooltiptext">' + title + '</span>');
+                        return;
+                    }
+
+                    $(this).nextAll().remove();
+
+                    // get resource id from different sensor types
+                    var resource_id;
+                    var sensor_type = "";
+                    if($(this).closest(".demo-card-event").length > 0) {
+                        var res_id = $(this).closest(".demo-card-event").attr("id");
+                        resource_id = res_id.split('-')[1];
+                    }
+                    else if($(this).closest(".status-card").length > 0)
+                        resource_id  = $(this).closest(".mdl-card__supporting-text").find(".mdl-card__menu").attr("data-ID");
+                    else if($(this).closest(".sensor-card").length > 0 ) {
+                        resource_id = $(this).closest(".sensor-card").find("h1").attr("data-ID");
+                        sensor_type = $(this).closest(".sensor-card").find("h1").attr("data-type");
+                    }
+                    var tag = text.substring(prefix.length, text.length);
+                    titleObj.text(text);
+                    $(this).remove();
+
+                    $.sh.now.update_sensor_title(resource_id, tag, sensor_type, oldVal, titleObj);
+                });
+            });
 		},
-		clear_data: function() {
-			$("#status-container").html('');
-			$("#data-container").html('');
-		},
+        update_sensor_title: function(resource_id, title, sensor_type, oldVal, titleObj) {
+		    if(sensor_type.length > 0)
+		        sensor_type = sensor_type.toLowerCase();
+		    $.ajax({
+		        type: "POST",
+                url: "/update_sensor_attr",
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "resource_id": resource_id,
+                    "type": sensor_type.toLowerCase(),
+                    "value": {'tag': title},
+                }),
+                success: function(data) {
+                    console.log(data);
+                    data = JSON.parse(data);
+                    var resource_id = data.resource_id;
+                    if (resource_id) {
+                        createSnackbar('Sensor ' + resource_id +  ' is updated.', 'Dismiss');
+                    }
+                }
+            }).done(function() {
+            }).fail(function(jqXHR, textStatus, errorThrown){
+                console.error("Failed to update status " + errorThrown);
+                createSnackbar("Server error: " + errorThrown, 'Dismiss');
+                //change the title back if fail
+                $(titleObj).text(oldVal);
+            });
+        },
+        clear_data: function(data) {
+		    var types = ["status", "data"];
+		    var sensor_list = [];
+            types.forEach(function(type) {
+                $.each(data[type], function (key, value_list) {
+                    value_list.forEach(function (value) {
+                        var id = value.resource_id.toString();
+                        if(!sensor_list.includes(id))
+                            sensor_list.push(id);
+                    });
+                });
+            });
+            $('.sensor-card h1').each(function () {
+                    var ID = $(this).attr('data-ID');
+                    if (!sensor_list.includes(ID)){
+                        // remove the sensor card
+                        console.log('remove sensor:' + ID);
+                        $(this).closest(".sensor-card").remove();
+                    }
+            });
+            $('.status-card .mdl-card__menu').each(function (){
+                var ID = $(this).attr('data-ID');
+                if (!sensor_list.includes(ID)) {
+                    $(this).closest(".status-card").remove();
+                }
+            });
+        },
+        dismiss_alert_card: function(obj){
+            dismiss(obj);
+            alert_card_number--;
+            console.log("number of alert cards " + alert_card_number);
+            if(alert_card_number <= 0)
+            {
+                $("#alert-status-title-quiet").show();
+                $("#alert-status-title-alerts").hide();
+            }
+        },
 		update_car_alert: function(data, show_uuid) {
             var uuid_txt = "";
-            var time = "";
+            var time;
             if(data.value.length == 0 ) return;
             time = getTime(data.value, utc_offset, timezone);
             if(show_uuid)
-                uuid_txt = 'UUID: ' + data.uuid;
+                uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
-			if($("#" + data.uuid).length > 0){
+            var title = "ELECTRIC CAR ";
+            var tag = title;
+            if(data.tag)
+                tag = tag + data.tag;
+
+            var card_id = "res-" + data.resource_id;
+
+			if($("#" + card_id).length > 0){
 				//find the car card and update time
                 if(time) {
-                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Charge')");
+                    var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Charge')");
                     txt.text("Charge car in time for tomorrow " + time);
                 }
-                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
 			}
 			else {
 					$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand">\
-					<h6>ELECTRIC CAR</h6>\
+					<h6 data-title="{4}">{3}</h6>\
+					<i class="material-icons edit" style="display: none;">edit</i>\
 				  </div>\
 				  <span class="mdl-card__subtitle-text" style="font-size: 70%">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
@@ -200,41 +347,39 @@ $(function() {
 					</a>\
 					<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" style="color: #000">SET TIMER</a>\
 				  </div>\
-				</div>', data.uuid, uuid_txt, time));
+				</div>', card_id, uuid_txt, time, tag, title));
                 alert_card_number++;
 			}
 		},
-        dismiss_alert_card: function(obj){
-            dismiss(obj);
-            alert_card_number--;
-            console.log("number of alert cards " + alert_card_number);
-            if(alert_card_number <= 0)
-            {
-                $("#alert-status-title-quiet").show();
-                $("#alert-status-title-alerts").hide();
-            }
-        },
 		update_motion_alert: function(data, show_uuid){
             var uuid_txt = "";
-            var time = "";
+            var time;
             if(data.value.length == 0 ) return;
             time = getTime(data.value, utc_offset, timezone);
             if(show_uuid)
-                uuid_txt = 'UUID: ' + data.uuid;
+                uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
-			if($("#" + data.uuid).length > 0){
+            var title = "MOTION SENSOR";
+            var tag = title;
+            if(data.tag)
+                tag = tag + data.tag;
+
+            var card_id = "res-" + data.resource_id;
+
+			if($("#" + card_id).length > 0){
 				//find the motion card and update time
                 if(time) {
-                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Someone')");
+                    var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Someone')");
                     txt.text("Someone is at the front door " + time);
                 }
-                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
 			}
 			else {
 					$("#alert-container").append(String.format('<div id ="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand">\
-					<h6>MOTION SENSOR</h6>\
+					<h6 data-title="{4}">{3}</h6>\
+					<i class="material-icons edit" style="display: none;">edit</i>\
 				  </div>\
 				  <span class="mdl-card__subtitle-text" style="font-size: 70%">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
@@ -250,32 +395,40 @@ $(function() {
 					  DISMISS\
 					</a>\
 				  </div>\
-				</div>', data.uuid, uuid_txt, time));
+				</div>', card_id, uuid_txt, time, tag, title));
                 alert_card_number++;
 			}
 		},
 		update_gas_alert: function(data, show_uuid){
 		    var uuid_txt = "";
-            var time = "";
+            var time;
 
             if(data.value.length == 0 ) return;
             time = getTime(data.value, utc_offset, timezone);
             if(show_uuid)
-                uuid_txt = 'UUID: ' + data.uuid;
+                uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
-			if($("#" + data.uuid).length > 0){
+            var title = "CO2 SENSOR";
+            var tag = title;
+            if(data.tag)
+                tag = tag + data.tag;
+
+            var card_id = "res-" + data.resource_id;
+
+			if($("#" + card_id).length > 0){
 				//find the gas card and update time
                 if(time) {
-                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Gas')");
+                    var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Gas')");
                     txt.text("Gas detected in kitchen area " + time);
                 }
-                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
 			}
 			else {
 				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp" style="background: #ed0042;">\
 				  <div class="mdl-card__title mdl-card--expand">\
-					<h6 style="color: #fff;">CO2 SENSOR</h6>\
+					<h6 style="color: #fff;" data-title="{4}">{3}</h6>\
+					<i class="material-icons edit" style="display: none; color: #fff;">edit</i>\
 				  </div>\
 				  <span class="mdl-card__subtitle-text" style="font-size: 70%; color: #fff;">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
@@ -292,33 +445,41 @@ $(function() {
 					</a>\
 					<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"  style="color: #fff;">EMERGENCY</a>\
 				  </div>\
-				</div>', data.uuid, uuid_txt, time));
+				</div>', card_id, uuid_txt, time, tag, title));
                 alert_card_number++;
 			}
 		},
 		update_buzzer_alert: function(data, show_uuid) {
 		    var uuid_txt = "";
-            var time = "";
+            var time;
 
             if(data.value.length == 0 ) return;
             time = getTime(data.value, utc_offset, timezone);
 
             if(show_uuid)
-                uuid_txt = 'UUID: ' + data.uuid;
+                uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
-			if($("#" + data.uuid).length > 0) {
+            var title = "BUZZER";
+            var tag = title;
+            if(data.tag)
+                tag = tag + data.tag;
+
+            var card_id = "res-" + data.resource_id;
+
+			if($("#" + card_id).length > 0) {
                 //find the buzzer card and update time
                 if(time) {
-                    var txt = $("#" + data.uuid + " > .mdl-card__supporting-text > .section__circle-container > h1");
+                    var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h1");
                     txt.text(time);
                 }
-                var uid = $("#" + data.uuid + " > .mdl-card__subtitle-text");
+                var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
             }
 			else {
 				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand">\
-					<h6>BUZZER</h6>\
+					<h6 data-title="{4}">{3}</h6>\
+					<i class="material-icons edit" style="display: none;">edit</i>\
 				  </div>\
 				  <span class="mdl-card__subtitle-text" style="font-size: 70%">{1}</span>\
 				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
@@ -334,7 +495,7 @@ $(function() {
 					  DISMISS\
 					</a>\
 				  </div>\
-				</div>', data.uuid, uuid_txt, time));
+				</div>', card_id, uuid_txt, time, tag, title));
                 alert_card_number++;
 			}
 		},
@@ -345,43 +506,74 @@ $(function() {
 				color = "green";
 
             if(show_uuid)
-                uuid_cell = '<div class="mdl-cell mdl-cell--10-col" style="font-size: 0.6vw; color: grey;" >UUID: ' + data.uuid + '</div>';
+                uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
-			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-						<div class="mdl-cell mdl-cell--2-col" style="text-align: left">\
-							<h6>{0}</h6>\
-						</div>\
-						{1}\
-					  <div class="mdl-card__menu">\
-						  <i class="material-icons {2}">done</i>\
-					  </div>\
-				  </div>\
-				</div>', type, uuid_cell, color))
+            var tag = type;
+            if(data.tag)
+                tag = tag + data.tag;
+
+            var menu = $(".status-card div[data-ID='" + data.resource_id + "'] i");
+            if(menu.length == 0)
+                $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
+                      <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
+                            <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+                                <h6 title="{1}" data-title="{4}">{0}</h6>\
+                                <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
+                            </div>\
+                          <div data-ID="{2}" class="mdl-card__menu">\
+                              <i class="material-icons {3}">done</i>\
+                          </div>\
+                      </div>\
+                    </div>', tag, uuid_cell, data.resource_id, color, type));
+            else {
+                menu.removeClass().addClass("material-icons " + color);
+                var uid = menu.parent().prev().children('h6');
+                uid.attr("title", uuid_cell);
+            }
 		},
 		update_fan_status: function(data, show_uuid) {
-			var is_checked = "";
             var uuid_cell = "";
-			if(data.value)
-				is_checked = "checked";
-
             if(show_uuid)
-                uuid_cell = '<div class="mdl-cell mdl-cell--10-col" style="font-size: 0.6vw; color: grey;" >UUID: ' + data.uuid + '</div>';
+                uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
-			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-						<div class="mdl-cell mdl-cell--2-col" style="text-align: left">\
-							<h6>FAN</h6>\
+            var title = "FAN";
+            var tag = title;
+            if(data.tag)
+                tag = tag + data.tag;
+
+            var menu = $(".status-card div[data-ID='" + data.resource_id +"'] label");
+            if(menu.length == 0) {
+                $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
+				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="display: flex; flex-flow: row wrap;">\
+						<div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+							<h6 title="{0}" data-title="{3}">{2}</h6>\
+							<i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
 						</div>\
-						{0}\
-					  <div class="mdl-card__menu">\
-						  <label title="switch on/off" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="{2}">\
-      						<input type="checkbox" id="{2}" class="mdl-switch__input" {1} onclick="return toggle_status(\'fan\', this);">\
+					  <div data-ID="{1}" class="mdl-card__menu">\
+						  <label title="switch on/off" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="res-{1}">\
+      						<input type="checkbox" id="res-{1}" class="mdl-switch__input" onclick="return toggle_status({1}, this);">\
       						<span class="mdl-switch__label"></span>\
     					  </label>\
 					  </div>\
 				  </div>\
-				</div>', uuid_cell, is_checked, data.uuid));
+				</div>', uuid_cell, data.resource_id, tag, title));
+                $("input[id=res-" + data.resource_id + "]").prop('checked', data.value);
+            }
+            else{
+                // toggle switch on/off
+                var status = menu.find("input")[0].checked;
+                if(status !== data.value) {
+                    if (status) {
+                        menu[0].MaterialSwitch.off();
+                    }
+                    else {
+                        menu[0].MaterialSwitch.on();
+                    }
+                }
+
+                var uid = menu.parent().prev().children('h6');
+                uid.attr("title", uuid_cell);
+            }
             // Expand all new MDL elements
             componentHandler.upgradeDom();
 		},
@@ -392,50 +584,78 @@ $(function() {
 				bgcolor = "bg-red";
 
             if(show_uuid)
-                uuid_cell = '<div class="mdl-cell mdl-cell--9-col" style="font-size: 0.6vw; color: grey;" >UUID: ' + data.uuid + '</div>';
+                uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
-			$("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-			  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-					<div class="mdl-cell mdl-cell--3-col" style="text-align: left">\
-						<h6>RGB LED</h6>\
-					</div>\
-					{1}\
-				  <div class="mdl-card__menu">\
-					  <i class="material-icons {0}">lightbulb_outline</i>\
-				  </div>\
-			  </div>\
-			</div>', bgcolor, uuid_cell))
+            var title = "RGB LED";
+            var tag = title;
+            if(data.tag)
+                tag = tag + data.tag;
 
+            var menu = $(".status-card div[data-ID='" + data.resource_id + "'] i");
+            if(menu.length == 0) {
+                $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
+                  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
+                        <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+                            <h6 title="{1}" data-title="{4}">{3}</h6>\
+                            <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
+                        </div>\
+                      <div data-ID="{2}" class="mdl-card__menu">\
+                          <i class="material-icons {0}">lightbulb_outline</i>\
+                      </div>\
+                  </div>\
+                </div>', bgcolor, uuid_cell, data.resource_id, tag, title));
+            }
+            else {
+                menu.removeClass().addClass("material-icons " + bgcolor);
+                var uid = menu.parent().prev().children('h6');
+                uid.attr("title", uuid_cell);
+            }
 		},
-        update_sensor_data_without_unit: function(title, value) {
-		    this.update_data(title, value, '');
+        update_sensor_data_without_unit: function(title, data, show_uuid) {
+		    this.update_sensor_data(title, data, '', show_uuid);
         },
-        update_multiply_sensors_without_unit: function(title, value, uuid) {
-            this.update_data(title, value, '', uuid);
-        },
-        update_sensor_data: function(title, value, unit) {
-            this.update_data(title, value, unit, '');
-        },
-		update_data: function(title, value, unit, uuid) {
-			var show_uuid = '';
-            if(uuid)
-                show_uuid = '<span class="mdl-card__subtitle-text" style="font-size: 70%">UUID: ' + uuid + '</span>';
-			var	html = String.format('<div class="sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
-                    <div class="mdl-card__title" style="display: block">\
-			  	        <h6>{0}</h6>\
+		update_sensor_data: function(title, data, unit, show_uuid) {
+			var uuid_cell = '';
+            if(show_uuid)
+                uuid_cell = '<span class="mdl-card__subtitle-text" style="font-size: 70%; flex-basis: 100%;">ID: '
+                    + data.uuid + ':' + data.path + '</span>';
+
+            var value = $(".sensor-card h1[data-ID='" + data.resource_id + "'][data-type='" + title + "']");
+
+            var type = title;
+            if(data.tag)
+                type = type + data.tag;
+
+            if(value.length == 0) {
+                var html = String.format('<div class="sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
+                    <div class="mdl-card__title" style="display: flex; flex-flow: row wrap;">\
+			  	        <h6 data-title="{0}">{5}</h6>\
+			  	        <i class="material-icons edit" style="display: none;">edit</i>\
 			  	        {1}\
                     </div>\
                     <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
                         <div class="mdl-cell" style="text-align:left; width: auto;">\
-                            <h1 style="font-size: 3.8vw;">{2}</h1>\
+                            <h1 data-ID="{2}" data-type="{0}" style="font-size: 3.8vw;">{3}</h1>\
                         </div>\
                         <div class="mdl-cell" style="display: flex; align-items: center;">\
-								<h6 style="font-size: 0.8vw;">{3}</h6>\
+								<h6 style="font-size: 0.8vw;">{4}</h6>\
                         </div>\
                     </div>\
-                </div>',title, show_uuid, value, unit);
-
-			$("#data-container").append(html);
+                </div>', title, uuid_cell, data.resource_id, data.value, unit, type);
+                $("#data-container").append(html);
+            }
+            else{
+                value.text(data.value);
+                var subtitle = value.closest(".mdl-card__supporting-text").prev(".mdl-card__title").children("span");
+                if(show_uuid) {
+                    if(subtitle.length == 0)
+                        value.closest(".mdl-card__supporting-text").prev(".mdl-card__title").children("i").after(uuid_cell);
+                }
+                else {
+                    if(subtitle.length > 0)
+                        subtitle.remove();
+                }
+            }
 		},
         get_temperature_in_timezone: function(value) {
 		    var house_temp = null;
@@ -451,6 +671,14 @@ $(function() {
             }
             return house_temp.toString() + temp_unit;
         },
+        parse_data: function(value_list, callback){
+            var show_uuid = false;
+            if(value_list.length > 1)
+                show_uuid = true;
+            value_list.forEach(function(data){
+                callback(data, show_uuid);
+            })
+        },
 		update_portal: function() {
 			if(window.panel != 1) return;
             $.ajax({
@@ -463,43 +691,35 @@ $(function() {
                 success: function(data){
                     console.log(data);
                     var sensors = data.data;
-                    $.sh.now.clear_data();
+                    $.sh.now.clear_data(sensors);
                     $.each(sensors['alert'], function (key, value_list) {
                         switch (key) {
                             case 'buzzer':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_buzzer_alert(data, show_uuid);
-                                    alert_token[data.uuid] = data.value;
+                                    if(data.value)
+                                        alert_token[data.resource_id] = data.value;
                                 });
                                 break;
                             case 'motion':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_motion_alert(data, show_uuid);
-                                    alert_token[data.uuid] = data.value;
+                                    if(data.value)
+                                        alert_token[data.resource_id] = data.value;
                                 });
                                 break;
                             case 'gas':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_gas_alert(data, show_uuid);
-                                    alert_token[data.uuid] = data.value;
+                                    if(data.value)
+                                        alert_token[data.resource_id] = data.value;
                                 });
                                 break;
 							case 'button':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+							    $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_car_alert(data, show_uuid);
-                                    alert_token[data.uuid] = data.value;
+                                    if(data.value)
+                                        alert_token[data.resource_id] = data.value;
                                 });
                                 break;
                             default:
@@ -515,26 +735,17 @@ $(function() {
                     $.each(sensors['status'], function (key, value_list) {
                         switch (key) {
                             case 'fan':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_fan_status(data, show_uuid);
                                 });
                                 break;
                             case 'led':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_status('LED', data, show_uuid);
                                 });
                                 break;
                             case 'rgbled':
-                                value_list.forEach(function(data) {
-                                    var show_uuid = false;
-                                    if(value_list.length > 1)
-                                        show_uuid = true;
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_rgb_status(data, show_uuid);
                                 });
                                 break;
@@ -545,60 +756,41 @@ $(function() {
                     $.each(sensors['data'], function (key, value_list) {
                         switch (key) {
                             case 'temperature':
-                                value_list.forEach(function(data){
-                                    var house_temp = $.sh.now.get_temperature_in_timezone(data.value);
-                                    if(value_list.length > 1)
-								        $.sh.now.update_multiply_sensors_without_unit('TEMPERATURE', house_temp, data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data_without_unit('TEMPERATURE', house_temp);
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    data.value = $.sh.now.get_temperature_in_timezone(data.value);
+                                    $.sh.now.update_sensor_data_without_unit('TEMPERATURE', data, show_uuid);
                                 });
                                 break;
                             case 'solar':
-                                value_list.forEach(function(data){
-                                    if(value_list.length > 1)
-								        $.sh.now.update_data('SOLAR PANEL TILT', data.value, '%', data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data('SOLAR PANEL TILT', data.value, '%');
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    $.sh.now.update_sensor_data('SOLAR PANEL TILT', data, '%', show_uuid);
                                 });
                                 break;
                             case 'illuminance':
-                                value_list.forEach(function(data){
-                                    if (value_list.length > 1)
-                                        $.sh.now.update_data('AMBIENT LIGHT', data.value, 'lm', data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data('AMBIENT LIGHT', data.value, 'lm');
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    $.sh.now.update_sensor_data('AMBIENT LIGHT', data, 'lm', show_uuid);
                                 });
                                 break;
                             case 'power':
-                                value_list.forEach(function(data){
-                                    if (value_list.length > 1)
-                                        $.sh.now.update_data('CURRENT ENERGY CONSUMPTION', data.value/1000, 'Watt', data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', data.value/1000, 'Watt');
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    data.value = data.value/1000;
+                                    $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', data, 'Watt', show_uuid);
                                 });
                                 break;
                             case 'humidity':
-                                value_list.forEach(function(data){
-                                    if (value_list.length > 1)
-                                        $.sh.now.update_multiply_sensors_without_unit('HUMIDITY', data.value, '%', data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data_without_unit('HUMIDITY', data.value + '%');
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    data.value = data.value + '%';
+                                    $.sh.now.update_sensor_data_without_unit('HUMIDITY', data, show_uuid);
                                 });
                                 break;
                             case 'pressure':
-                                value_list.forEach(function(data){
-                                    if (value_list.length > 1)
-                                        $.sh.now.update_data('PRESSURE', data.value, 'hPa', data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data('PRESSURE', data.value, 'hPa');
+                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    $.sh.now.update_sensor_data('PRESSURE', data, 'hPa', show_uuid);
                                 });
                                 break;
                             case 'uv_index':
-                                value_list.forEach(function(data){
-                                    if (value_list.length > 1)
-                                        $.sh.now.update_multiply_sensors_without_unit('UV INDEX', data.value, data.uuid);
-                                    else
-                                        $.sh.now.update_sensor_data_without_unit('UV INDEX', data.value);
+                               $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                    $.sh.now.update_sensor_data_without_unit('UV INDEX', data, show_uuid);
                                 });
                                 break;
                             default:
@@ -660,17 +852,6 @@ $(function() {
 				});
             });
 
-
-            // switch between the other tabs
-            //$("a.mdl-tabs__tab").on("click", function(){
-				//var tid = $(this).attr( "href" );
-            //    //$(this).parent().siblings("div.mdl-tabs__panel").hide();
-            //    //$("div" + tid).show();
-            //    $("div" + tid).find("div[id*='container']").each(function () {
-            //        if(tid.indexOf('#static') == 0)
-            //            $(this).highcharts().reflow();
-            //    });
-            //});
 		},
         update_billing: function(tab) {
             //set up tab bar

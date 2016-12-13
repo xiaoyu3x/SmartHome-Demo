@@ -15,7 +15,7 @@ except ImportError:
     pass
 
 
-@app.task(name='CeleryTask.tasks.get_sensor_data', bind=True, ignore_result=True, default_retry_delay=30, max_retries=2)
+@app.task(name='CeleryTask.tasks.get_sensor_data', bind=True, ignore_result=True, default_retry_delay=30, max_retries=50)
 def get_sensor_data(self, username):
     try:
         mgr = DataManager(username)
