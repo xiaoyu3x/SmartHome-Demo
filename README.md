@@ -10,5 +10,6 @@ The repository is organised as follows:
 * `ostro-config`: a collection of `systemd` service files that can help automatically start the Home GW software (on the Home Gateway) and OCF servers (on the OCF server hardware). (*note:* these require manual adaptation and not all OCF servers have an associated service file available)
 * `sensors`: source code for the various Smart Devices that are based on the [Zephyr Project](https://www.zephyrproject.org/)
 * `smarthome-web-portal`: code for the cloud portal
+* `snap`: meta file for packaging the Home Gateway into a snap
 
 You will find dedicated README.md files in most of these subfolders that will explain in more details how to use their respective contents.
