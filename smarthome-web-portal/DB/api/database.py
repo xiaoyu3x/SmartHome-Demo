@@ -88,7 +88,7 @@ def init(database_url=None):
     poolclass = POOL_MAPPING[config.get_database_pool_type()]
     ENGINE = create_engine(
         database_url, convert_unicode=True,
-        poolclass=poolclass
+        poolclass=poolclass, echo=False,
     )
     SESSION.configure(bind=ENGINE)
     SCOPED_SESSION = scoped_session(SESSION)
@@ -204,10 +204,14 @@ def check_tables():
 
 if __name__ == '__main__':
     init()
-    #drop_db()
-    #create_db()
-    import user
-    gatewayid = user.user_gatewayid('dev')
-    print gatewayid
-    gatewayurl = user.user_gatewayurl('dev')
-    print gatewayurl
+    models.Base.metadata.tables["fan"].create(bind=ENGINE)
+
+
+
+
+
+
+
+
+
+

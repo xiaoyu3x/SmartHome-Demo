@@ -5,7 +5,7 @@ Script to pre-populate the database
 """
 import hashlib
 from sqlalchemy_utils.functions import create_database, database_exists
-from DB.api import user, gateway, sensor_type
+from DB.api import user, gateway, sensor_type, sensor_group
 from DB.api import database
 from DB import exception
 from utils.config import config
@@ -34,7 +34,7 @@ DEFAULT_GATEWAYS = [
         'url': 'https://192.55.66.110:8000/',
         'address': 'Manchester Grand Hyatt San Diego',
         'latitude': '32.714987',
-        'longitude': ' -117.167359',
+        'longitude': '-117.167359',
         'status': True
     },
 ]
@@ -67,6 +67,12 @@ SENSOR_TYPES = [
     ('environment', 'oic.r.sensor.environment'),
 ]
 
+SENSOR_GROUPS = [
+    ('Kitchen', '#cd8daa'),
+    ('Bedroom', '#f19d5a'),
+    ('Living Room', '#7499e1'),
+]
+
 
 def new_database():
     engine = config.get_connection_url()
@@ -96,7 +102,11 @@ def init_data():
         user.add_user(usr)
     print "Init sensor type data ..."
     for st in SENSOR_TYPES:
-        sensor_type.add_sensor_type({'type': st[1], 'mapping_class': st[0]})
+        sensor_type.new({'type': st[1], 'mapping_class': st[0]})
+    print "Init sensor groups ..."
+    for sg in SENSOR_GROUPS:
+        for i in range(len(DEFAULT_GATEWAYS)):
+            sensor_group.new({'gateway_id': i+1, 'name': sg[0], 'color': sg[1]})
     print "Done."
 
 

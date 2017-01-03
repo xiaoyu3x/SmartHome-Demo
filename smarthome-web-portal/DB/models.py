@@ -6,7 +6,7 @@ import datetime
 import json
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relation, backref
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.dialects.mysql import DOUBLE
 
 from DB import exception
@@ -131,7 +131,7 @@ class User(Base, HelperMixin, DefaultMixin):
     password = Column(VARCHAR(64))
     phone = Column(VARCHAR(15))
     gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    gateway = relation('Gateway', backref='user', lazy=False)
+    gateway = relationship('Gateway', backref='user', lazy=False)
 
     def __init__(self, username=None, password=None, gateway_id=None):
         self.username = username
@@ -150,7 +150,7 @@ class Fan(Base, HelperMixin, DefaultMixin):
     status = Column(Boolean)
     # gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="fan", lazy=False)
+    resource = relationship('Resource', backref="fan", lazy=False)
 
     def __init__(self, status=None, resource_id=None):
         self.status = status
@@ -168,7 +168,7 @@ class Button(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="button", lazy=False)
+    resource = relationship('Resource', backref="button", lazy=False)
 
     def __init__(self, resource_id=None, status=None):
         self.status = status
@@ -188,7 +188,7 @@ class Temperature(Base, HelperMixin, DefaultMixin):
     units = Column(VARCHAR(10))
     range = Column(VARCHAR(20))
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="temperature", lazy=False)
+    resource = relationship('Resource', backref="temperature", lazy=False)
 
     def __init__(self, temperature=None, units=None, range=None, resource_id=None):
         self.temperature = temperature
@@ -210,7 +210,7 @@ class Rgbled(Base, HelperMixin, DefaultMixin):
     rgbvalue = Column(VARCHAR(20))
     range = Column(VARCHAR(20))
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="rgbled", lazy=False)
+    resource = relationship('Resource', backref="rgbled", lazy=False)
 
     def __init__(self, rgbvalue=None, range=None, resource_id=None):
         self.rgbvalue = rgbvalue
@@ -230,7 +230,7 @@ class Led(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="led", lazy=False)
+    resource = relationship('Resource', backref="led", lazy=False)
 
     def __init__(self, status=None, resource_id=None):
         self.status = status
@@ -248,7 +248,7 @@ class Buzzer(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="buzzer", lazy=False)
+    resource = relationship('Resource', backref="buzzer", lazy=False)
 
     def __init__(self, status=None, resource_id=None):
         self.status = status
@@ -266,7 +266,7 @@ class Illuminance(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     illuminance = Column(Float)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="illuminance", lazy=False)
+    resource = relationship('Resource', backref="illuminance", lazy=False)
 
     def __init__(self, illuminance=None, resource_id=None):
         self.illuminance = illuminance
@@ -284,7 +284,7 @@ class Motion(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="motion", lazy=False)
+    resource = relationship('Resource', backref="motion", lazy=False)
 
     def __init__(self, status=None, resource_id=None):
         self.status = status
@@ -302,7 +302,7 @@ class Gas(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     status = Column(Boolean)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="gas", lazy=False)
+    resource = relationship('Resource', backref="gas", lazy=False)
 
     def __init__(self, status=None, resource_id=None):
         self.status = status
@@ -323,7 +323,7 @@ class Solar(Base, HelperMixin, DefaultMixin):
     tiltpercentage = Column(Float)
     lcd_first = Column(VARCHAR(30))
     lcd_second = Column(VARCHAR(30))
-    resource = relation('Resource', backref="solar", lazy=False)
+    resource = relationship('Resource', backref="solar", lazy=False)
 
     def __init__(self, status=None, tiltpercentage=None, lcd_first=None, lcd_second=None, resource_id=None):
         self.status = status
@@ -346,7 +346,7 @@ class Power(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     value = Column(Integer)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="power", lazy=False)
+    resource = relationship('Resource', backref="power", lazy=False)
 
     def __init__(self, value=None, resource_id=None):
         self.value = value
@@ -364,7 +364,7 @@ class Energy(Base, HelperMixin, DefaultMixin):
     # uuid = Column(VARCHAR(40), ForeignKey('resource.uuid', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     value = Column(Integer)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="energy", lazy=False)
+    resource = relationship('Resource', backref="energy", lazy=False)
 
     def __init__(self, value=None, resource_id=None):
         self.value = value
@@ -385,7 +385,7 @@ class Environment(Base, HelperMixin, DefaultMixin):
     pressure = Column(FLOAT)
     uv_index = Column(FLOAT)
     resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    resource = relation('Resource', backref="environment", lazy=False)
+    resource = relationship('Resource', backref="environment", lazy=False)
 
     def __init__(self, temperature=None, humidity=None, pressure=None, uv_index=None, resource_id=None):
         self.temperature = temperature
@@ -463,11 +463,14 @@ class Resource(Base, HelperMixin, DefaultMixin):
     uuid = Column(VARCHAR(40), nullable=False, index=True)
     sensor_type_id = Column(Integer, ForeignKey('sensor_type.id', ondelete='CASCADE', onupdate='CASCADE'),
                             nullable=False)
+    sensor_group_id = Column(Integer, ForeignKey('sensor_group.id', ondelete='CASCADE', onupdate='CASCADE'),
+                             nullable=True)
     status = Column(Boolean)
     gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     path = Column(VARCHAR(60), nullable=False)
     tag = Column(VARCHAR(200), nullable=True)
-    sensor_type = relation('SensorType', backref='resource', lazy=False)
+    sensor_type = relationship('SensorType', backref='resource', lazy=False)
+    sensor_group = relationship('SensorGroup', backref='resource', lazy=False)
 
     def __init__(self, uuid=None, sensor_type_id=None, path=None, status=None):
         self.uuid = uuid
@@ -482,6 +485,7 @@ class Resource(Base, HelperMixin, DefaultMixin):
 
 class SensorType(Base, HelperMixin):
     __tablename__ = 'sensor_type'
+
     id = Column(Integer, primary_key=True)
     type = Column(VARCHAR(30), nullable=False)
     mapping_class = Column(VARCHAR(20), nullable=False)
@@ -493,5 +497,20 @@ class SensorType(Base, HelperMixin):
     def __repr__(self):
         return "<SensorType(id='%s', type='%s')>" % (str(self.id), self.type)
 
-# if __name__ == '__main__':
-#    initial_db()
+
+class SensorGroup(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'sensor_group'
+
+    name = Column(VARCHAR(30), nullable=False)
+    color = Column(VARCHAR(10), nullable=False)
+    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+
+    def __init__(self, name=None, color=None, gateway_id=None):
+        self.name = name
+        self.color = color
+        self.gateway_id = gateway_id
+
+    def __repr__(self):
+        return "<SensorGroup(id='%s',name='%s',color='%s', gateway_id='%s', created_at='%s')>" % (
+            str(self.id), self.name, self.color, str(self.gateway_id), str(self.created_at))
+

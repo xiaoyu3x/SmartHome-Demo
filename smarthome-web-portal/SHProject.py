@@ -16,7 +16,7 @@ from decimal import Decimal
 from utils import logsettings
 from utils import util
 from utils.config import config
-from DB.api import resource, user, gateway
+from DB.api import resource, user, gateway, sensor_group
 from RestClient.sensor import Sensor
 from RestClient.api import ApiClient
 from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, TAP_ENV_VARS
@@ -133,6 +133,20 @@ def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, resul
         'path': latest_data.get('resource').get('path') if latest_data.get('resource') else None,
         'tag': latest_data.get('resource').get('tag') if latest_data.get('resource') else None,
     }
+
+    # extract group background color
+    res_obj = latest_data.get('resource')
+    color = None
+    if res_obj:
+        # print latest_data.get('resource').get('sensor_group')
+        if res_obj.get('sensor_group_id'):
+            color = sensor_group.get_sensor_group(res_obj.get('sensor_group_id'))
+            # use the default color if null
+        color = {'color': '#fff', 'name': ''} if not color else color
+        val_dict.update(
+            {'color': color}
+        )
+
     # decouple the tag field for environmental sensors
     if latest_data.get('resource') and latest_data.get('resource').get('tag'):
         # a pure digit string will be treated as json
@@ -156,8 +170,7 @@ def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, resul
         val_dict.update({
             'value': "",
         })
-    # if sensor_type == 'rgbled':
-    #     print str(val_dict) + " " + str(record_key)
+
     if result[result_key].get(sensor_type) is None:
         result[result_key].update({sensor_type: [val_dict, ]})
     else:
@@ -188,6 +201,7 @@ def _get_sensor_data(token_dict):
             latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
         if latest_data is None:
             continue
+        # print latest_data
         if typ in ALERT_GRP:
             _compose_sensor_data(typ, latest_data, 'created_at', 'alert', ret)
         elif typ in STATUS_GRP:
@@ -222,29 +236,30 @@ def get_sensor():
     token_header = request.headers.get('token')
     token_dict = json.loads(token_header) if token_header else dict()
     ret = _get_sensor_data(token_dict)
-    return jsonify({'data': ret}), 201
+    return jsonify(data=ret), 201
 
 
 def _compose_sensor_tag(data):
-    res = resource.get_resource(id=data["resource_id"])
-    sensor_type = res.get("sensor_type").get("mapping_class")
+    if "tag" in data["value"]:
+        res = resource.get_resource(id=data["resource_id"])
+        sensor_type = res.get("sensor_type").get("mapping_class")
 
-    if sensor_type == "environment" and "tag" in data["value"]:
-        new_tag = data["value"]['tag']
-        tag = res.get("tag")
-        sensor_type = data["type"]
-        if sensor_type:
-            sensor_type = sensor_type.replace(" ", "_")
-        try:
-            tag_dict = json.loads(tag)
-        except:
-            tag_dict = {}
-        tag_dict.update({
-            sensor_type: new_tag
-        })
-        data["value"].update({
-            "tag": json.dumps(tag_dict)
-        })
+        if sensor_type == "environment":
+            new_tag = data["value"]['tag']
+            tag = res.get("tag")
+            sensor_type = data["type"]
+            if sensor_type:
+                sensor_type = sensor_type.replace(" ", "_")
+            try:
+                tag_dict = json.loads(tag)
+            except:
+                tag_dict = {}
+            tag_dict.update({
+                sensor_type: new_tag
+            })
+            data["value"].update({
+                "tag": json.dumps(tag_dict)
+            })
 
 
 @app.route('/update_sensor_attr', methods=['POST'])
@@ -255,6 +270,7 @@ def update_sensor_attr():
     :return: uuid and status code
     """
     data = request.json
+    print data
     if "resource_id" not in data.keys() \
             or "value" not in data.keys() \
             or not data.get("resource_id") \
@@ -263,7 +279,7 @@ def update_sensor_attr():
         abort(400)
     _compose_sensor_tag(data)
     updated_res = resource.update_resource(id=data['resource_id'], **data["value"])
-    return json.dumps({"resource_id": updated_res.get("id")}), 200
+    return jsonify(resource_id=updated_res.get("id")), 200
 
 
 @app.route('/get_geo_location')
@@ -298,6 +314,32 @@ def update_sensor():
                     resource_type=res.get('sensor_type').get('type'), username=session.get('username'))
     sts = sensor.update_status(data)
     return jsonify({'status': sts}), 201
+
+
+@app.route('/add_sensor_group', methods=['POST'])
+@login_required
+def add_sensor_group():
+    """
+    update sensor group
+    Http POST: {
+                'gateway_id': 1,
+                'color': '#fff',
+                'name': 'name',
+                }
+    """
+    content = request.get_json(silent=True)
+    gateway_id = content.get('gateway_id')
+    if not gateway_id or not content.get('color') or not content.get('name'):
+        abort(400)
+    if not isinstance(gateway_id, int):
+        if not isinstance(gateway_id, str):
+            abort(400)
+        elif not gateway_id.isdigit():
+            abort(400)
+    try:
+        return jsonify(sensor_group.new(content)), 201
+    except:
+        abort(500)
 
 
 @app.route('/')
@@ -374,6 +416,18 @@ def get_instance():
     return jsonify({'cf_instance': inst}), 201
 
 
+@app.route('/get_groups')
+@login_required
+def list_sensor_groups():
+    """
+    Get the sensor groups of the current gateway
+    Return data in json format
+    """
+    gateway_id = session['gateway_id']
+    sg = sensor_group.get_all_groups(gateway_id=gateway_id)
+    return jsonify(sensor_groups=sg)
+
+
 @app.route('/get_gateways')
 def list_gateways():
     # todo: need some security mechanism to protect the data
@@ -399,6 +453,7 @@ def authenticate():
         print info
         resp = make_response(redirect(url_for('index'), code=302))
         resp.set_cookie('JSESSIONID', 'Sticky session.')
+        resp.set_cookie('gateway_id', str(gateway_id))
         return resp
     else:
         info = 'Username or password are incorrect'

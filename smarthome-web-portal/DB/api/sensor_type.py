@@ -15,7 +15,8 @@ SRC_EXISTED_FIELD = {
 
 
 @database.run_in_session()
-def add_sensor_type(session, src_dic, content={}):
+@utils.wrap_to_dict(RESP_FIELDS)
+def new(session, src_dic, content={}):
     for k, v in SRC_EXISTED_FIELD.items():
         content[k] = src_dic.get(v, None)
     return utils.add_db_object(session, SensorType, **content)

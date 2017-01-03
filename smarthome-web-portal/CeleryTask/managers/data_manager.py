@@ -109,6 +109,7 @@ class FetchData(threading.Thread):
                             'lcd_first': data.get('properties').get('lcd1'),
                             'lcd_second': data.get('properties').get('lcd2'),
                         })
+
                         # add_method(content)
                         print('update tilt percentage: {}'.format(str(add_method(content))))
                     else:
@@ -131,6 +132,7 @@ class FetchData(threading.Thread):
                             'units': data.get('properties').get('units'),
                             'range': data.get('properties').get('range'),
                         })
+
                         # add_method(content)
                         print('update temperature: {}'.format(str(add_method(content))))
                     else:
@@ -244,6 +246,7 @@ class DataManager(base.BaseTask):
     def _update_resource(self, active_resource_ids=[]):
         for res in resource.list_resource(status=True, gateway_id=self.gateway_id):
             res_id = res.get('id')
+            # res_uuid = res.get('uuid')
             if res_id and res_id not in active_resource_ids:
                 resource.update_resource(res_id, status=False)
 

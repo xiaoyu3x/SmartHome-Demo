@@ -9,6 +9,7 @@ from os.path import join
 import re
 import sys
 from pytz import timezone, all_timezones
+from uuid import UUID
 from utils.settings import PROJECT_ROOT
 
 

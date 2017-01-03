@@ -26,6 +26,9 @@ $(function() {
     // the token dict to store the last alert time for motion, gas, buzz and button sensors
     var alert_token = {};
 
+    // check whether to update the sensor group list
+    var dropdown_need_update = false;
+
     $.sh = {
         init: function() {
             //set initial timezone to Cookie
@@ -208,7 +211,7 @@ $(function() {
                     // validate the input
                     var regex = new RegExp('^[a-zA-Z]+[-A-Za-z0-9_. ]{1,30}$');
                     if (!regex.test(text)) {
-                        console.error("Input validation failed, try again.");
+                        console.log("Input validation failed, try again.");
                         $(this).select();
                         $(this).after('<span class="tooltiptext">' + title + '</span>');
                         return;
@@ -236,7 +239,121 @@ $(function() {
                     $.sh.now.update_sensor_title(resource_id, tag, sensor_type, oldVal, titleObj);
                 });
             });
+
+            $("#data-container, #alert-container, #status-container").on('click', 'li', function(e) {
+                if($(e.target).text().indexOf('Add Group') > -1 ) {
+                    showDialog({
+                        title: 'Add New Group',
+                        content: '<table>\
+                                    <tbody>\
+                                        <tr><td>Group Name: </td>\
+                                            <td><input type="text" pattern="^[a-zA-Z]+[-A-Za-z0-9_. ]{1,30}$" maxlength="30" required></td>\
+                                        </tr>\
+                                        <tr><td>Color: </td>\
+                                            <td>\
+                                                <input id="color-picker" type="text"></td>\
+                                        </tr>\
+                                    </tbody>\
+                                  </table>',
+                        negative: {
+                            title: 'Cancel',
+                        },
+                        positive: {
+                            title: 'Submit',
+                            onClick: function () {
+                                var textbox = $("#orrsDiag input:required");
+                                if($("#orrsDiag input:valid").length > 1) {
+                                    var name = textbox.val();
+                                    var color = $("#color-picker").spectrum('get').toHexString();
+                                    if(getCookie('gateway_id')) {
+                                        var data = {
+                                            'name': name,
+                                            'color': color,
+                                            'gateway_id': parseInt(getCookie('gateway_id')),
+                                        };
+                                        $.ajax ({
+                                            url: "/add_sensor_group",
+                                            type: "POST",
+                                            data: JSON.stringify(data),
+                                            dataType: "json",
+                                            contentType: "application/json; charset=utf-8",
+                                            success: function(data) {
+                                                $.sh.now.append_sensor_group(data);
+                                                createSnackbar("Sensor group '" + data.name + "' is added.", 'Dismiss');
+                                            }
+                                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                                            createSnackbar("Failed to add sensor group: " + errorThrown, "Dismiss");
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    $('#color-picker').spectrum({
+                            showPaletteOnly: true,
+                            showPalette:true,
+                            hideAfterPaletteSelect:true,
+                            color: 'blanchedalmond',
+                            palette: [
+                                ['black', 'white', 'blanchedalmond',
+                                'rgb(255, 128, 0);', 'hsv 100 70 50'],
+                                ['red', 'yellow', 'green', 'blue', 'violet']
+                            ],
+                    });
+                }
+                else {
+                    var color = $(this).css("color");
+                    var gid = $(this).data("cid");
+                    var title = $(this).closest(".mdl-card__title");
+                    if (title.length == 0)
+                        title = $(this).closest(".mdl-card__supporting-text");
+                    var buttonId = title.find("button").attr('id');
+                    var bid = buttonId.split('-').pop();
+                    var buttonElem = $("button[id$=" + bid + "]");
+
+                    // invalid select
+                    if (buttonElem.css('background-color') == color) return;
+
+                    if (gid == 0) gid = null;
+                    var value = {
+                        'resource_id': bid,
+                        'value': {
+                            "sensor_group_id": gid,
+                        }
+                    }
+                    $.sh.now._update_sensor_group(value, color, buttonElem);
+                }
+            });
+
+            // $("#data-container, #alert-container, #status-container").on('click', 'button', function(e) {
+                // $.sh.now.update_sensor_group();
+                //var listLen = $(this).next().find("ul").children("li");
+                // if(listLen == 0) {
+                //     e.preventDefault();
+                //     return false;
+                // }
+            // });
+
 		},
+        _update_sensor_group: function(value, color, buttonElem) {
+            $.ajax({
+                type: "POST",
+                url: "/update_sensor_attr",
+                contentType: 'application/json',
+                data: JSON.stringify(value),
+                success: function(data) {
+                    var resource_id = data.resource_id;
+                    if (resource_id) {
+                        buttonElem.css('background', color);
+                        createSnackbar('Sensor group for resource ' + resource_id + ' is updated.', 'Dismiss');
+                    }
+                }
+            }).done(function() {
+            }).fail(function(jqXHR, textStatus, errorThrown){
+                console.error("Failed to update sensor group: " + errorThrown);
+                createSnackbar("Server error: " + errorThrown, 'Dismiss');
+            });
+        },
         update_sensor_title: function(resource_id, title, sensor_type, oldVal, titleObj) {
 		    if(sensor_type.length > 0)
 		        sensor_type = sensor_type.toLowerCase();
@@ -250,11 +367,11 @@ $(function() {
                     "value": {'tag': title},
                 }),
                 success: function(data) {
-                    console.log(data);
-                    data = JSON.parse(data);
+                    // console.log(data);
+                    // data = JSON.parse(data);
                     var resource_id = data.resource_id;
                     if (resource_id) {
-                        createSnackbar('Sensor ' + resource_id +  ' is updated.', 'Dismiss');
+                        createSnackbar('Sensor ' + resource_id + ' is updated.', 'Dismiss');
                     }
                 }
             }).done(function() {
@@ -263,6 +380,51 @@ $(function() {
                 createSnackbar("Server error: " + errorThrown, 'Dismiss');
                 //change the title back if fail
                 $(titleObj).text(oldVal);
+            });
+		},
+        update_sensor_group: function(){
+		    if(dropdown_need_update) {
+                $.getJSON("/get_groups", function (data) {
+                    var grps = data.sensor_groups;
+                    $(".sensor-card ul, .demo-card-event ul, .status-card ul").each(function () {
+                        var ulElem = $(this);
+                        if (isArray(grps)) {
+                            ulElem.html("");
+                            $('<li/>').addClass('mdl-menu__item')
+                                .addClass('mdl-menu__item--full-bleed-divider')
+                                .css('color', '#fff')
+                                .data('cid', 0)
+                                .html("<span>Clear Group</span>")
+                                .appendTo(ulElem);
+                            $.each(grps, function (idx, group) {
+                                $('<li/>').addClass('mdl-menu__item')
+                                    .css('color', group['color'])
+                                    .data('cid', group['id'])
+                                    .html("<span>" + group['name'] + "</span>")
+                                    .appendTo(ulElem);
+                            });
+                            $('<li/>').addClass('mdl-menu__item--full-bleed-divider-top')
+                                .addClass('mdl-menu__item')
+                                .css('color', '#fff')
+                                .html("<span>Add Group</span>")
+                                .appendTo(ulElem);
+                        }
+                    });
+                    dropdown_need_update = false;
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                        console.error("Failed to update status " + errorThrown);
+                });
+            }
+        },
+        append_sensor_group: function(data) {
+            $(".sensor-card ul, .demo-card-event ul, .status-card ul").each(function() {
+                var len = $(this).children("li").length;
+                var liElem = $(this).children("li:eq(" + (len - 2) + ")");
+                $('<li/>').addClass('mdl-menu__item')
+                    .css('color', data['color'])
+                    .data('cid', data['id'])
+                    .html("<span>" + data['name'] + "</span>")
+                    .insertAfter(liElem);
             });
         },
         clear_data: function(data) {
@@ -328,7 +490,11 @@ $(function() {
 			}
 			else {
 					$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
-				  <div class="mdl-card__title mdl-card--expand">\
+				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
+				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
+                    </button>\
+                    <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{5}">\
+                    </ul>\
 					<h6 data-title="{4}">{3}</h6>\
 					<i class="material-icons edit" style="display: none;">edit</i>\
 				  </div>\
@@ -347,8 +513,10 @@ $(function() {
 					</a>\
 					<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" style="color: #000">SET TIMER</a>\
 				  </div>\
-				</div>', card_id, uuid_txt, time, tag, title));
+				</div>', card_id, uuid_txt, time, tag, title, data.resource_id, data.color.color, data.color.name));
+
                 alert_card_number++;
+                dropdown_need_update = true;
 			}
 		},
 		update_motion_alert: function(data, show_uuid){
@@ -377,7 +545,11 @@ $(function() {
 			}
 			else {
 					$("#alert-container").append(String.format('<div id ="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
-				  <div class="mdl-card__title mdl-card--expand">\
+				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
+				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
+                    </button>\
+                    <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{5}">\
+                    </ul>\
 					<h6 data-title="{4}">{3}</h6>\
 					<i class="material-icons edit" style="display: none;">edit</i>\
 				  </div>\
@@ -395,8 +567,10 @@ $(function() {
 					  DISMISS\
 					</a>\
 				  </div>\
-				</div>', card_id, uuid_txt, time, tag, title));
+				</div>', card_id, uuid_txt, time, tag, title, data.resource_id, data.color.color, data.color.name));
+
                 alert_card_number++;
+                dropdown_need_update = true;
 			}
 		},
 		update_gas_alert: function(data, show_uuid){
@@ -426,7 +600,11 @@ $(function() {
 			}
 			else {
 				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp" style="background: #ed0042;">\
-				  <div class="mdl-card__title mdl-card--expand">\
+				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
+				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
+                    </button>\
+                    <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{5}">\
+                    </ul>\
 					<h6 style="color: #fff;" data-title="{4}">{3}</h6>\
 					<i class="material-icons edit" style="display: none; color: #fff;">edit</i>\
 				  </div>\
@@ -445,8 +623,10 @@ $(function() {
 					</a>\
 					<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"  style="color: #fff;">EMERGENCY</a>\
 				  </div>\
-				</div>', card_id, uuid_txt, time, tag, title));
+				</div>', card_id, uuid_txt, time, tag, title, data.resource_id, data.color.color, data.color.name));
+
                 alert_card_number++;
+                dropdown_need_update = true;
 			}
 		},
 		update_buzzer_alert: function(data, show_uuid) {
@@ -477,7 +657,11 @@ $(function() {
             }
 			else {
 				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
-				  <div class="mdl-card__title mdl-card--expand">\
+				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
+				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
+                    </button>\
+                    <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{5}">\
+                    </ul>\
 					<h6 data-title="{4}">{3}</h6>\
 					<i class="material-icons edit" style="display: none;">edit</i>\
 				  </div>\
@@ -495,8 +679,10 @@ $(function() {
 					  DISMISS\
 					</a>\
 				  </div>\
-				</div>', card_id, uuid_txt, time, tag, title));
+				</div>', card_id, uuid_txt, time, tag, title, data.resource_id, data.color.color, data.color.name));
+
                 alert_card_number++;
+                dropdown_need_update = true;
 			}
 		},
 		update_status: function(type, data, show_uuid) {
@@ -513,9 +699,14 @@ $(function() {
                 tag = tag + data.tag;
 
             var menu = $(".status-card div[data-ID='" + data.resource_id + "'] i");
-            if(menu.length == 0)
+
+            if(menu.length == 0) {
                 $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-                      <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
+                      <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;">\
+                            <button id="{4}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="margin-top: 8%; background:{5}" title="{6}">\
+                            </button>\
+                            <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{2}">\
+                            </ul>\
                             <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
                                 <h6 title="{1}" data-title="{4}">{0}</h6>\
                                 <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
@@ -524,7 +715,14 @@ $(function() {
                               <i class="material-icons {3}">done</i>\
                           </div>\
                       </div>\
-                    </div>', tag, uuid_cell, data.resource_id, color, type));
+                    </div>', tag, uuid_cell, data.resource_id, color, type, data.color.color, data.color.name));
+                var len = $(".status-card").length;
+                if (len > 0) {
+                    var zindex = 100 - len - 1;
+                    $(".status-card").last().css("z-index", zindex);
+                }
+                dropdown_need_update = true;
+            }
             else {
                 menu.removeClass().addClass("material-icons " + color);
                 var uid = menu.parent().prev().children('h6');
@@ -542,13 +740,18 @@ $(function() {
                 tag = tag + data.tag;
 
             var menu = $(".status-card div[data-ID='" + data.resource_id +"'] label");
+
             if(menu.length == 0) {
                 $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="display: flex; flex-flow: row wrap;">\
-						<div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
-							<h6 title="{0}" data-title="{3}">{2}</h6>\
-							<i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
-						</div>\
+				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;">\
+                        <button id="{3}-{1}" class="mdl-button mdl-js-button mdl-button--raised" style="margin-top: 8%; background:{4}" title="{5}">\
+                        </button>\
+                        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{3}-{1}">\
+                        </ul>\
+                        <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+                            <h6 title="{0}" data-title="{3}">{2}</h6>\
+                            <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
+                        </div>\
 					  <div data-ID="{1}" class="mdl-card__menu">\
 						  <label title="switch on/off" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="res-{1}">\
       						<input type="checkbox" id="res-{1}" class="mdl-switch__input" onclick="return toggle_status({1}, this);">\
@@ -556,8 +759,14 @@ $(function() {
     					  </label>\
 					  </div>\
 				  </div>\
-				</div>', uuid_cell, data.resource_id, tag, title));
+				</div>', uuid_cell, data.resource_id, tag, title, data.color.color, data.color.name));
                 $("input[id=res-" + data.resource_id + "]").prop('checked', data.value);
+                var len = $(".status-card").length;
+                if(len > 0) {
+                    var zindex = 100 - len - 1;
+                    $(".status-card").last().css("z-index", zindex);
+                }
+                dropdown_need_update = true;
             }
             else{
                 // toggle switch on/off
@@ -570,7 +779,6 @@ $(function() {
                         menu[0].MaterialSwitch.on();
                     }
                 }
-
                 var uid = menu.parent().prev().children('h6');
                 uid.attr("title", uuid_cell);
             }
@@ -594,7 +802,11 @@ $(function() {
             var menu = $(".status-card div[data-ID='" + data.resource_id + "'] i");
             if(menu.length == 0) {
                 $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-                  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
+                  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;">\
+                        <button id="{4}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="margin-top: 8%; background:{5}" title="{6}">\
+                        </button>\
+                        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{2}">\
+                        </ul>\
                         <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
                             <h6 title="{1}" data-title="{4}">{3}</h6>\
                             <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
@@ -603,7 +815,13 @@ $(function() {
                           <i class="material-icons {0}">lightbulb_outline</i>\
                       </div>\
                   </div>\
-                </div>', bgcolor, uuid_cell, data.resource_id, tag, title));
+                </div>', bgcolor, uuid_cell, data.resource_id, tag, title, data.color.color, data.color.name));
+                var len = $(".status-card").length;
+                if(len > 0) {
+                    var zindex = 100 - len - 1;
+                    $(".status-card").last().css("z-index", zindex);
+                }
+                dropdown_need_update = true;
             }
             else {
                 menu.removeClass().addClass("material-icons " + bgcolor);
@@ -629,6 +847,10 @@ $(function() {
             if(value.length == 0) {
                 var html = String.format('<div class="sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
                     <div class="mdl-card__title" style="display: flex; flex-flow: row wrap;">\
+                        <button id="{5}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
+                        </button>\
+                        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{5}-{2}">\
+                        </ul>\
 			  	        <h6 data-title="{0}">{5}</h6>\
 			  	        <i class="material-icons edit" style="display: none;">edit</i>\
 			  	        {1}\
@@ -641,8 +863,12 @@ $(function() {
 								<h6 style="font-size: 0.8vw;">{4}</h6>\
                         </div>\
                     </div>\
-                </div>', title, uuid_cell, data.resource_id, data.value, unit, type);
+                </div>', title, uuid_cell, data.resource_id, data.value, unit, type, data.color.color, data.color.name);
                 $("#data-container").append(html);
+
+                //Expand all new MDL elements
+                componentHandler.upgradeDom();
+                dropdown_need_update = true;
             }
             else{
                 value.text(data.value);
@@ -801,9 +1027,10 @@ $(function() {
             }).done(function() {
 			   //console.log( "second success" );
 			}).fail(function() {
-			  console.log( "getJson data error" );
+			    console.log( "getJson data error" );
 			}).always(function() {
-				//console.log("complete");
+                if(dropdown_need_update)
+                    $.sh.now.update_sensor_group();
 			})
 		},
         update_billing: function() {
@@ -811,7 +1038,6 @@ $(function() {
             draw_billing_pie_chart('current_container', 'Current bill', [{ name: "Grid Power", value:90},{ name:"Solar Power", value: 110}]);
             draw_billing_pie_chart('items_container', 'Items', [{ name: "Heater", value:90},{ name:"Oven", value: 110}, { name:"Refrigerator", value: 110}]);
         },
-
 		init: function() {
 			console.log("init now page.");
 			window.panel = 1;

@@ -6,10 +6,12 @@ from DB.models import Resource
 from DB.api import dbutils as utils
 from DB.api import database
 
-RESP_FIELDS = ['id', 'uuid', 'sensor_type', 'path', 'status', 'tag', 'gateway_id', 'created_at']
+RESP_FIELDS = ['id', 'uuid', 'sensor_type', 'path', 'status', 'tag', 'gateway_id', 'sensor_group', 'sensor_type_id',
+               'sensor_group_id', 'created_at']
 SRC_EXISTED_FIELD = {
     'uuid': 'uuid',
     'sensor_type_id': 'sensor_type_id',
+    'sensor_group_id': 'sensor_group_id',
     'status': 'status',
     'path': 'path',
     'tag': 'tag',
@@ -57,9 +59,13 @@ def _update_resource(session, resource_id, **kwargs):
     return utils.update_db_object(session, res, **kwargs)
 
 
-@utils.supported_filters(optional_support_keys=RESP_FIELDS)
+@utils.supported_filters(optional_support_keys=['id', 'status', 'gateway_id', 'sensor_type_id', 'sensor_group_id', 'tag'])
 @database.run_in_session()
 def update_resource(session, id, **kwargs):
     return _update_resource(
         session, id, **kwargs
     )
+
+
+if __name__ == "__main__":
+    print get_resource(id=2)

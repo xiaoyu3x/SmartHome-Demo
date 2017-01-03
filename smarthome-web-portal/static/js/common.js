@@ -5,6 +5,10 @@ var week = moment.weekdaysShort();
 var month = ['4th', '8th', '12th', '16th', '20th', '24th', '28th'];
 var year = moment.monthsShort();
 
+function isArray(obj){
+    return !!obj && Array === obj.constructor;
+}
+
 //string format function
 String.format = function() {
   var s = arguments[0];
@@ -108,26 +112,37 @@ function showDialog(options) {
         id: 'orrsDiag',
         title: null,
         text: null,
+        content: null,
         negative: false,
         positive: false,
         cancelable: true,
         contentStyle: null,
-        onLoaded: false
+        onLoaded: false,
+        hideOther: true,
     }, options);
+
+    if (options.hideOther) {
+        // remove existing dialogs
+        $('.dialog-container').remove();
+        $(document).unbind("keyup.dialog");
+    }
 
     // remove existing dialogs
     $('.dialog-container').remove();
     $(document).unbind("keyup.dialog");
 
-    $('<div id="' + options.id + '" class="dialog-container"><div class="mdl-card mdl-shadow--16dp"></div></div>').appendTo("body");
+    $('<div id="' + options.id + '" class="dialog-container"><div class="mdl-card mdl-shadow--4dp"></div></div>').appendTo("body");
     var dialog = $('#orrsDiag');
     var content = dialog.find('.mdl-card');
     if (options.contentStyle != null) content.css(options.contentStyle);
     if (options.title != null) {
-        $('<h5>' + options.title + '</h5>').appendTo(content);
+        $('<div class="mdl-card__title" style="margin-left: 5%"><h5>' + options.title + '</h5></div>').appendTo(content);
     }
     if (options.text != null) {
         $('<p>' + options.text + '</p>').appendTo(content);
+    }
+    if (options.content != null) {
+        $('<div class="mdl-card__supporting-text">' + options.content + '</div>').appendTo(content);
     }
     if (options.negative || options.positive) {
         var buttonBar = $('<div class="mdl-card__actions dialog-button-bar"></div>');
@@ -198,13 +213,6 @@ createSnackbar = (function() {
   // Any snackbar that is already shown
   var previous = null;
 
-/*
-<div class="paper-snackbar">
-  <button class="action">Dismiss</button>
-  Messages
-</div>
-*/
-
   return function(message, actionText, action) {
     if (previous) {
       previous.dismiss();
@@ -257,6 +265,7 @@ toggle_status = function(resource_id, obj) {
     var status_str = status?'on':'off';
     // var uuid = obj.id;
     console.log('The fan ' + resource_id + ' will be turned ' + status_str + '.');
+
     $.ajax({
         type: "PUT",
         url: "/update_sensor",

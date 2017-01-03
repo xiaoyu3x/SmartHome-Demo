@@ -71,7 +71,3 @@ def get_latest_by_gateway_uuid(session, resource_id, ):
 def get_button_by_time(session, start_time, end_time):
     return utils.list_db_objects(session, Button, created_at={'ge': str(start_time), 'le': str(end_time)})\
 
-
-if __name__ == '__main__':
-    # print Button.resource.property.primaryjoin
-    print get_latest_by_gateway_uuid(resource_id=20)
