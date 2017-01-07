@@ -1,0 +1,41 @@
+{% extends 'index.html' %}
+
+{% block header %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sh-dataset.css') }}">
+    <script src="{{ url_for('static', filename='js/sh-dataset.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    <section class="mdl-grid section--center">
+        <div class="mdl-cell mdl-cell--12-col">
+		<div class="mdl-card mdl-shadow--2dp mdl-cell--12-col">
+            <div class="mdl-card__title mdl-card--expand">
+                <h5 class="title_style">Upload Datasets</h5>
+            </div>
+            <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+            <div class="mdl-card_form ml_5">
+			    <form action="/dataset/create" method="POST" enctype="multipart/form-data">
+			      <table class='table_from'>
+				    <tr>
+					    <td class='td_titel'><label for="dataset">File Name</label></td>
+					    <td class='td_text'><input class="mdl_text ml_5" id="dataset" name="file" type="file" accept=".csv, text/plain" autofocus required /><div id="tooltip2" class="icon material-icons info-icon">info</div><div class="mdl-tooltip mdl-tooltip--large" for="tooltip2" style="text-align: left;">It takes files in .csv and .txt format only. <br/>Plz remove the heading in the file.</div></td>
+					    <td class='td_button'></td>
+						<td class='td_button'></td>
+					</tr>
+					<tr>
+					    <td class='td_titel'><label for="name">Title</label></td>
+						<td class='td_text'><input class="mdl_text ml_5" id="name" name="title" type="text" maxlength="30" pattern="^[a-zA-Z]+[-A-Za-z0-9_. ]{1,30}$" placeholder="Title for the dataset. " required /><input type="submit" id="upload_test" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect ml_5" value ="Upload"></td>
+						<td></td>
+						<td></td>
+					</tr>
+				  </table>
+               </form>				
+			</div>
+         </div>
+
+	    <div class="card-container mt_5 " id="dataset_list" style="clear:both;">
+	    </div>
+      </div>
+	</div>
+    </section>
+{% endblock %}

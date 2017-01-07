@@ -40,7 +40,28 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.4/moment-timezone-with-data-2010-2020.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/3.2.1/echarts.min.js"></script>
+    <script type="text/javascript">
+        //declare all the global variables
+        window.socket;
+        window.socket = null;
+
+        //The variable panel represents the current panel displayed by the browser.
+        //0: Initial. No panel is specified.
+        //1: the Now panel.
+        //2: the Before panel
+        //3: the Future panel
+        window.panel;
+        window.panel=0;
+
+        window.now_timer = null;
+        window.time_timer = null;
+        window.weather_timer = null;
+
+        window.timezone = null;
+        window.utc_offset = null;
+    </script>
       <script type="text/javascript" src="{{ static_url_prefix }}js/common.js"></script>
+      <script type="text/javascript" src="{{ static_url_prefix }}js/sh-base.js"></script>
       {% block head %}
     {% endblock %}
   </head>

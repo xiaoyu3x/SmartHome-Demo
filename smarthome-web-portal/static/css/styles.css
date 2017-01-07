@@ -732,10 +732,11 @@ body {
 .material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
 
 .vertical-divider {
-  border-top-width: 0;
-  border-right-width: 1px;
-  border-right-style: solid;
-  height: 100%;
+    border-top-width: 0;
+    border-right-width: 1px;
+    border-right-style: solid;
+    height: 100%;
+    color: #fff;
 }
 
 #instance_info {
@@ -830,5 +831,48 @@ body {
     padding-bottom: .5em;
 }
 
+.card-inside{
+    background: #FFF; width:200px; height:200px; float:left; margin-top:20px; margin-left:50px;  position:relative;
+}
+
+.card-shadow{
+     box-shadow:0 0 8px rgba(0,0,0,.5);
+}
+
+.card-inside-td img{ width:35px; height:33px; }
+
+.card-inside-title{
+    width:80px; height:20px; margin:0 auto; margin-top:15px;
+}
+.card-inside-title a{
+    color:#414040; fount-family:Segoe UI; fount-size:20;font-weight:bold;line-height:20px;
+}
+
+.card-inside-value{
+    width:190px; height:100px; margin-top:70px;
+}
+.card-input-text{
+    width:50px;   border:0px;background:rgba(0, 0, 0, 0); border-bottom:#01e676 solid 1px;
+     font-size:24px; color:#ee8719;vertical-align:middle;
+}
 
 
+.model{ width:270px; height:200px; background-color:#ffffff;
+        box-shadow:2px 2px 2px #909090; position:relative;float:left;
+}
+.model-title{width:270px; height:40px; background:#d2a51e; border-radius:2px 2px 0px 0px;}
+.model-title p{color:#ffffff; font:20px bold italic;margin:0 auto; height:40px; line-height:40px;font-family:Tahoma; text-align:center;margin-top:3px; }
+.model-type{width:270px; height:130px;}
+.model-type p{ color:#959da1; font:50px normal italic; margin:0 auto; height:130px; line-height:130px;text-align:center; }
+.model-bottom{width:270px; height:30px; background:#a3b2b9; margin:auto 0; position:absolute; bottom:0;}
+.model-bottom p{color:#FFFFFF;font:15px bold italic; margin:0 auto; font-family:Arial;text-align:center; margin-top:3px;}
+
+.Dataset{ width:270px; height:200px; background-color:#ffffff;
+        box-shadow:2px 2px 2px #909090; position:relative; float: left;
+}
+.Dataset-title{width:270px; height:40px; background:#07acc0; border-radius:2px 2px 0px 0px;}
+.Dataset-title p{color:#ffffff; font:20px bold italic;margin:0 auto; height:40px; line-height:40px;font-family:Tahoma; text-align:center;margin-top:3px; }
+.Dataset-type{width:270px; height:130px;}
+.Dataset-type p{ color:#959da1; font:50px normal italic; margin:0 auto; height:130px; line-height:130px;text-align:center; }
+.Dataset-bottom{width:270px; height:30px; background:#a3b2b9; margin:auto 0; position:absolute; bottom:0;}
+.Dataset-bottom p{color:#FFFFFF;font:15px bold italic; margin:0 auto; font-family:Arial;text-align:center; margin-top:3px;}

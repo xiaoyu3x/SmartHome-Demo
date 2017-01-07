@@ -514,3 +514,159 @@ class SensorGroup(Base, HelperMixin, DefaultMixin):
         return "<SensorGroup(id='%s',name='%s',color='%s', gateway_id='%s', created_at='%s')>" % (
             str(self.id), self.name, self.color, str(self.gateway_id), str(self.created_at))
 
+
+class ActualWeather(Base, HelperMixin, DefaultMixin):
+    __tablename__='actual_weather'
+
+    publish_date = Column(DATE)
+    # region_id = Column(Integer, ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    region_id = Column(Integer, nullable=False)
+    forecast_date = Column(DATE)
+    order = Column(Integer)
+    temperature = Column(FLOAT)
+    humidity = Column(FLOAT)
+    weather=Column(VARCHAR(45))
+
+    def __init__(self, publish_date=None, region_id=None, forecast_data=None, order=None, temperature=None,
+                 humidity=None, weather=None):
+        self.publish_date = publish_date
+        self.region_id = region_id
+        self.forecast_data = forecast_data
+        self.order = order
+        self.temperature = temperature
+        self.humidity = humidity
+        self.weather = weather
+
+    def __repr__(self):
+        return "<ActualWeather(id='%s',publish_date='%s',created_at='%s',region_id='%s',forecast_data='%s',order='%s'," \
+               "temperature='%s',humidity='%s',weather='%s')>" % (str(self.id), str(self.publish_date), str(self.created_at),
+                                                                  str(self.region_id), str(self.forecast_date),
+                                                                  str(self.order), str(self.temperature),
+                                                                  str(self.humidity), self.weather)
+
+
+class HisWeather(Base, HelperMixin, DefaultMixin):
+    __tablename__='his_weather'
+
+    publish_date =Column(DATE)
+    # region_id = Column(Integer,ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    region_id = Column(Integer, nullable=False)
+    temperature =Column(FLOAT)
+    humidity = Column(FLOAT)
+    weather=Column(VARCHAR(45))
+
+    def __init__(self, publish_date=None, region_id=None, temperature=None, humidity=None, weather=None):
+        self.publish_date = publish_date
+        self.region_id = region_id
+        self.temperature = temperature
+        self.humidity = humidity
+        self.weather = weather
+
+    def __repr__(self):
+        return "<HisWeather(id='%s',publish_date='%s',created_at='%s',region_id='%s',temperature='%s',humidity='%s'," \
+               "weather='%s')>" % (str(self.id), str(self.publish_date), str(self.created_at), str(self.region_id),
+                                   str(self.temperature), str(self.humidity), self.weather)
+
+
+class PredictedPower(Base, HelperMixin, DefaultMixin):
+    __tablename__='predicted_power'
+
+    # region_id = Column(Integer, ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    region_id = Column(Integer, nullable=False)
+    predict_date = Column(DATE)
+    publish_date = Column(DATE)
+    order = Column(Integer)
+    power=Column(FLOAT)
+
+    def __init__(self,region_id=None, predict_date=None, publish_date=None, order=None, power=None):
+        self.region_id = region_id
+        self.predict_date = predict_date
+        self.publish_date = publish_date
+        self.order = order
+        self.power = power
+
+    def __repr__(self):
+        return "<PredictedPower(id='%s',created_at='%s',region_id='%s',predict_date='%s',order='%s',power='%s')>" % (
+            str(self.id), str(self.created_at), str(self.region_id), str(self.predict_date), str(self.order),
+            str(self.power))
+
+
+class ActualPower(Base, HelperMixin, DefaultMixin):
+    __tablename__='actual_power'
+
+    collect_date = Column(DATE)
+    # region_id = Column(Integer, ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    region_id = Column(Integer, nullable=False)
+    power = Column(FLOAT)
+
+    def __init__(self, collect_date=None, region_id=None, power=None):
+        self.collect_date = collect_date
+        self.region_id = region_id
+        self.power = power
+
+    def __repr__(self):
+        return "<ActualPower(id='%s',collect_date='%s',region_id='%s',power='%s')>" % (str(self.id),
+                                                                                       str(self.collect_date),
+                                                                                       str(self.region_id),
+                                                                                       str(self.power))
+
+
+class DataSet(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'dataset'
+
+    filename = Column(VARCHAR(255))
+    dataformat = Column(VARCHAR(10))
+    title = Column(VARCHAR(50))
+    rows = Column(Integer)
+    columns = Column(Integer)
+    description = Column(VARCHAR(200))
+    uploadtime = Column(DateTime)
+    status = Column(VARCHAR(10))
+
+    def __init__(self, filename=None, dataformat=None, title=None, rows=None, columns=None, description=None,
+                 uploadtime=None, status=None):
+        self.filename = filename
+        self.dataformat = dataformat
+        self.title = title
+        self.rows = rows
+        self.columns = columns
+        self.description = description
+        self.uploadtime = uploadtime
+        self.status = status
+
+    def __repr__(self):
+        return "<DataSet(id='%s',filename='%s',dataformat='%s',title='%s',rows='%s',columns='%s',description='%s'," \
+               "uploadtime='%s')>" % (str(self.id), self.filename, self.dataformat, self.title, str(self.rows),
+                                      str(self.columns), self.description, str(self.uploadtime), self.status)
+
+
+class DataModel(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'data_model'
+
+    id = Column(Integer, primary_key=True)
+    dataset_id = Column(Integer, ForeignKey('dataset.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    name = Column(VARCHAR(100))
+    algorithm_type = Column(VARCHAR(50))
+    serialization = Column(Integer)
+    description = Column(VARCHAR(200))
+    created_at = Column(DateTime)
+    status = Column(VARCHAR(1))
+    dataset = relationship('DataSet', backref='data_model', lazy=False)
+
+    def __init__(self, dataset_id=None, name=None, algorithm_type=None, serialization=None, description=None,
+                 created_at=None, status=None):
+        self.dataset_id = dataset_id
+        self.name = name
+        self.algorithm_type = algorithm_type
+        self.serialization = serialization
+        self.description = description
+        self.created_at = created_at
+        self.status = status
+
+    def __repr__(self):
+        return "<DataModel(id='%s',dataset_id='%s',name='%s',algorithm_type='%s',serialization='%s',description='%s'," \
+               "created_at='%s',status='%s')>" % (str(self.id), str(self.dataset_id), self.name, self.algorithm_type,
+                                                  self.serialization, self.description, str(self.created_at),
+                                                  str(self.status))
+# if __name__ == '__main__':
+#    initial_db()

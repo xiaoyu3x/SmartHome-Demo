@@ -3,6 +3,7 @@
  */
 var week = moment.weekdaysShort();
 var month = ['4th', '8th', '12th', '16th', '20th', '24th', '28th'];
+var month_str=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 var year = moment.monthsShort();
 
 function isArray(obj){
@@ -64,6 +65,40 @@ getLocalDate = function(dt, offset) {
     //local = local.format('HH:mm:ss');
     //console.log('local time: ' + local);
     return local;
+}
+
+getLocalDate2 = function(date, offset) {
+    //console.log('datetime: ' + dt + ' and tz: ' + offset );
+    //var local = moment(dt).utcOffset(parseInt(offset) * -1).format('HH:mm:ss');
+    //var local = moment(dt).clone();
+    //local.add(offset * 60, 'minutes');
+    //local = local.format('HH:mm:ss');
+    //console.log('local time: ' + local);
+	console.log("offset is :" + offset);
+	console.log("utc date is :" + date);
+	var newDate = new Date(date.getTime() + (offset * 1000 * 60 * 60 ));
+	console.log("utc date mm :" + date.getTime());
+	console.log("mm in hour:" + offset * 1000 * 60 * 60);
+    console.log("new date is:" + newDate);
+    return newDate;
+}
+
+
+getUTCDate = function(){
+    var date = new Date()
+    var y =  date.getUTCFullYear();    
+    var m = date.getUTCMonth() ;
+    var d = date.getUTCDate();
+    var h= date.getUTCHours();
+	
+	//console.log("utc hour:" +h)
+    var M = date.getUTCMinutes();
+    var s = date.getUTCSeconds();
+    var utc = Date.UTC(y,m,d,h,M,s);
+	//console.log("utc objetc:" +utc)
+	var utc_date = new Date(y,m,d,h,M,s);
+	//console.log("utc date：" +utc_date)
+	return utc_date
 }
 
 getTime = function(dt, offset, timezone) {
@@ -328,6 +363,69 @@ function getWeek(){
       return d+" "+year[m]+"-"+getDay();
 }
 
+function getDate_future(offset){
+
+	  var list = new Array();	  
+	  date_b1 = addDayfromUTC(-3, offset);
+	  var data_b1_Str = date_b1.toLocaleDateString();
+	  list[0] = data_b1_Str
+	  
+	  date_b2 = addDayfromUTC(-2, offset);
+	  var data_b2_Str = date_b2.toLocaleDateString();
+	  list[1] = data_b2_Str
+	  
+	  date_b3 = addDayfromUTC(-1, offset);
+	  var data_b3_Str = date_b3.toLocaleDateString();
+	  list[2] = data_b3_Str
+	  
+	  date_today = addDayfromUTC(0, offset);
+	  var data_today_Str = date_today.toLocaleDateString();
+	  list[3] = data_today_Str
+	  
+	  date_f1 = addDayfromUTC(1, offset);
+	  var data_f1_Str = date_f1.toLocaleDateString();
+	  list[4] = data_f1_Str
+	  
+	  date_f2 = addDayfromUTC(2, offset);
+	  var data_f2_Str = date_f2.toLocaleDateString();
+	  list[5] = data_f2_Str
+	  
+	  date_f3 = addDayfromUTC(3, offset);
+	  var data_f3_Str = date_f3.toLocaleDateString();
+	  list[6] = data_f3_Str
+	 
+	  //alist = get_StortDateList(list)
+      return list;
+}
+
+function get_StortDateList(DateList){
+    var list = new Array();
+    for(var i=0;i<DateList.length;i++){
+	    var date = getDate(DateList[i])
+		var year = date.getFullYear();
+		var month = date.getMonth()+1; 
+		var day = date.getDate();
+		list[i] = month+"-"+day
+	}
+	return list;
+}
+
+
+addDayfromUTC = function(dayNumber,offset){
+        //date = date ? date : new Date();
+		utc_date = getUTCDate()
+		local_date = getLocalDate2(utc_date, offset)
+        var ms = dayNumber * (1000 * 60 * 60 * 24)
+        var newDate = new Date(local_date.getTime() + ms);
+        return newDate;
+}
+
+function getDate(strDate) {
+        var date = eval('new Date(' + strDate.replace(/\d+(?=-[^-]+$)/,
+        function (a) { return parseInt(a, 10) - 1; }).match(/\d+/g) + ')');
+        return date;
+}
+
 function getMonth(){
     //var year = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var dd = new Date();
@@ -342,6 +440,14 @@ function getYear(){
 
 function drawcontainer(div, xray, yray, description) {
     drawcontainerchart(div, xray, yray, description, '', 'Energy', 'KWH');
+}
+
+function drawcontainer2(div, xray, yray1,yray2, description) {
+    drawcontainerchart2(div, xray, yray1,yray2, description, '', 'Actual Temperature','Temperature Forecast', 'F◦','#f60404');
+}
+
+function drawcontainer3(div, xray, yray1,yray2,yray3, description) {
+    drawcontainerchart3(div, xray, yray1,yray2,yray3 ,description, '', 'Actual Usage','Historcal Predicted Usage','Predicted Usage', 'KWH','#fa08ec');
 }
 
 function drawcontainerchart(div,xray,yray,title,xtext,name,unit) {
@@ -431,6 +537,237 @@ function drawcontainerchart(div,xray,yray,title,xtext,name,unit) {
         myChart.resize();
     });
 }
+
+function drawcontainerchart2(div,xray,yray1,yray2,title,xtext,name1,name2,unit,color_str) {
+    if(unit === undefined) { unit = ''; }
+    var myChart = echarts.init(document.getElementById(div));
+    var option = {
+        title: {
+            text: '',
+            textStyle: {
+                fontWeight: 'normal',
+            },
+            left: '10%',
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                lineStyle: {
+                    color: '#fff',
+                    opacity: 0,
+                }
+            },
+        },
+		legend: {
+		    //left:center,
+			//orient: 'vertical',
+            //x: 'right',
+            data:[name1,name2]
+         },
+        xAxis: {
+            scale: true,
+            type: 'category',
+            boundaryGap: false,
+            data :xray,
+            axisLine: {
+                show: false,
+            },
+            axisTick: {
+                show: false,
+            }
+        },
+        yAxis: {
+            scale: true,
+            type: 'value',
+            axisLine: {
+                show: false,
+            },
+            axisLabel: {
+                show: false,
+            },
+            axisTick: {
+                show: false,
+            },
+            splitLine: {
+                show: false
+            }
+        },
+        series: [{
+            name: name1,
+            type: 'line',
+            data: yray1,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: {
+               normal:{
+                   color: '#20e7fe',
+               }
+            },
+            lineStyle: {
+                normal: {
+                    color: '#20e7fe',
+                    width: 2
+                }
+            }
+        },{
+            name: name2,
+            type: 'line',
+            data: yray2,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: {
+               normal:{
+                   color: color_str,
+               }
+            },
+            lineStyle: {
+                normal: {
+                    color: color_str,
+                    width: 2
+                }
+            }
+        }]
+    };
+    if(xtext)
+    {
+        option.xAxis.name = xtext;
+        option.xAxis.nameLocation = 'middle';
+        option.xAxis.nameGap = 35;
+    }
+    myChart.setOption(option);
+    window.addEventListener('resize', function () {
+        myChart.resize();
+    });
+}
+
+
+
+
+
+function drawcontainerchart3(div,xray,yray1,yray2,yray3,title,xtext,name1,name2,name3,unit,color_str) {
+    if(unit === undefined) { unit = ''; }
+    var myChart = echarts.init(document.getElementById(div));
+    var option = {
+        title: {
+            text: '',
+            textStyle: {
+                fontWeight: 'normal',
+            },
+            left: '10%',
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                lineStyle: {
+                    color: '#fff',
+                    opacity: 0,
+                }
+            },
+        },
+		legend: {
+		    //right: 30,
+			//orient: 'vertical',
+            //x: 'right',
+           data:[name1,name2,name3]
+         },
+        xAxis: {
+            scale: true,
+            type: 'category',
+            boundaryGap: false,
+            data :xray,
+            axisLine: {
+                show: false,
+            },
+            axisTick: {
+                show: false,
+            }
+        },
+        yAxis: {
+            scale: true,
+            type: 'value',
+            axisLine: {
+                show: false,
+            },
+            axisLabel: {
+                show: false,
+            },
+            axisTick: {
+                show: false,
+            },
+            splitLine: {
+                show: false
+            }
+        },
+        series: [{
+            name: name1,
+            type: 'line',
+            data: yray1,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: {
+               normal:{
+                   color: '#20e7fe',
+               }
+            },
+            lineStyle: {
+                normal: {
+                    color: '#20e7fe',
+                    width: 2
+                }
+            }
+        },{
+            name: name2,
+            type: 'line',
+            data: yray2,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: {
+               normal:{
+                   color: '#EE2C2C',
+               }
+            },
+            lineStyle: {
+                normal: {
+                    color: '#EE2C2C',
+                    width: 2
+                }
+            }
+        },{
+            name: name3,
+            type: 'line',
+            data: yray3,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: {
+               normal:{
+                   color: '#EE30A7',
+               }
+			   
+            },
+            lineStyle: {
+                normal: {
+                    color: '#EE30A7',
+                    width: 2,
+					type:'dashed'
+                }
+            }
+        }
+		]
+    };
+    if(xtext)
+    {
+        option.xAxis.name = xtext;
+        option.xAxis.nameLocation = 'middle';
+        option.xAxis.nameGap = 35;
+    }
+    myChart.setOption(option);
+    window.addEventListener('resize', function () {
+        myChart.resize();
+    });
+}
+
+
+
 
 draw_billing_pie_chart = function(container, title, data) {
     var myChart = echarts.init(document.getElementById(container));
@@ -549,3 +886,20 @@ updateWelcomeCardsDateTime  = function(utc_offset, timezone)
 function getRandomPecentbyIndex(min, max, index, length) {
   return (((index + 1) / length * (max - min)) + min) * 0.01;
 }
+
+
+function getRequest(url,type,data,successCallback,failCallback){
+    if(!type) type = "GET";
+    $.ajax({
+        type: type,
+        url: url,
+		async: false,
+        dataType: "json",
+        contentType:'application/json;charset=UTF-8',
+        data:JSON.stringify(data),
+        success: successCallback,
+        error: failCallback,
+    });    
+}
+
+

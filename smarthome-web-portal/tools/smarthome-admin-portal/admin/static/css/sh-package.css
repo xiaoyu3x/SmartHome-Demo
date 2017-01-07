@@ -1,0 +1,26 @@
+.package_container{ width:270px;  background-color:#FFFFFF;box-shadow:2px 2px 2px #909090; position:relative; float:left; cursor:pointer;}
+.package_container:hover {-webkit-box-shadow: 3px 3px 10px #515151; box-shadow: 3px 3px 10px #515151;}
+
+.package_title{width:270px; height:40px; }
+.package_title  p{color:#FFFFFF; font:20px bold italic;margin:0 auto; height40px; line-height:40px;font-family:Tahoma; text-align:center;}
+.package_content{width:270px; height:130px;}
+.package_content p{color:#959da1; font:50px normal italic; margin:0 auto; height:100px; line-height:100px;text-align:center;}
+.package_bottom{width:270px; height:30px; background:#a3b2b9; margin:auto 0; position:absolute; bottom:0;}
+.package_bottom p{color:#FFFFFF;font:15px bold italic; margin:0 auto; font-family:Arial;text-align:center; margin-top:3px;}
+
+
+.package_delete {width: 15px;height: 15px; background-color:#A3B2B9; border-radius: 50%; cursor:pointer;
+		        position:absolute; top:-4px; right:-4px;
+		        float:right; text-align: center;line-height: 15px;
+		  /* set shadow of div*/
+		  border:#909090 1px solid;
+		  filter:progid:DXImageTransform.Microsoft.Shadow(color=#909090,direction=120,strength=3);/*ie*/
+          -moz-box-shadow: 1px 1px 5px #909090;/*firefox*/
+          -webkit-box-shadow: 1px 1px 5px #909090;/*safari?chrome*/
+          box-shadow:1px 1px 5px #909090;/*opera?ie9*/	 	
+}
+.package_delete:hover { width: 18px; height: 18px; background-color:#EE2C2C;}
+
+.package_dataset_title{background:#07acc0;}
+
+.package_model_title{background:#d2a51e;}

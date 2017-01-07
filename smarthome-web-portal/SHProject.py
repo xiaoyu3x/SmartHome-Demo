@@ -7,6 +7,7 @@ import json
 import logging
 import hashlib
 import functools
+import time
 import datetime
 from flask import redirect, url_for, abort
 from flask import request, session, make_response
@@ -16,10 +17,12 @@ from decimal import Decimal
 from utils import logsettings
 from utils import util
 from utils.config import config
-from DB.api import resource, user, gateway, sensor_group
+from DB.api import resource, user, gateway, sensor_group, actual_weather, actual_power, his_weather, predicted_power
 from RestClient.sensor import Sensor
 from RestClient.api import ApiClient
 from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, TAP_ENV_VARS
+from datetime import timedelta
+
 
 try:
     import pymysql
@@ -468,6 +471,131 @@ def logout():
     resp = make_response(redirect(url_for('login'), code=302))
     resp.set_cookie('__VCAP_ID__', '', expires=0)
     return resp
+
+
+@app.route('/temp_actual')
+@login_required
+def temp_actual():
+    region = request.args.get('region')
+    today_date_str = request.args.get('today_date')
+    print "######temp_actual"
+    print today_date_str
+
+    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
+    startDate = today_date - timedelta(days=3)
+    endDate = today_date + timedelta(days=3)
+    print startDate
+    print endDate
+    his_temper_info = his_weather.get_weather_by_date(startDate, endDate, order_by=[('publish_date', False)])
+    print his_temper_info
+    for info in his_temper_info:
+        info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
+    json_str=json.dumps(his_temper_info)
+    return json_str, 200
+
+
+@app.route('/temp_future')
+@login_required
+def temp_future():
+    region = request.args.get('region')
+    today_date_str = request.args.get('today_date')
+    print "######temp_future"
+
+    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
+
+    startDate = today_date - timedelta(days=3) 
+    endDate = today_date + timedelta(days=3)
+    print startDate
+    acutal_weather_info = actual_weather.get_weather_by_date(today_date, today_date, region_id=1, order_by=[('publish_date', False)])
+    print acutal_weather_info
+    for info in acutal_weather_info:
+        info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
+        info['forecast_date'] = info['forecast_date'].strftime('%Y-%m-%d')
+    json_str = json.dumps(acutal_weather_info)
+    return json_str, 200
+
+
+@app.route('/temp_today')
+@login_required
+def temp_today():
+    region = request.args.get('region')
+    today_date_str = request.args.get('today_date')
+    print "######temp_today"
+
+    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
+	
+    startDate = today_date - timedelta(days=3) 
+    endDate = today_date + timedelta(days=3)
+    print startDate
+    acutal_weather_info = actual_weather.get_weather_by_date(today_date, today_date, order=0, region_id=1, order_by=[('publish_date', False)])
+    print acutal_weather_info
+    for info in acutal_weather_info:
+        info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
+        info['forecast_date']=info['forecast_date'].strftime('%Y-%m-%d')
+    json_str=json.dumps(acutal_weather_info)
+    return json_str, 200
+	
+
+@app.route('/power_actual')
+@login_required
+def power_actual():
+    region = request.args.get('region')
+    today_date_str = request.args.get('today_date')
+    print "######power_actual"
+
+    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
+    startDate = today_date - timedelta(days=3) 
+    endDate = today_date + timedelta(days=3)
+    print startDate
+    actual_power_info = actual_power.get_power_by_date(startDate, endDate, region_id=1, order_by=[('collect_date', False)])
+    for info in actual_power_info:
+        info['collect_date']=info['collect_date'].strftime('%Y-%m-%d')
+    json_str=json.dumps(actual_power_info)
+    print actual_power_info
+    return json_str, 200
+
+
+@app.route('/power_predict_his')
+@login_required
+def power_predict_his():
+    region = request.args.get('region')
+    today_date_str = request.args.get('today_date')
+    print "#########power_predict_his"
+
+    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
+
+    startDate = today_date - timedelta(days=3)
+    endDate = today_date + timedelta(days=3)
+	
+    predict_power_info = predicted_power.get_power_by_date(startDate,endDate, order=0, region_id=1, order_by=[('publish_date', False)])
+    for info in predict_power_info:
+        info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
+    json_str = json.dumps(predict_power_info)
+    print predict_power_info
+    return json_str, 200
+
+
+@app.route('/power_future')
+@login_required
+def power_future():
+    region = request.args.get('region')
+    today_date_str = request.args.get('today_date')
+    print "#########power_future"
+
+    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
+
+    #startDate = today_date - timedelta(days=3) 
+    #endDate = today_date + timedelta(days=3)
+
+    predict_power_info = predicted_power.get_power(publish_date=today_date, order_by=[('publish_date', False)])
+    for info in predict_power_info:
+        info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
+    json_str=json.dumps(predict_power_info)
+    print predict_power_info
+    return json_str, 200
+
+#@app.route('/get_power')
+#def get_power():
 
 
 if __name__ == '__main__':

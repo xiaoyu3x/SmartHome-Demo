@@ -51,3 +51,17 @@ createSnackbar = (function() {
     snackbar.style.zIndex = 999999;
   };
 })();
+
+function getRequest(url,type,data,successCallback,failCallback){
+    if(!type) type = "GET";
+    
+    $.ajax({
+        type: type,
+        url: url,
+        dataType: "json",
+        contentType:'application/json;charset=UTF-8',
+        data:JSON.stringify(data),
+        success: successCallback,
+        error: failCallback,
+    });    
+}

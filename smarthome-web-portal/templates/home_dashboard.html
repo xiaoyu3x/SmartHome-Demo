@@ -24,6 +24,10 @@
         background: #00fe68;
     }
 
+    .card-inside-td{ width:35px; height:30px; position:absolute;z-index:5555;
+        right:-10px;top:-10px;
+        background-image:{{ static_url_prefix }}image/td.png;}
+
     .status-card {
         overflow: visible;
     }
@@ -35,7 +39,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.css">
 {#    <script src="{{ static_url_prefix }}js/jquery-dateFormat.min.js"></script>#}
-    <script type="text/javascript" src="{{ static_url_prefix }}js/sh-now.js"></script>
+{#    <script type="text/javascript" src="{{ static_url_prefix }}js/common.js"></script>#}
+	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-now.js"></script>
+	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-before.js"></script>
+	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-future.js"></script>
+
     <!-- update weather -->
     <script type="text/javascript" src="{{ static_url_prefix }}js/weather.js"></script>
     <script>
@@ -60,6 +68,7 @@
 	    <div class="mdl-layout__tab-bar mdl-js-ripple-effect">
 	      <a href="#sh-now" class="mdl-layout__tab is-active">NOW</a>
 	      <a href="#sh-before" class="mdl-layout__tab">BEFORE</a>
+		  <a href="#sh-future" class="mdl-layout__tab">FUTURE<a>
 	    </div>
         <!-- Link -->
         <div id="logout">
@@ -122,6 +131,7 @@
                 </div>
             </div>
         </div>
+		<!-- Tab1 sh-now -->
         <div class="mdl-layout__tab-panel is-active" id="sh-now" style="color:#ededed">
 {#            <hr class="mdl-hr">#}
             <section class="mdl-grid section--center">
@@ -170,7 +180,7 @@
                     <div class="mdl-card__actions">
                         <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">HELP ME SAVE MORE</a>
                     </div>
-                </div>
+                </div><!--end Billing -->
                 <!-- Weather -->
                 <div class="demo-card-data mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">
                     <div class="mdl-card__title mdl-card--expand">
@@ -228,6 +238,7 @@
                 <!-- Real-time sensor data -->
             </section>
         </div>
+		<!-- Tab2 sh-before -->
         <div class="mdl-layout__tab-panel" id="sh-before">
         	  <section class="mdl-grid section--center">
                 <div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #f5f5f5;">
@@ -818,6 +829,196 @@
                     </div>
                       </div>
             </section>
-        </div>
+        </div><!-- Tab2 sh-before -->
+		
+		<!-- Tab3 sh-before -->
+		<div class="mdl-layout__tab-panel" id="sh-future">
+{#            <hr class="mdl-hr">#}
+            <section class="mdl-grid section--center">
+			    
+				<!-- Billing -->
+				<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #f5f5f5;">
+                    <div class="mdl-card__title mdl-card--expand">
+                        <h6>Billing</h6>
+                        <div class="mdl-layout-spacer"></div>
+						<div class="mdl-card_Current_Price">
+						    <a style="color:#01e676; font-size:30;">Current Price $</a>
+							<input class="card-input-text" id="unit_price" style="padding-left:5px;" type="text" value="0.06">
+							<a style="color:#01e676; font-size:15;">per KWH</a>
+						</div>
+                        <div class="mdl-card__title mdl-card--expand">
+                            <div class="mdl-card__menu">
+                                <button id="demo-menu-top-right"
+                                    class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                                    <i class="material-icons">more_vert</i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+					
+                    <div class="demo-tabs mdl-tabs mdl-js-tabs">
+                        <div class="mdl-tabs__tab-bar" id="billing_tabs">
+                            <a href="#tab1" id="billing_date_1" class="mdl-tabs__tab is-active">2016-12-21</a>
+                            <a href="#tab2" id="billing_date_2" class="mdl-tabs__tab">2016-12-22</a>
+                            <a href="#tab3" id="billing_date_3" class="mdl-tabs__tab">2016-12-23</a>
+                        </div>
+                        <div class="mdl-tabs__panel is-active" id="tab1">
+                            <div class="card-inside card-shadow">
+							    <div class="card-inside-title"><a style="font-size: 12px">Daily Usage</a></div>
+								<div class="card-inside-value">
+								    <a style="font-size:20px; color:#ee8719; margin-left:20px">$</a>
+								    <a id="daily_price_1" style="font-size:60px; color:#ee8719;">0.81</a>
+								</div>
+								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
+							</div>
+							<div class="card-inside card-shadow">
+							    <div class="card-inside-title"><a style="font-size: 12px">Daily Energy</a></div>
+								<div class="card-inside-value"> 
+									<a id="daily_power_1" style="font-size:60px; color:#14e2fa;margin-left:20px;">13.6</a>
+									<a style="font-size:20px; color:#14e2fa;">KWH</a>
+								</div>
+								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
+							</div>
+                        </div>
+                        <div class="mdl-tabs__panel" id="tab2">
+                             <div class="card-inside card-shadow">
+							    <div class="card-inside-title"><a style="font-size: 12px">Daily Usage</a></div>
+								<div class="card-inside-value">
+								    <a style="font-size:20px; color:#ee8719; margin-left:20px">$</a>
+								    <a id="daily_price_2" style="font-size:60px; color:#ee8719;">0.75</a>
+								</div>
+								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
+							</div>
+							<div class="card-inside card-shadow">
+							    <div class="card-inside-title"><a style="font-size: 12px">Daily Energy</a></div>
+								<div class="card-inside-value"> 
+									<a id="daily_power_2" style="font-size:60px; color:#14e2fa;margin-left:20px;">12.6</a>
+									<a style="font-size:20px; color:#14e2fa;">KWH</a>
+								</div>
+								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
+							</div>
+                        </div>
+                        <div class="mdl-tabs__panel" id="tab3">
+                             <div class="card-inside card-shadow">
+							    <div class="card-inside-title"><a style="font-size: 12px">Daily Usage</a></div>
+								<div class="card-inside-value">
+								    <a style="font-size:20px; color:#ee8719; margin-left:20px">$</a>
+								    <a id="daily_price_3"  style="font-size:60px; color:#ee8719;">0.79</a>
+								</div>
+								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
+							</div>
+							<div class="card-inside card-shadow">
+							    <div class="card-inside-title"><a style="font-size: 12px">Daily Energy</a></div>
+								<div class="card-inside-value"> 
+									<a id="daily_power_3" style="font-size:60px; color:#14e2fa;margin-left:20px;">13.2</a>
+									<a style="font-size:20px; color:#14e2fa;">KWH</a>									
+								</div>
+								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
+							</div>
+                        </div>
+						
+                    </div><!-- Billing -->
+					
+                    <div class="mdl-card__actions mdl-card--border" style="margin-top:15px;">
+{#                      <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">#}
+{#                        DISMISS#}
+{#                      </a>#}
+                        <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">CONTACT PROVIDER</a>
+                    </div>
+                </div><!--end Billing -->
+				
+				
+				<!-- Energy Future -->
+					<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #ffffff;">
+					    <div class="mdl-card__title mdl-card--expand">
+                        <h6>Energy</h6>
+                        <div class="mdl-layout-spacer"></div>
+                        <button id="demo-menu-top-right"
+                            class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                            <i class="material-icons">more_vert</i>
+                        </button>
+                        </div>
+						<div class="mdl-tabs__panel is-active" id="grid-tab1" style="height:320px;">
+                            <div class="mdl-grid mdl-grid--no-spacing" style="height:320px;">
+                              
+                                <div class="mdl-cell mdl-cell--12-col" style="height:320px;">
+                                    <div id="container_power" style="width: 100%; height:320px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                          </div>
+						
+					</div><!-- Energy Future -->
+					
+					<!-- Weather -->
+					<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #ffffff;">
+					    <div class="mdl-card__title mdl-card--expand">
+                            <h6>Weather</h6>
+                            <div class="mdl-layout-spacer"></div>
+                            <button id="demo-menu-top-right"
+                            class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                            <i class="material-icons">more_vert</i>
+                            </button>
+                        </div>
+						
+						<div class="mdl-tabs__panel is-active" id="grid-tab1">
+                            <div class="mdl-grid mdl-grid--no-spacing">
+                                <div  style="height=70px;padding: 0px 25px;">
+                                    <a style="font-size:45px;text-align:center;" id="a_temp_today">41</a><a style="vertical-align:super; font-size:45px">◦</a>
+                                </div>
+                                <div  style="text-align:left;height=70px; padding-bottom:15px;">
+								   <button id="temperature_convert" class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64; margin-left:-1px;">F</button>
+                                    <h6 style="margin:0px;font-size:13px;">Today's Temperature</h6>
+                                </div>
+								
+                                <div class="mdl-cell mdl-cell--12-col" style="height=250px;">
+                                    <div id="container_temperature" style="width: 100%; height: 200px; margin: 0 auto"></div>
+                                </div>
+                            </div>
+                          </div>
+						
+					</div><!-- Weather -->
+					
+					<!-- Training Model-->
+					<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp" style="background: #ffffff; position:relative;">
+					    <div class="mdl-card__title mdl-card--expand">
+                            <h6>Training Model</h6>
+                            <div class="mdl-layout-spacer"></div>
+                            <button id="demo-menu-top-right"
+                            class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64;">
+                            <i class="material-icons">more_vert</i>
+                            </button>
+                        </div>
+						<div class="width:100%;heght:100%">
+						
+						   <div style="width:90%;height:300px;position:relative;margin:0 auto;padding-bottom:15px;">
+						     <div id="div_gs"  class="card-inside card-shadow" style="width:250px;height:140px;float:left;margin-left:20px; display:none;position:absolute; right:0px; top:0px; z-index:99999; background-color:rgba(255,234,82,.3);transition: transform  3s;">
+					          <div class="card-inside-title" style="width:250px; margin-left:40px;"><a style="font-size:25px;">y = ax<a style="vertical-align:super; font-size:18px">2</a><a style="font-size:25px"> + c</a></div>
+							  <div class="card-inside-title" style="width:240px; margin-top:26px; margin-left:40px;" ><a style="font-size:20px;font-weight:300;" >a = 0.45</a></div>
+							  <div class="card-inside-title" style="width:240px; margin-top:26px; margin-left:40px;" ><a style="font-size:20px;font-weight:300;">c = 1.923</a></div>
+						     </div>
+					         <img id="img_gs" style="width:100%;height:300px; margin-bottom:5px;" src="{{ static_url_prefix }}image/model/linear_shanghai.png"/>
+						   </div>
+						</div>
+						
+				
+					    <!--<div class="model" style="float:left; margin-left:20px;margin-top:5px;">
+							    <div class="model-title"><p>ShangHai_Linear</p></div>
+								<div class="model-type"><p>Linear</p></div>
+								<div class="model-bottom"><p>2016-12-12 14:55</p></div>
+					    </div>
+							
+					    <div class="Dataset" style="float:left;margin-left:20px;margin-top:5px;">
+							    <div class="Dataset-title"><p>ShangHai_2013</p></div>
+								<div class="Dataset-type"><p>CSV</p></div>
+								<div class="Dataset-bottom"><p>2016-12-10 13:20</p></div>
+						</div>-->
+				
+					
+						
+					</div><!-- Training Model -->
+					
+				
+			</section>
+		</div><!-- Tab3 end sh-before -->
     </main>
 {% endblock %}
