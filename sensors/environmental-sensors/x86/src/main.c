@@ -193,6 +193,7 @@ static void sensor_ipm_callback(void *context, uint32_t id, volatile void *data)
 		/* resolution of 0.1 Pa */
 		val = data;
 		pressure_value = val->val1 * 10000 + val->val2 / 100;
+		break;
 	case SENSOR_CHAN_UV_INDEX:
 		uv_val = *(volatile uint8_t *) data;
 		uv_index_value = (uint16_t) uv_val;

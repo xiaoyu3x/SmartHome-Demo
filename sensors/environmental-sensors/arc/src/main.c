@@ -64,7 +64,7 @@ void main(void)
 	struct nano_timer timer;
 	uint32_t data[2] = {0, 0};
 	int32_t uv_signal;
-	float illuminance;
+	float uv_intensity;
 
 	nano_timer_init(&timer, data);
 
@@ -109,13 +109,11 @@ void main(void)
 					| (uint32_t) seq_buffer[1] << 8
 					| (uint32_t) seq_buffer[2] << 16
 					| (uint32_t) seq_buffer[3] << 24;
-			//printk("uv_signal = %d\n", uv_signal);
-			illuminance = (float) uv_signal * 3.3 / 4096 * 307;
-			uv_index = (uint8_t)((illuminance - 83) / 21);
+			uv_intensity = (float) uv_signal * 3.3 / 4096 * 307;
+			uv_index = (uint8_t)(uv_intensity / 200);
 			if (ipm_send(ipm, 1, SENSOR_CHAN_UV_INDEX, &uv_index, sizeof(uv_index))) {
 				printk("Failed to send uv sensor data over ipm\n");
 			}
-			//printk("UV index = %d\n", uv_index.val1);
 		}
 
 		/* fetch sensor samples */
@@ -158,16 +156,21 @@ void main(void)
 			temp.val2/100000, 223 /* degree symbol */);
 		glcd_print(glcd, row, strlen(row));
 
-		/* display himidity on LCD */
-		glcd_cursor_pos_set(glcd, 17 - strlen(row), 0);
+		/* display humidity on LCD */
 		sprintf(row, "RH:%d%c", humidity.val1/1000,
 			37 /* percent symbol */);
+		glcd_cursor_pos_set(glcd, 16 - strlen(row), 0);
 		glcd_print(glcd, row, strlen(row));
 
 		/* display pressure on LCD */
 		glcd_cursor_pos_set(glcd, 0, 1);
 		sprintf(row, "P:%d.%02dkPa", press.val1,
 		       press.val2 / 1000);
+		glcd_print(glcd, row, strlen(row));
+
+		/* display UV index on LCD */
+		sprintf(row, "UV:%u", uv_index);
+		glcd_cursor_pos_set(glcd, 16 - strlen(row), 1);
 		glcd_print(glcd, row, strlen(row));
 #endif
 

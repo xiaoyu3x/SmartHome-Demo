@@ -185,10 +185,10 @@ void main(void)
 		if (glcd) {
 			glcd_clear(glcd);
 			glcd_cursor_pos_set(glcd, 0, 0);
-			sprintf(str, "House: %d mM", power1 / 1000);
+			sprintf(str, "House: %d mW", power1 / 1000);
 			glcd_print(glcd, str, strlen(str));
 			glcd_cursor_pos_set(glcd, 0, 1);
-			sprintf(str, "Solar: %d mM", power2 / 1000);
+			sprintf(str, "Solar: %d mW", power2 / 1000);
 			glcd_print(glcd, str, strlen(str));
 		}
 
