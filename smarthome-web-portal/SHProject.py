@@ -20,7 +20,8 @@ from utils.config import config
 from DB.api import resource, user, gateway, sensor_group, actual_weather, actual_power, his_weather, predicted_power
 from RestClient.sensor import Sensor
 from RestClient.api import ApiClient
-from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, TAP_ENV_VARS
+from RestClient.api.iotError import IoTRequestError
+from utils.settings import SECRET_KEY, ALERT_GRP, STATUS_GRP, DATA_GRP, BRILLO_GRP, TAP_ENV_VARS
 from datetime import timedelta
 
 
@@ -164,6 +165,12 @@ def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, resul
         val_dict.update({
             'value': record_key.get('value'),
         })
+    elif isinstance(record_key, list):
+        for key in record_key:
+            val = latest_data.get(key)
+            val_dict.update({
+                key: str(val) if isinstance(val, (float, Decimal)) else val,
+            })
     elif latest_data.get(record_key) is not None:
         val = latest_data.get(record_key)
         val_dict.update({
@@ -174,10 +181,17 @@ def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, resul
             'value': "",
         })
 
-    if result[result_key].get(sensor_type) is None:
-        result[result_key].update({sensor_type: [val_dict, ]})
+    if result_key == "brillo":
+        uuid = latest_data.get('resource').get('uuid')
+        if result[result_key].get(uuid) is None:
+            result[result_key].update({uuid: {sensor_type: val_dict}})
+        else:
+            result[result_key][uuid].update({sensor_type: val_dict})
     else:
-        result[result_key][sensor_type].append(val_dict)
+        if result[result_key].get(sensor_type) is None:
+            result[result_key].update({sensor_type: [val_dict, ]})
+        else:
+            result[result_key][sensor_type].append(val_dict)
 
 
 def _get_sensor_data(token_dict):
@@ -186,47 +200,67 @@ def _get_sensor_data(token_dict):
     ret = {
         'alert': {},
         'status': {},
-        'data': {}
+        'data': {},
+        'brillo': {},
     }
     for sensor in res:
         typ = sensor.get('sensor_type').get('mapping_class')
+        href = sensor.get('path')
         resource_id = sensor.get("id")
-        if typ in ALERT_GRP:
-            token = token_dict.get(str(resource_id)) if str(resource_id) in token_dict.keys() \
-                                                        and token_dict.get(str(resource_id)) else default_token
-            latest_data = util.get_class("DB.api.{}.get_latest_alert_by_gateway_uuid"
-                                         .format(typ))(resource_id=resource_id,
-                                                       token=token)
-            latest_data = latest_data if latest_data else {"resource_id": resource_id}
-        elif typ == 'power':
-            latest_data = util.get_class("DB.api.energy.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
-        else:
-            latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
-        if latest_data is None:
-            continue
-        # print latest_data
-        if typ in ALERT_GRP:
-            _compose_sensor_data(typ, latest_data, 'created_at', 'alert', ret)
-        elif typ in STATUS_GRP:
-            if typ == "rgbled":
-                val = True if latest_data.get('rgbvalue') == "[255, 0, 0]" else False
-                _compose_sensor_data(typ, latest_data, {'value': val}, 'status', ret)
-            else:
-                _compose_sensor_data(typ, latest_data, 'status', 'status', ret)
-        elif typ in DATA_GRP:
-            # extract values from the db query result
-            if typ in ['temperature', 'illuminance']:
-                key_words = [typ]
-            elif typ == 'solar':
-                key_words = ['tiltpercentage']
+        if href.startswith("/a/"):
+            if typ in ALERT_GRP:
+                token = token_dict.get(str(resource_id)) if str(resource_id) in token_dict.keys() \
+                                                            and token_dict.get(str(resource_id)) else default_token
+                latest_data = util.get_class("DB.api.{}.get_latest_alert_by_gateway_uuid"
+                                             .format(typ))(resource_id=resource_id,
+                                                           token=token)
+                latest_data = latest_data if latest_data else {"resource_id": resource_id}
             elif typ == 'power':
-                key_words = ['value']
-            elif typ == 'environment':
-                key_words = ['temperature', 'humidity', 'pressure', 'uv_index']
+                latest_data = util.get_class("DB.api.energy.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
+            else:
+                latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
+            if latest_data is None:
+                continue
+            # print latest_data
+            if typ in ALERT_GRP:
+                _compose_sensor_data(typ, latest_data, 'created_at', 'alert', ret)
+            elif typ in STATUS_GRP:
+                if typ == "rgbled":
+                    val = True if latest_data.get('rgbvalue') == "[255, 0, 0]" else False
+                    _compose_sensor_data(typ, latest_data, {'value': val}, 'status', ret)
+                else:
+                    _compose_sensor_data(typ, latest_data, 'status', 'status', ret)
+            elif typ in DATA_GRP:
+                # extract values from the db query result
+                if typ in ['temperature', 'illuminance']:
+                    key_words = [typ]
+                elif typ == 'solar':
+                    key_words = ['tiltpercentage']
+                elif typ == 'power':
+                    key_words = ['value']
+                elif typ == 'environment':
+                    key_words = ['temperature', 'humidity', 'pressure', 'uv_index']
 
-            for key in key_words:
-                sensor_type = typ if typ != "environment" else key
-                _compose_sensor_data(sensor_type, latest_data, key, 'data', ret)
+                for key in key_words:
+                    sensor_type = typ if typ != "environment" else key
+                    _compose_sensor_data(sensor_type, latest_data, key, 'data', ret)
+        elif href.startswith("/brillo/"):
+            latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(
+                resource_id=resource_id)
+            # print latest_data
+            if latest_data is None:
+                continue
+            if typ in BRILLO_GRP:
+                if typ in ['brightness']:
+                    keys = [typ]
+                elif typ == 'rgbled':
+                    keys = ['rgbvalue']
+                elif typ == 'audio':
+                    keys = ['volume', 'mute']
+                elif typ == 'mp3player':
+                    keys = ['media_states', 'playlist', 'state', 'title']
+
+                _compose_sensor_data(typ, latest_data, keys, 'brillo', ret)
     return ret
 
 
@@ -315,8 +349,11 @@ def update_sensor():
     print "content: " + str(content)
     sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'),
                     resource_type=res.get('sensor_type').get('type'), username=session.get('username'))
-    sts = sensor.update_status(data)
-    return jsonify({'status': sts}), 201
+    try:
+        sts = sensor.update_status(data)
+        return jsonify({'status': sts}), 201
+    except IoTRequestError:
+        abort(500)
 
 
 @app.route('/add_sensor_group', methods=['POST'])
@@ -523,7 +560,7 @@ def temp_today():
     print "######temp_today"
 
     today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-	
+
     startDate = today_date - timedelta(days=3) 
     endDate = today_date + timedelta(days=3)
     print startDate
@@ -534,7 +571,7 @@ def temp_today():
         info['forecast_date']=info['forecast_date'].strftime('%Y-%m-%d')
     json_str=json.dumps(acutal_weather_info)
     return json_str, 200
-	
+
 
 @app.route('/power_actual')
 @login_required
@@ -566,7 +603,7 @@ def power_predict_his():
 
     startDate = today_date - timedelta(days=3)
     endDate = today_date + timedelta(days=3)
-	
+
     predict_power_info = predicted_power.get_power_by_date(startDate,endDate, order=0, region_id=1, order_by=[('publish_date', False)])
     for info in predict_power_info:
         info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')

@@ -49,7 +49,8 @@ class Resource(object):
                 try:
                     href = str(item['links'][0]['href'])
                     rt = str(item['links'][0]['rt'])
-                    if rt and rt.startswith("oic.r") and href and href.startswith("/a/"):
+                    if rt and not rt.startswith("oic.wk") and href \
+                            and (href.startswith("/a/") or href.startswith("/brillo/")):
                         sensors.append((item['di'], href, rt))
                     else:
                         # ignore the wrong or unregistered json types

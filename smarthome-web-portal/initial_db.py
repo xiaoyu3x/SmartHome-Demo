@@ -65,6 +65,9 @@ SENSOR_TYPES = [
     ('button', 'oic.r.button'),
     ('power', 'oic.r.energy.consumption'),
     ('environment', 'oic.r.sensor.environment'),
+    ('mp3player', 'x.com.intel.demo.mp3player'),
+    ('audio', 'oic.r.audio'),
+    ('brightness', 'oic.r.light.brightness'),
 ]
 
 SENSOR_GROUPS = [

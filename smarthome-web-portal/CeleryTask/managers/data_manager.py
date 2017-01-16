@@ -4,6 +4,7 @@ Task to fetch data
 """
 import threading
 import time
+import json
 from random import randint
 from RestClient import sensor as client
 from RestClient import Resource as rsclient
@@ -78,7 +79,7 @@ class FetchData(threading.Thread):
                 if new_power != 0:
                     content = {
                             'resource_id': resource_id,
-                            'value': new_power,
+                            'value': int(new_power),
                     }
                     # power_add(content)
                     print('update power: {}'.format(str(power_add(content))))
@@ -87,7 +88,7 @@ class FetchData(threading.Thread):
                     content = {
                             # 'uuid': uuid,
                             'resource_id': resource_id,
-                            'value': new_energy,
+                            'value': int(new_energy),
 
                     }
                     # energy_add(content)
@@ -137,6 +138,40 @@ class FetchData(threading.Thread):
                         print('update temperature: {}'.format(str(add_method(content))))
                     else:
                         print("Unable to get Temperature status.")
+                elif sensor == 'audio':
+                    audio_data = data.get('properties')
+                    if audio_data is not None:
+                        content.update({
+                            'mute': audio_data.get('mute'),
+                            'volume': audio_data.get('volume'),
+                        })
+                        # add_method(content)
+                        print('update audio: {}'.format(str(add_method(content))))
+                    else:
+                        print("Unable to get Audio sensor status .")
+                elif sensor == 'brightness':
+                    bright_data = data.get('properties')
+                    if bright_data is not None:
+                        content.update({
+                            'brightness': bright_data.get('brightness'),
+                        })
+                        # add_method(content)
+                        print('update brightness: {}'.format(str(add_method(content))))
+                    else:
+                        print("Unable to get Brightness sensor status .")
+                elif sensor == 'mp3player':
+                    mp3player_data = data.get('properties')
+                    if mp3player_data is not None:
+                        content.update({
+                            'media_states': json.dumps(mp3player_data.get('mediaStates')),
+                            'playlist': json.dumps(mp3player_data.get('playList')),
+                            'state': mp3player_data.get('state'),
+                            'title': mp3player_data.get('title'),
+                        })
+                        # add_method(content)
+                        print('update mp3player: {}'.format(str(add_method(content))))
+                    else:
+                        print("Unable to get Mp3player sensor status .")
                 elif sensor == 'rgbled':
                     new_rgb = data.get('properties').get('rgbValue')
                     if new_rgb is not None:

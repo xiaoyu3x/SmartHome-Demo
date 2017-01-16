@@ -335,20 +335,20 @@ def create_model():
 def delete_model():
     if request.method == 'PUT':
         content = request.get_json(silent=True)
-        model_name =  content.get('model_name')
+        model_name = content.get('model_name')
         obj = db.session.query(DataModel).filter(DataModel.name==model_name).all()
         print "---delete---"
         print model_name
-		
-        filename = obj[0].serialization
-        filepath = os.path.join(Model_Seria_FOLDER,filename)
-        print filepath
+
+        filename = "{}.pkl".format(model_name)
+        print filename, Model_Seria_FOLDER
+        filepath = os.path.join(Model_Seria_FOLDER, filename)
         if os.path.exists(filepath):
             os.remove(filepath)
             print "delete model file successful"
         else:
-		    print (filepath)
-        
+            print (filepath)
+
         pic_path = Model_Pic_FOLDER + model_name + ".png"
         if os.path.exists(pic_path):
             os.remove(pic_path)

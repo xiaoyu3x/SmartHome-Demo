@@ -3,7 +3,7 @@
  */
 var week = moment.weekdaysShort();
 var month = ['4th', '8th', '12th', '16th', '20th', '24th', '28th'];
-var month_str=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+var month_str=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var year = moment.monthsShort();
 
 function isArray(obj){
@@ -74,12 +74,12 @@ getLocalDate2 = function(date, offset) {
     //local.add(offset * 60, 'minutes');
     //local = local.format('HH:mm:ss');
     //console.log('local time: ' + local);
-	console.log("offset is :" + offset);
-	console.log("utc date is :" + date);
+    // console.log("offset is :" + offset);
+    // console.log("utc date is :" + date);
 	var newDate = new Date(date.getTime() + (offset * 1000 * 60 * 60 ));
-	console.log("utc date mm :" + date.getTime());
-	console.log("mm in hour:" + offset * 1000 * 60 * 60);
-    console.log("new date is:" + newDate);
+    // console.log("utc date mm :" + date.getTime());
+    // console.log("mm in hour:" + offset * 1000 * 60 * 60);
+    // console.log("new date is:" + newDate);
     return newDate;
 }
 
@@ -293,6 +293,27 @@ createSnackbar = (function() {
     snackbar.style.zIndex = 999;
   };
 })();
+
+update_sensor_status = function(resource_id, value, target, onSuccess){
+    if(target) target.data('lock', "1");
+    $.ajax({
+        type: "PUT",
+        url: "/update_sensor",
+        contentType: 'application/json',
+        data: JSON.stringify({
+            "resource_id": resource_id,
+            "data": value
+        }),
+        success: function(data){
+            if(target) target.data('lock', "0");
+            onSuccess(data);
+        }
+        }).fail(function(jqXHR, textStatus, errorThrown){
+            if(target) target.data('lock', "0");
+            console.error("Failed to update status " + errorThrown);
+            createSnackbar("Server error: " + errorThrown, 'Dismiss');
+    });
+};
 
 toggle_status = function(resource_id, obj) {
     console.log("checked: " + obj.checked);
@@ -640,10 +661,6 @@ function drawcontainerchart2(div,xray,yray1,yray2,title,xtext,name1,name2,unit,c
     });
 }
 
-
-
-
-
 function drawcontainerchart3(div,xray,yray1,yray2,yray3,title,xtext,name1,name2,name3,unit,color_str) {
     if(unit === undefined) { unit = ''; }
     var myChart = echarts.init(document.getElementById(div));
@@ -766,9 +783,6 @@ function drawcontainerchart3(div,xray,yray1,yray2,yray3,title,xtext,name1,name2,
     });
 }
 
-
-
-
 draw_billing_pie_chart = function(container, title, data) {
     var myChart = echarts.init(document.getElementById(container));
     var option = {
@@ -887,7 +901,6 @@ function getRandomPecentbyIndex(min, max, index, length) {
   return (((index + 1) / length * (max - min)) + min) * 0.01;
 }
 
-
 function getRequest(url,type,data,successCallback,failCallback){
     if(!type) type = "GET";
     $.ajax({
@@ -900,6 +913,29 @@ function getRequest(url,type,data,successCallback,failCallback){
         success: successCallback,
         error: failCallback,
     });    
+}
+
+function convertToRgb(input) {
+    // input: [255,255,255]
+    // output: rgb(255, 255, 255)
+    var color = JSON.parse(input);
+    var output = "";
+    if(color.constructor === Array && color.length == 3 ){
+        output = "rgb(" + input.replace(/^\[+|]+$/g, '') + ")";
+    }
+    return output;
+}
+
+function convertToStr(input) {
+    // output: [255,255,255] array
+    // input: tinycolor object
+    var output = new Array();
+    if(input){
+        output.push(Math.round(input._r));
+        output.push(Math.round(input._g));
+        output.push(Math.round(input._b));
+    }
+    return output;
 }
 
 

@@ -5,6 +5,7 @@ A device sensor wrapper to send http requests
 import logging
 import json
 from RestClient.api.IoTClient import IoTClient
+from RestClient.api.iotError import IoTRequestError
 from utils.config import config
 from DB.api import sensor_type
 
@@ -55,11 +56,13 @@ class Sensor(object):
         uri = "{}?di={}".format(self.path, self.id)
         if isinstance(data, dict):
             self.resp = self._client.put(uri, json.dumps(data))
+            print "########PUT data " + json.dumps(data)
             if self.resp.ok():
                 # print "The response status is " + str(self.resp.status_code)
                 ret = True
             else:
                 print('Failed to update {} status: {}'.format(uri, str(self.resp.errors())))
+                raise IoTRequestError(self.resp.status_code)
         return ret
 
 

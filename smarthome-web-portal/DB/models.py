@@ -402,6 +402,62 @@ class Environment(Base, HelperMixin, DefaultMixin):
                                                       str(self.resource.gateway_id), str(self.created_at))
 
 
+class Audio(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'audio'
+
+    mute = Column(Boolean)
+    volume = Column(Integer)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relationship('Resource', backref="audio", lazy=False)
+
+    def __init__(self, mute=None, volume=None, resource_id=None):
+        self.mute = mute
+        self.volume = volume
+        self.resource_id = resource_id
+
+    def __repr__(self):
+        return "<Audio(id='%s',mute='%s',volume='%s',created_at='%s')>" % \
+               (str(self.id), self.mute, str(self.volume), str(self.created_at))
+
+
+class Brightness(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'brightness'
+
+    brightness = Column(Integer)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relationship('Resource', backref="brightness", lazy=False)
+
+    def __init__(self, brightness=None, resource_id=None):
+        self.brightness = brightness
+        self.resource_id = resource_id
+
+    def __repr__(self):
+        return "<Brightness(id='%s',brightness='%s',created_at='%s')>" % \
+               (str(self.id), str(self.brightness), str(self.created_at))
+
+
+class MP3Player(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'mp3player'
+
+    media_states = Column(VARCHAR(50))
+    playlist = Column(TEXT)
+    state = Column(VARCHAR(15))
+    title = Column(VARCHAR(255))
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relationship('Resource', backref="mp3player", lazy=False)
+
+    def __init__(self, media_states=None, playlist=None, state=None, title=None, resource_id=None):
+        self.mediaStates = media_states
+        self.playList = playlist
+        self.state = state
+        self.title = title
+        self.resource_id = resource_id
+
+    def __repr__(self):
+        return "<MP3Player(id='%s',mediaStates='%s',playList='%s',state='%s', title='%s', created_at='%s')>" % \
+               (str(self.id), self.mediaStates, self.playList, self.state, self.title, str(self.created_at))
+
+
 class EventLog(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'eventlog'
 

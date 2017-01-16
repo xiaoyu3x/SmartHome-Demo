@@ -9,6 +9,11 @@ body {
     background: #eeeeee;
 }
 
+/*to fix the Tooltips are blurry on Chrome 53 */
+.mdl-tooltip {
+    will-change:unset !important;
+}﻿
+
 .mdl-menu__item--full-bleed-divider {
   border-bottom: 1px solid rgba(0,0,0,0.12);
 }
@@ -856,7 +861,6 @@ body {
      font-size:24px; color:#ee8719;vertical-align:middle;
 }
 
-
 .model{ width:270px; height:200px; background-color:#ffffff;
         box-shadow:2px 2px 2px #909090; position:relative;float:left;
 }
@@ -876,3 +880,22 @@ body {
 .Dataset-type p{ color:#959da1; font:50px normal italic; margin:0 auto; height:130px; line-height:130px;text-align:center; }
 .Dataset-bottom{width:270px; height:30px; background:#a3b2b9; margin:auto 0; position:absolute; bottom:0;}
 .Dataset-bottom p{color:#FFFFFF;font:15px bold italic; margin:0 auto; font-family:Arial;text-align:center; margin-top:3px;}
+
+.mdl-chip .select2-container--default .select2-selection--single {
+    padding: 0px;
+    font-size: 1.2em;
+    background-color: #ffc75f;
+    border: 1px solid #ffc75f;
+    box-shadow: 0 0 3px 1px #aaa;
+}
+
+.mdl-chip .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #fff;
+}
+
+.slider-bar {
+    width:94%;
+    padding: 0 0 30px 50px;
+    position: relative;
+    /*margin: 5px;*/
+}

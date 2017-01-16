@@ -2,138 +2,14 @@
  * Scripts for the Now page
  */
 $(function() {
-	//Set the object socket global.
-	// window.socket;
-	// window.socket = null;
-    //
-	// //The variable panel represents the current panel displayed by the browser.
-	// //0: Initial. No panel is specified.
-	// //1: the Now panel.
-	// //2: the Before panel
-    // //3: the Future panel
-	// window.panel;
-	// window.panel=0;
-
     //Number of alert cards displayed on NOW page
     var alert_card_number = 0;
 
-    // window.now_timer = null;
-    // window.time_timer = null;
-    // window.weather_timer = null;
-
-
-    // var timezone = null;
-    // var utc_offset = null;
     // the token dict to store the last alert time for motion, gas, buzz and button sensors
     var alert_token = {};
 
     // check whether to update the sensor group list
     var dropdown_need_update = false;
-
-    // $.sh = {
-    //     init: function() {
-    //         //set initial timezone to Cookie
-    //         console.log("load timezone...");
-    //         if (!getTimezone()) {
-    //             setTimezone(moment.tz.guess());
-    //             console.log('set timezone in cookie: ' + getCookie('timezone'));
-    //         }
-    //         makeTimezoneSelect();
-    //
-    //         $("#inst").on('click mouseover', function() {
-    //             $.getJSON('/cf_instance', function(data) {
-    //                     if (data.error != null) {
-    //                         console.error('Cannot get the cf instance info.');
-    //                     } else {
-    //                         var inst = data.cf_instance;
-    //                         if($.isEmptyObject(inst))
-    //                             $("#instance_info").html('n/a');
-    //                         else
-    //                         {
-    //                             var info = String.format('<div>Name <span>{0}</span></div><div style="word-break:break-all;">URL <a>{1}</a></div> \
-    //                                 <table><tbody> \
-    //                                 <tr><td>Instance ID</td><td style="word-break:break-all; width: 145px">{2}</td></tr> \
-    //                                 <tr><td>Version</td><td>{3}</td></tr> \
-    //                                 <tr><td>Index</td><td>{4}</td></tr> \
-    //                                 <tr><td>Instance running</td><td>{5}</td></tr> \
-    //                                 </tbody></table>', inst.name, inst.uris[0], inst.instance_id, inst.version, inst.Instance, inst.Total);
-    //                             $("#instance_info").html(info);
-    //                         }
-    //                         $("#instance_info").show();
-    //
-    //                         // to fix the wrong margin offset for the first time issue
-    //                         var left_offset = $("#instance_info").css('margin-left');
-    //                         if(left_offset == "0px") {
-    //                             var tip = $("#instance_info");
-    //                             $("#instance_info").css('margin-left', -1 * tip.width() + 'px');
-    //                         }
-    //                     }
-    //             });
-    //         });
-    //     }
-    // };
-    //
-    // function getTimezone() {
-    //     var tz = getCookie('timezone');
-    //     var zones = moment.tz.names();
-    //     if(zones.indexOf(tz) > 0) {
-    //         console.log('get timezone in cookie: ' + tz);
-    //         timezone = tz;
-    //         utc_offset = moment.tz(timezone).utcOffset() / 60;
-    //         return true;
-    //     }
-    //     else return false;
-    // };
-    //
-    // function setTimezone(tz) {
-    //     timezone = tz;
-    //     createCookie('timezone', timezone, 5);
-    //     utc_offset = moment.tz(timezone).utcOffset()/60;
-    //     console.log('current offset: ' + utc_offset);
-    // };
-    //
-    // function makeTimezoneSelect() {
-    //     // reduce the timezone list size to 220.
-    //     var cities = Object.keys(moment.tz._zones)
-    //         .map(function(k) { if(typeof moment.tz._zones[k] === 'string') return moment.tz._zones[k].split('|')[0]; else return moment.tz._zones[k].name;})
-    //         .filter(function(z) { return z.indexOf('/') >= 0; });
-    //
-    //     var ordered_cities = [];
-    //     var i = 0 ;
-    //     for(var key in cities) {
-    //         ordered_cities.push({
-    //           id: i.toString(),
-    //           text: '(GMT ' + moment.tz(cities[key]).format('Z') + ') ' + cities[key],
-    //           offset: moment.tz(cities[key]).format('Z')
-    //         });
-    //         i++;
-    //     }
-    //     ordered_cities.sort(function(a, b){
-    //         return parseInt(a.offset.replace(":", ""), 10) - parseInt(b.offset.replace(":", ""), 10);
-    //     });
-    //
-    //     $('#timezone').select2({
-    //         data: ordered_cities,
-    //         tags: "true",
-    //         width: "300px",
-    //         placeholder: '(GMT ' + moment.tz(timezone).format('Z') + ') ' + timezone,
-    //     });
-    //
-    //     $('#timezone').change(function() {
-    //         var theSelection = $('#timezone option:selected').text();
-    //         console.log('selected: ' + theSelection.split(') ')[1]);
-    //         setTimezone(theSelection.split(') ')[1]);
-    //         window.location.reload();
-    //     });
-    // }
-    //
-    // window.onbeforeunload = function() {
-		// console.log("Leaving the page...");
-		// if(window.socket !=null)window.socket.close();
-    // };
-    //
-    // window.onload = function() {
-    // };
 
 	$.sh.now = {
 		register_actions: function(){
@@ -326,16 +202,146 @@ $(function() {
                 }
             });
 
-            // $("#data-container, #alert-container, #status-container").on('click', 'button', function(e) {
-                // $.sh.now.update_sensor_group();
-                //var listLen = $(this).next().find("ul").children("li");
-                // if(listLen == 0) {
-                //     e.preventDefault();
-                //     return false;
-                // }
-            // });
+            // update brillo rgbled
+            $("#brillo-container").on('change', ".basic", function(e, color){
+                /* data format :
+                { "rgbValue" : [255,255,255] }
+                */
+                var value = {
+                    'rgbValue': convertToStr(color)
+                };
+                // console.log("res id:" + $(this).data('id'));
+                // console.log("value: " + value);
+                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                    console.log(data);
+                    var ret = data.status;
+                    if(ret) {
+                        console.log("Brillo rgbled color is updated.");
+                        createSnackbar('Brillo rgbled color is updated.', 'Dismiss');
+                    }
+                });
+            });
 
-		},
+            // update brillo playlist
+            $("#brillo-container").on('change', "select", function(){
+                /* data format :
+                { "select" : 0 }
+                */
+                var value = {
+                    "select": parseInt($(this).val())
+                };
+                // console.log("res id:" + $(this).parent().data('id'));
+                // console.log("value: " + value);
+                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                    var ret = data.status;
+                    if(ret) {
+                        createSnackbar('Brillo mp3player playlist is updated.', 'Dismiss');
+                    }
+                });
+            });
+
+            // update brillo play/pause
+            $("#brillo-container").on('click', "button", function(){
+                /* data format :
+                { "state" : "Paused" }
+                */
+                var buttonId = $(this).attr('id');
+                var resId = buttonId.split('-').pop();
+                var playlist = $(this).parent().find("select");
+                var value;
+                if(buttonId.indexOf("brillo-pause") == 0){
+                    if(playlist.val()) {
+                        if ($(this).children("i").html() == "play_arrow")
+                            value = {
+                                "state": "Playing"
+                            };
+                        if ($(this).children("i").html() == "pause")
+                            value = {
+                                "state": "Paused"
+                            };
+                    }
+                    else{
+                        createSnackbar('Brillo mp3player has no song selected.', 'Dismiss');
+                        return false;
+                    }
+                }
+                else if (buttonId.indexOf("brillo-clear") == 0) {
+                    if(playlist.val()) {
+                        value = {
+                            "state": "Idle"
+                        }
+                    }
+                    else{
+                        createSnackbar('Brillo mp3player is already in Idle state.', 'Dismiss');
+                        return false;
+                    }
+                }
+                if(value) {
+                    update_sensor_status(parseInt(resId), value, null, function(data){
+                        var ret = data.status;
+                        if(ret) {
+                            createSnackbar('Brillo mp3player state is updated.', 'Dismiss');
+                        }
+                    });
+                }
+            });
+
+            // update brillo brightness
+            $("#brillo-container").on('change', ".brightness", function(){
+                /* data format :
+                { "brightness" : 10 }
+                */
+                var value = {
+                    "brightness": parseInt($(this).val())
+                };
+                // console.log("res id:" + $(this).parent().data('id'));
+                // console.log("value: " + value);
+                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                    var ret = data.status;
+                    if(ret) {
+                        createSnackbar('Brillo mp3player brightness is updated.', 'Dismiss');
+                    }
+                });
+            });
+
+            // update brillo volume
+            $("#brillo-container").on('change', ".volume", function(){
+                /* data format :
+                { "volume" : 10 }
+                */
+                var value = {
+                    "volume": parseInt($(this).val())
+                };
+                // console.log("res id:" + $(this).parent().data('id'));
+                // console.log("value: " + value);
+                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                    var ret = data.status;
+                    if(ret) {
+                        createSnackbar('Brillo mp3player volume is updated.', 'Dismiss');
+                    }
+                });
+            });
+
+            // update brillo volume mute
+            $("#brillo-container").on('click', "label", function(e){
+                /* data format :
+                { "mute" : true }
+                */
+                var switchIcon = $(this).children("input");
+                var value = {
+                    "mute": !switchIcon[0].checked
+                };
+                // console.log("res id:" + $(this).parent().data('id'));
+                // console.log("value: " + value);
+                update_sensor_status(switchIcon.data('id'), value, null, function(data){
+                    var ret = data.status;
+                    if(ret) {
+                        createSnackbar('Brillo mp3player mute status is updated', 'Dismiss');
+                    }
+                });
+                return false;
+            });
+        },
         _update_sensor_group: function(value, color, buttonElem) {
             $.ajax({
                 type: "POST",
@@ -454,6 +460,18 @@ $(function() {
                     $(this).closest(".status-card").remove();
                 }
             });
+            $.sh.now.clear_brillo_data(data);
+        },
+        clear_brillo_data: function(data) {
+            if(data["brillo"]){
+                var sensor_list = Object.keys(data["brillo"]);
+                $('#brillo-container .mdl-card__supporting-text').each(function(){
+                    var ID = $(this).attr('id');
+                    if (!sensor_list.includes(ID)) {
+                        $(this).parent(".demo-card-data").remove();
+                    }
+                });
+            }
         },
         dismiss_alert_card: function(obj){
             dismiss(obj);
@@ -884,6 +902,204 @@ $(function() {
                 }
             }
 		},
+        update_brillo_data: function(uuid, data, show_uuid){
+            // <button id="brillo-{1}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{7}" title="{8}">\
+            // </button>\
+            // <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{brillo}-{1}">\
+            // </ul>\
+
+            var value = $("#"+ uuid);
+            var plist = JSON.parse(data['mp3player'].playlist);
+
+            if(value.length == 0) {
+                var html = String.format('<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp">\
+                    <div class="mdl-card__title mdl-card--expand" style="padding-left: 8%">\
+                        <h6>Android Things</h6>\
+                        <i class="material-icons edit" style="display: none;">edit</i>\
+                    </div>\
+                    <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" id="{0}">\
+                        <div class="mdl-cell mdl-cell--2-col" style="text-align: left;">\
+                            <span>Colour</span>\
+                        </div>\
+                        <div class="mdl-cell mdl-cell--10-col" style="text-align: left; padding-bottom: 20px;">\
+                            <input type="text" class="basic" data-id="{1}" data-lock="0"/>\
+                        </div>\
+                        <div class="mdl-cell mdl-cell--3-col" style="text-align: left;">\
+                            <span>MP3 Player</span>\
+                        </div>\
+                        <div class="mdl-cell mdl-cell--9-col"></div>\
+                        <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="padding-left: 75px; height: 47px; margin-bottom: 15px;">\
+                            <div class="mdl-chip mdl-cell mdl-cell--9-col" style="background:#ffc75f; height:60%">\
+                                <select id="brillo-mp3-title-{2}" style="font-weight:700; color:#fff;" data-state="{9}" data-id="{2}" data-lock="0"></select>\
+                                <div class="mdl-tooltip" for="brillo-mp3-title-{2}">MP3 title</div>\
+                            </div>\
+                            <div class="mdl-layout-spacer"></div>\
+                            <button id="brillo-pause-{2}" class="mdl-cell mdl-cell--1-col mdl-button mdl-button--icon">\
+                                <i class="material-icons" style="color: #455a64">play_arrow</i>\
+                            </button>\
+                            <div class="mdl-tooltip" for="brillo-pause-{2}">Play</div>\
+                            <button id="brillo-clear-{2}" class="mdl-cell mdl-cell--1-col mdl-button mdl-button--icon">\
+                                <i class="material-icons" style="color: #455a64">clear</i>\
+                            </button>\
+                            <div class="mdl-tooltip" for="brillo-clear-{2}">Clear</div>\
+                        </div>\
+                        <div class="mdl-cell mdl-cell--3-col" style="text-align: left;">\
+                            <span >Brightness</span>\
+                        </div>\
+                        <div class="mdl-cell mdl-cell--9-col"></div>\
+                        <div class="mdl-cell mdl-cell--12-col">\
+                            <p class="slider-bar">\
+                                <input class="mdl-slider mdl-js-slider brightness" type="range" min="0" max="100" data-id="{3}" value="{5}">\
+                            </p>\
+                        </div>\
+                        <div class=" mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\
+                            <span class="mdl-cell mdl-cell--3-col" style="text-align: left;">Audio volume</span>\
+                            <div class="mdl-layout-spacer"></div>\
+                            <label class="mdl-cell mdl-cell--1-col mdl-switch mdl-js-switch mdl-js-ripple-effect" for="brillo-mute-{4}">\
+                                <input title="Mute on/off" id="brillo-mute-{4}" type="checkbox" class="mdl-switch__input" data-id="{4}" data-lock="0">\
+                            </label>\
+                        </div>\
+                        <div class="mdl-cell mdl-cell--12-col">\
+                            <p class="slider-bar">\
+                                <input class="mdl-slider mdl-js-slider volume" type="range" min="0" max="100" value="{6}" data-id="{4}" data-lock="0">\
+                            </p>\
+                        </div>\
+                    </div>\
+                </div>', uuid, data['rgbled'].resource_id, data['mp3player'].resource_id, data['brightness'].resource_id,
+                    data['audio'].resource_id, data['brightness'].brightness, data['audio'].volume,
+                    data['audio'].color.color, data['audio'].color.name, data['mp3player'].state);
+                $("#brillo-container").append(html);
+                // console.log(data['rgbled'].rgbvalue.replace(/^\(+|\)+$/g, ''));
+
+                $("#" + uuid + " .basic").spectrum({
+                    showInput: true,
+                    preferredFormat: "rgb",
+                    clickoutFiresChange: true,
+                    showButtons: false,
+                    color: convertToRgb(data['rgbled'].rgbvalue)
+                });
+
+                var data_src = new Array();
+                var selected_index = 0;
+                plist.forEach(function(value, key){
+                   // console.log(value);
+                   data_src.push({'id': key, 'text': value});
+                   if(value == data['mp3player'].title) selected_index = key;
+                });
+
+                $('#brillo-mp3-title-' + data['mp3player'].resource_id).select2({
+                    data: data_src,
+                    tags: "true",
+                    width: "100%"
+                });
+
+                if(data['mp3player'].state == "Playing"){
+                    $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
+                    $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
+                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
+                }
+                else if(data['mp3player'].state == "Paused"){
+                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
+                }
+                else{ // Idle
+                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).val('').trigger('change.select2');
+                }
+
+                if(data['audio'].mute === true) {
+                    $("#brillo-mute-" + data['audio'].resource_id).prop('checked', 'checked');
+                    $("#" + uuid + " .slider-bar .volume").attr('disabled', 'disabled');
+                }
+
+                $("#brillo-mute-" + data['audio'].resource_id).on('change', function(){
+                    if($(this).is(':checked')) {
+                        $("#" + uuid + " .slider-bar .volume").attr('disabled', 'disabled');
+                    }
+                    else {
+                         $("#" + uuid + " .slider-bar .volume").removeAttr('disabled');
+                    }
+                });
+
+                if(!(typeof(componentHandler) == 'undefined')) {
+                    componentHandler.upgradeAllRegistered();
+                }
+            }
+            else{
+                var title = $('#brillo-mp3-title-' + data['mp3player'].resource_id);
+                if(title.data('lock') == "0" ) {
+                    var prevStat = title.data("state");
+                    if (data['mp3player'].title) {
+                        var tIndex = plist.indexOf(data['mp3player'].title);
+                        if (tIndex > -1 && tIndex != title.val()) {
+                            console.log('*****update title');
+                            title.val(tIndex).trigger('change.select2');
+                        }
+                    }
+                    if (prevStat !== data['mp3player'].state) {
+                        if (data['mp3player'].state == "Idle") {
+                            title.val('').trigger('change.select2');
+                            $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
+                            $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Play');
+                        }
+                        else if (data['mp3player'].state == "Playing") {
+                            $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
+                            $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
+                        }
+                        else if (data['mp3player'].state == "Paused") {
+                            $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
+                            $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Play');
+                        }
+                        title.data('state', data['mp3player'].state);
+                    }
+                }
+
+                if(data['rgbled'].rgbvalue){
+                    if($("#" + uuid + " .basic").data("lock") == 0 ) {
+                        var rgb = $("#" + uuid + " .basic").spectrum('get').toRgbString();
+                        var newRgb = convertToRgb(data['rgbled'].rgbvalue);
+                        if (rgb) {
+                            // trim whitespaces
+                            rgb = rgb.replace(/\s+/g, '');
+                            newRgb = rgb.replace(/\s+/g, '');
+                            if (newRgb !== rgb) {
+                                console.log('*****update rgbled');
+                                $("#" + uuid + " .basic").spectrum("set", newRgb);
+                            }
+                        }
+                    }
+                }
+
+                var newbright = data['brightness'].brightness;
+                var bright = $("#" + uuid + " .slider-bar .brightness");
+                if(bright.data('lock') == 0 ) {
+                    if (newbright != bright.val()) {
+                        bright[0].MaterialSlider.change(newbright);
+                    }
+                }
+
+                var mute = $("#brillo-mute-" + data['audio'].resource_id);
+                var volume = $("#" + uuid + " .slider-bar .volume");
+                var status = mute[0].checked;
+                if(status !== data['audio'].mute) {
+                    console.log('*****update mute');
+                    if (data['audio'].mute) {
+                        mute.parent('label')[0].MaterialSwitch.on();
+                        volume.attr('disabled', 'disabled');
+                    }
+                    else {
+                        mute.parent('label')[0].MaterialSwitch.off();
+                        volume.removeAttr('disabled');
+                    }
+                }
+
+                var newVol = data['audio'].volume;
+                if(volume.data('lock') == 0 ) {
+                    if (newVol != volume.val()) {
+                        console.log('*****update volume');
+                        volume[0].MaterialSlider.change(newVol);
+                    }
+                }
+            }
+        },
         get_temperature_in_timezone: function(value) {
 		    var house_temp = null;
             var temp_unit = "°";
@@ -1024,6 +1240,12 @@ $(function() {
                                 console.error("Unknown sensor data type: " + key);
                         }
                     });
+                    $.each(sensors['brillo'], function (key, value) {
+                        var show_uuid = false;
+                        if(Object.keys(sensors['brillo']).length > 1)
+                            show_uuid = true;
+                        $.sh.now.update_brillo_data(key, value, show_uuid);
+                    });
                 }
             }).done(function() {
 			   //console.log( "second success" );
@@ -1058,316 +1280,6 @@ $(function() {
             window.weather_timer = setInterval(updateWeather(), 3600*1000);
 		}
 	};
-    // $.sh.future = {
-	//      init: function() {
-	// 		console.log("init future page.");
-	// 		window.panel = 3;
-     //        $('#sh-now').hide();
-	// 		$('#sh-before').hide();
-     //        $('#sh-future').show();
-     //        $('#alert-status-card').show();
-     //        $("#demo-welcome-message").html("This demo tells you what is <b>energy consumption predict.</b>");
-	// 		$.sh.now.update_portal();
-	// 		$.sh.now.register_actions();
-     //        $.sh.now.update_billing();
-     //        $(window).trigger('resize');
-	// 		// Expand all new MDL elements
-     //  		//componentHandler.upgradeDom();
-	// 		//window.now_timer = setInterval($.sh.now.update_portal, 3000);
-     //        // update weather every 1 hour
-     //        window.weather_timer = setInterval(updateWeather(), 3600*1000);
-	// 	}
-	// }
-	
-	
-	
-	// $.sh.before = {
-	// 	register_actions: function(){
-	// 		console.log('sh-before: register_actions');
-	// 		$("a:contains('DISMISS')").on("click", function(){
-	// 			//find parent div
-	// 			dismiss(this);
-	// 		});
-    //
-     //        // switch between the billing tabs
-     //        $("a.mdl-tabs__tab").on("click", function(){
-	// 			var tid = $(this).attr( "href" );
-	// 			$("div"+tid).find("div[id*='container']").each(function () {
-     //                if(tid.indexOf('#tab') == 0)
-     //                    $.sh.before.update_billing(tid);
-     //                else {
-     //                    var id = $(this).attr('_echarts_instance_');
-     //                    window.echarts.getInstanceById(id).resize();
-     //                }
-	// 			});
-     //        });
-    //
-	// 	},
-     //    update_billing: function(tab) {
-     //        //set up tab bar
-     //        tab = tab.substring(1);
-     //        switch(tab) {
-     //            case 'tab1':
-     //                draw_billing_pie_chart(tab + '_today_container', 'Today\'s usage', [{name: "Grid Power", value: 90
-     //                }, {name: "Solar Power", value: 210}]);
-     //                draw_billing_pie_chart(tab + '_current_container', 'Current bill', [{name: "Grid Power",value: 90
-     //                }, {name: "Solar Power", value: 110}]);
-     //                draw_billing_pie_chart(tab + '_items_container', 'Items', [{name: "Heater", value: 90
-     //                }, {name: "Oven", value: 110}, {name: "Refrigerator", value: 110}]);
-     //                break;
-     //            case 'tab2':
-     //            case 'tab3':
-     //                draw_billing_pie_chart(tab + '_today_container', 'Past week', [{name: "Grid Power",value: 90
-     //                }, {name: "Solar Power", value: 210}]);
-     //                draw_billing_pie_chart(tab + '_current_container', 'Past month', [{name: "Grid Power",value: 90
-     //                }, {name: "Solar Power", value: 110}]);
-     //                draw_billing_pie_chart(tab + '_items_container', 'Items', [{name: "Heater", value: 90
-     //                }, {name: "Oven", value: 110}, {name: "Refrigerator", value: 110}]);
-     //                break;
-     //            case 'tab4':
-     //                draw_billing_pie_chart(tab + '_today_container', 'Past week', [{name: "Grid Power",value: 90
-     //                }, {name: "Solar Power", value: 210}]);
-     //                draw_billing_pie_chart(tab + '_current_container', 'Past month', [{name: "Grid Power", value: 90
-     //                }, {name: "Solar Power", value: 110}]);
-     //                draw_billing_pie_chart(tab + '_items_container', 'Past year', [{name: "Grid Power", value: 90
-     //                }, {name: "Solar Power", value: 110}]);
-     //                break;
-     //        }
-     //    },
-     //    update_static_data: function() {
-     //        var monthSolar = [1.67, 1.66, 1.67, 1.65, 1.61, 1.59, 1.58];
-     //        var yearSolar = [50.96, 59.55, 83.12, 100.68, 117.62, 126.35, 126.64, 120.79, 106.03, 85.59, 62.14, 51.49];
-     //        var weekGrid = [4.47, 4.82, 5.17, 5.10, 5.21, 5.07, 4.62];
-     //        var monthGrid = [4.80, 4.88, 4.82, 4.87, 4.92, 5.02, 4.97];
-     //        var yearGrid = [183.31, 203.80, 129.27, 95.66, 71.80, 42.18, 67.60, 94.03, 68.33, 48.08, 102.22, 156.58];
-     //        var weekTemp = [70.448, 70.556, 70.268, 70.43, 70.646, 70.88, 70.826];
-     //        var monthTemp = [70.826, 70.772, 70.664, 70.808, 71.096, 71.33, 71.42];
-     //        var yearTemp = [70.844, 70.898, 70.97, 71.066, 71.114, 71.042, 71.096, 71.15, 71.276, 71.186, 70.916, 70.844];
-     //        var weekSolar = [1.64, 1.68, 1.67, 1.69, 1.70, 1.67, 1.64];
-     //        var weekbuzzer = [123,145,264,153,120,120,110];
-     //        var monthbuzzer = [110,172,227,158,144,100,106];
-     //        var yearbuzzer = [3000,3400,4300,2900,2400,3500,3200,2900,4000,4200,3800,3500];
-     //        var weekgas = [120,110,123,153,120,145,264];
-     //        var monthgas = [172,110,227,158,144,230,106];
-     //        var yeargas = [3400,3000,4300,2900,4000,4200,2400,2900,3800,3200, 3500, 2800];
-     //        var weeklight = [12.28,13.04,15.08,11.54,15.92,12.19,10.32];
-     //        var monthlight = [12.43,13.04,12.08,11.26,15.92,15.92,12.32];
-     //        var yearlight = [16.02,11.04,15.08,13.75,13.92,12.19,14.32, 15.03, 15.56, 14.34, 12.80, 12.79];
-    //
-     //        drawcontainer('container', week, weekSolar, getWeek());
-     //        drawcontainer('container_a', month, monthSolar, getMonth());
-     //        drawcontainer('container_b', year, yearSolar, getYear());
-     //        drawcontainer('container1', week, weekGrid, getWeek());
-     //        drawcontainer('container1_a', month, monthGrid, getMonth());
-     //        drawcontainer('container1_b', year, yearGrid, getYear());
-     //        drawcontainerchart('container2_a',week,weekTemp,getWeek(),'Week(Day)', 'average temperature');
-     //        drawcontainerchart('container2_b',month,monthTemp,getMonth(),'Month(Day)', 'average temperature');
-     //        drawcontainerchart('container2_c',year,yearTemp,getYear(),'Year(Month)', 'average temperature');
-     //        drawcontainerchart('container3_a',week,weekbuzzer,getWeek(),'Week(Day)','total times', 'times');
-     //        drawcontainerchart('container3_b',month,monthbuzzer,getMonth(),'Month(Day)', 'total times', 'times');
-     //        drawcontainerchart('container3_c',year,yearbuzzer,getYear(),'Year(Month)', 'total times', 'times');
-     //        drawcontainerchart('container4_a',week,weekgas,getWeek(),'Week(Day)' ,'total times', 'times');
-     //        drawcontainerchart('container4_b',month,monthgas,getMonth(),'Month(Day)', 'total times', 'times');
-     //        drawcontainerchart('container4_c',year,yeargas,getYear(),'Year(Month)', 'total times', 'times');
-     //        drawcontainerchart('container5_a',week,weeklight, getWeek(),'Week(Day)', 'average illuminance', 'lm');
-     //        drawcontainerchart('container5_b',month,monthlight, getMonth(),'Month(Day)', 'average illuminance', 'lm');
-     //        drawcontainerchart('container5_c',year,yearlight, getYear(),'Year(Month)', 'average illuminance', 'lm');
-     //    },
-    	// loading: function () {
-	// 		var newmsg="<div style = 'text-align:center;'><img src='image/loading.gif' width='24px' height ='24px'/></div>";
-	// 		$("#container2").html(newmsg);
-	// 		$("#container3").html(newmsg);
-	// 		$("#container4").html(newmsg);
-	// 		$("#container5").html(newmsg);
-    	// },
-    	// sendrequest: function () {
-	// 		if(window.panel != 2) return;
-     //        //var converted = moment.tz(moment(), timezone).format("YYYY-MM-DD");
-     //        //console.log("timezone today: " + moment.tz(moment(), timezone).format());
-	// 		var full_format = "YYYY-MM-DD HH:mm:ss";
-     //        // for the current day
-     //        var utc_start_time = moment.tz(timezone).startOf('day').utc().format(full_format);;
-     //        var utc_end_time = moment.tz(timezone).endOf('day').utc().format(full_format);;
-    //
-     //        console.log("utc start and end: " + utc_start_time + " " + utc_end_time);
-	// 		window.socket.emit('my data', {data: "temperature", date: [utc_start_time, utc_end_time]});
-	// 		window.socket.emit('my data', {data: "gas", date: [utc_start_time, utc_end_time]});
-	// 		window.socket.emit('my data', {data: "illuminance", date: [utc_start_time, utc_end_time]});
-	// 		window.socket.emit('my data', {data: "buzzer", date: [utc_start_time, utc_end_time]});
-    	// },
-    	// socketinit: function () {
-     //        var now = moment.utc();
-     //        var hour = getHour(now, utc_offset);
-     //        //var hour = moment(time).format();
-     //        console.log('utc offset: ' + utc_offset + ' hour:' + hour);
-	// 		namespace = '/index'; // change to an empty string to use the global namespace
-	// 		var day = ['0', '1',
-	// 					'2', '3', '4',
-	// 					'5', '6','7',
-	// 					'8','9','10','11','12',
-	// 					'13','14',
-	// 					'15','16','17','18',
-	// 					'19','20','21','22','23'];
-	// 		// the socket.io documentation recommends sending an explicit package upon connection
-	// 		// this is specially important when using the global namespace
-	// 		if(window.socket != null)
-	// 		{
-	// 			$.sh.before.sendrequest();
-	// 			return;
-	// 		}
-    //
-	// 		window.socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
-    //
-	// 		setInterval($.sh.before.sendrequest,3600000);
-    //
-	// 		// event handler for server sent data
-	// 		// the data is displayed in the "Received" section of the page
-	// 		socket.on('my response', function (msg) {
-	// 			//alert(msg.data);
-	// 		});
-	// 		// event handler for new connections
-	// 		socket.on('connect', function () {
-	// 			console.log("i'm connected!");
-	// 		});
-	// 		socket.on( 'my temperature', function (msg ) {
-	// 			console.log( "temperature");
-	// 			var temp_data = msg.data;
-     //            console.log(temp_data);
-	// 			if(temp_data.length==0)
-	// 			{
-	// 				var content = "<div style='text-align:center'><label>There is no data today.</label></div>";
-	// 				$("#container2").html(content);
-	// 			}
-	// 			else
-	// 			{
-	// 				var chart_data = Array.apply(null, Array(hour+1)).map(Number.prototype.valueOf,0);
-     //                var average_temp = 0;
-     //                var local_hour;
-     //                var is_Celsius = true;
-     //                var temp_unit = "°";
-     //                console.log('index: ' + timezone.indexOf("US") + " tz: " + timezone);
-     //                if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
-     //                    is_Celsius = false;
-     //                    temp_unit += "F";
-     //                }
-     //                else temp_unit += "C";
-    //
-	// 				for (var i =0;i<temp_data.length;i++)
-	// 				{
-     //                    local_hour = utc_offset+temp_data[i][1];
-     //                    if(local_hour < 0)
-     //                        local_hour += 24;
-     //                    else if (local_hour > 24)
-     //                        local_hour -= 24;
-     //                    //console.log('local hour: ' + local_hour);
-     //                    console.log("is: " + is_Celsius + " c: " + parseFloat(temp_data[i][0].toFixed(2)) + " f:" + convertToF(parseFloat(temp_data[i][0]), 2));
-     //                    var temp = is_Celsius? parseFloat(temp_data[i][0].toFixed(2)): parseFloat(convertToF(parseFloat(temp_data[i][0]), 2));
-     //                    chart_data[local_hour] = temp;
-	// 					average_temp += temp;
-	// 				}
-     //                console.log('avg total: ' + average_temp);
-	// 				average_temp = (average_temp/temp_data.length).toFixed(2);
-     //                console.log('avg: ' + average_temp);
-	// 				$("#averagetemp").text(average_temp.toString()+ temp_unit);
-	// 				drawcontainerchart('container2',day,chart_data,getDay(),'Time(hour)', 'average temperature', temp_unit);
-	// 			}
-	// 		});
-	// 		socket.on('my gas', function (msg) {
-	// 			console.log("gas");
-	// 			var num = msg.data;
-     //            //console.log(num);
-	// 			if(num.length==0)
-	// 			{
-	// 				var content = "<div style='text-align:center'><label>There is no data today.</label></div>";
-	// 				$("#container4").html(content);
-	// 			}
-	// 			else
-	// 			{
-     //                var chart_data = Array.apply(null, Array(hour+1)).map(Number.prototype.valueOf,0);
-     //                var local_hour;
-     //                for (var i =0;i<num.length;i++) {
-     //                    local_hour = utc_offset + num[i][1];
-     //                    if (local_hour < 0)
-     //                        local_hour += 24;
-     //                    else if (local_hour > 24)
-     //                        local_hour -= 24;
-     //                    chart_data[local_hour] = parseFloat(num[i][0].toFixed(2));
-     //                }
-	// 				drawcontainerchart('container4',day,chart_data, getDay(),'Time(hour)', 'total times', 'times');
-	// 				if(num[num.length-1]>0)
-	// 					$("#safestate").text("Unsafe");
-	// 				else
-	// 				    $("#safestate").text("Safe");
-	// 			}
-    //
-	// 		});
-	// 		socket.on('my buzzer', function (msg) {
-	// 			console.log("buzzer");
-	// 			var num = msg.data;
-	// 			if(num.length==0)
-	// 			{
-	// 				var content = "<div style='text-align:center'><label>There is no data today.</label></div>";
-	// 				$("#container3").html(content);
-	// 			}
-	// 			else {
-     //                var chart_data = Array.apply(null, Array(hour+1)).map(Number.prototype.valueOf, 0);
-     //                var local_hour;
-     //                for (var i = 0; i < num.length; i++) {
-     //                    local_hour = utc_offset + num[i][1];
-     //                    if (local_hour < 0)
-     //                        local_hour += 24;
-     //                    else if (local_hour > 24)
-     //                        local_hour -= 24;
-     //                    chart_data[local_hour] = parseFloat(num[i][0].toFixed(2));
-     //                }
-     //                drawcontainerchart('container3', day, chart_data, getDay(), 'Time(hour)', 'total times', 'times');
-     //            }
-	// 		});
-    //
-	// 		socket.on('my illuminance', function (msg) {
-	// 			console.log("illuminance");
-	// 			var light_data = msg.data;
-	// 			if(light_data.length==0)
-	// 			{
-	// 				var content = "<div style='text-align:center'><label>There is no data today.</label></div>";
-	// 				$("#container5").html(content);
-	// 			}
-	// 			else
-	// 			{
-     //                var chart_data = Array.apply(null, Array(hour+1)).map(Number.prototype.valueOf,0);
-     //                var local_hour;
-	// 				for (var i =0;i<light_data.length;i++)
-	// 				{
-     //                    local_hour = utc_offset+light_data[i][1];
-     //                    if(local_hour < 0)
-     //                        local_hour += 24;
-     //                    else if (local_hour > 24)
-     //                        local_hour -= 24;
-     //                    chart_data[local_hour] = parseFloat(light_data[i][0].toFixed(2));
-	// 				}
-	// 				drawcontainerchart('container5',day,chart_data, getDay(),'Time(hour)', 'average illuminance', 'lm');
-	// 			}
-	// 		});
-    //
-	// 		$.sh.before.sendrequest();
-    	// },
-	// 	init: function() {
-	// 		console.log("init before page.");
-     //        $("#demo-welcome-message").html("This demo tells you about your <b>home sensor history.</b>");
-	// 		window.panel = 2;
-     //        $('#sh-before').show();
-	// 	    $('#sh-now').hide();
-	// 		$('#sh-future').hide();
-     //        $('#alert-status-card').hide();
-	// 		//window.trigger("resize");
-	// 		$.sh.before.register_actions();
-	// 		$.sh.before.loading();
-     //        $.sh.before.update_billing("#tab1");
-	// 		$.sh.before.socketinit();
-     //        $.sh.before.update_static_data();
-	// 	}
-	// };
-
 
 	$("a:contains('NOW')").on('click', function() {
 		clearInterval(window.time_timer);
@@ -1376,17 +1288,10 @@ $(function() {
 		//clearInterval(chart_timer);
 		$.sh.now.init();
 	});
-	// $("a:contains('BEFORE')").on('click', function() {
-     // 	clearInterval(time_timer);
-	// 	clearInterval(now_timer);
-     //    clearInterval(weather_timer);
-	// 	$.sh.before.init();
-	// });
 
     setInterval(function(){
         updateWelcomeCardsDateTime(utc_offset, timezone);
     }, 60 * 1000);
-
 
     $.sh.init();
     $.sh.now.init();
