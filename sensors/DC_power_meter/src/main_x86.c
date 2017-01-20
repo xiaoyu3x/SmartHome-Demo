@@ -34,8 +34,8 @@
 #define CONSUMPTION_CHANNEL		101
 #define SOLAR_CHANNEL			102
 
-/* Interval between notifications (second) */
-#define INTERVAL	1
+/* Interval between notifications (millisecond) */
+#define INTERVAL	500
 
 QUARK_SE_IPM_DEFINE(power_ipm, 0, QUARK_SE_IPM_INBOUND);
 
@@ -47,9 +47,9 @@ static struct bt_gatt_ccc_cfg consumption_ccc_cfg[CONFIG_BLUETOOTH_MAX_PAIRED] =
 static struct bt_gatt_ccc_cfg solar_ccc_cfg[CONFIG_BLUETOOTH_MAX_PAIRED] = {};
 struct bt_conn *default_conn;
 
-static void sensor_ccc_cfg_changed(uint16_t value)
+static void sensor_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
-        ccc_value = value;;
+        ccc_value = (value == BT_GATT_CCC_NOTIFY) ? 1 : 0;
 }
 
 static ssize_t read_u32(struct bt_conn *conn, const struct bt_gatt_attr *attr,
@@ -209,13 +209,12 @@ void main(void)
 			value32 = sys_cpu_to_le32(consumption_value);
 			bt_gatt_notify(default_conn, &attrs[2], &value32,
 					sizeof(value32));
-			task_sleep(INTERVAL * sys_clock_ticks_per_sec);
+			k_sleep(INTERVAL);
 
 			value32 = sys_cpu_to_le32(solar_value);
 			bt_gatt_notify(default_conn, &attrs[6], &value32,
 					sizeof(value32));
-			task_sleep(INTERVAL * sys_clock_ticks_per_sec);
 		}
-		task_sleep(INTERVAL * sys_clock_ticks_per_sec);
+		k_sleep(INTERVAL);
 	}
 }

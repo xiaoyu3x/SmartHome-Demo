@@ -1,5 +1,4 @@
-BOARD = arduino_101_factory
-KERNEL_TYPE = nano
-CONF_FILE ?= prj_nimble.conf
+BOARD ?= arduino_101
+CONF_FILE ?= prj.conf
 
 include ${ZEPHYR_BASE}/Makefile.inc

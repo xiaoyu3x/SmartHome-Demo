@@ -104,7 +104,6 @@ int write_reg16(struct device *i2c_dev, uint8_t reg_addr,
 }
 
 #define SLEEPTIME  1000
-#define SLEEPTICKS (SLEEPTIME * sys_clock_ticks_per_sec / 1000)
 
 void main(void)
 {
@@ -112,12 +111,8 @@ void main(void)
 	uint8_t data[2];
 	uint32_t power1, power2;
 
-	struct nano_timer timer;
-	uint32_t timer_data[2] = {0, 0};
 	uint8_t set_config;
 	char str[16];
-
-	nano_timer_init(&timer, timer_data);
 
 	// INA219 initialization
 	i2c_dev = device_get_binding("I2C_0");
@@ -196,7 +191,6 @@ void main(void)
 		printk("{\"ch-1\": %d, \"ch-2\": %d}\n", power1 / 1000, power2 / 1000);
 
 		/* wait a while */
-		nano_task_timer_start(&timer, SLEEPTICKS);
-		nano_task_timer_test(&timer, TICKS_UNLIMITED);
+		k_sleep(SLEEPTIME);
 	}
 }

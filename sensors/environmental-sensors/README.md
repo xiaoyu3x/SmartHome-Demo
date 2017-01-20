@@ -10,6 +10,24 @@ on a Grove LCD.
 The SoC application exposes the received sensor data as a simple Bluetooth
 Environmental Sensing Service.
 
+## Data flow and usage
+The sensor app uses standard BLE's ESS (Environmental Sensing Service) service and attributes to send data. It acts as a BLE peripheral device advertising itself as a "Zephyr Environmental Sensor" that any client can scan, connect and have the data via "read" or "notify" methods. On Android or iOS devices with BLE support, BLE apps like nRF Connect can be used to communicate and receive sensor data. In the SmartHome-Demo system, a remote OCF resource server using BLE connects, receives data from the sensor and shares to other devices in the same network.
+
+The OCF resource server is implemented in `ocf-servers/js-servers/environmental_sensor.js`. Use the following command to launch it:
+```
+    $ node <path>/environmental_sensor.js
+```
+
+Please note that it requires noble to run. noble can be installed by using following command in the SmartHome-Demo folder:
+```
+    $ npm install noble@^1.6.0
+```
+Please make sure that BLE is enabled on the device running the OCF resource server(i.e. `ocf-servers/js-servers/environmental_sensor.js`), you can enable it via below command:
+```
+    # rfkill unblock bluetooth
+```
+Use command `hciconfig` to check if it is unblocked and running.
+
 ## Sensor wiring:
 
 The sample uses the BME280 sensor for temperature, humidity and air pressure
@@ -56,9 +74,9 @@ Zephyr dev environment following steps:
     $ git clone https://gerrit.zephyrproject.org/r/zephyr && cd zephyr && git checkout tags/[supported_version]
     $ source ./zephyr-env.sh
 ```
-* Flash a bluetooth firmware named [`MyNewt`](https://wiki.zephyrproject.org/index.php?title=Arduino_101&oldid=975#Bluetooth_firmware_for_the_Arduino_101) which is supported by Zephyr
+* Following this [instruction](https://wiki.zephyrproject.org/view/Arduino_101#Bluetooth_firmware_for_the_Arduino_101) to build and flash the Zephyr bluetooth firmware to the board
 
-**Note**: You can learn more information from this [wiki](https://wiki.zephyrproject.org/index.php?title=Arduino_101&oldid=975)
+**Note**: You can learn more information from this [wiki](https://wiki.zephyrproject.org/view/Arduino_101)
 
 In the app source folder, use the following commands to build and flash the app
 to Arduino 101 board:
@@ -66,34 +84,16 @@ to Arduino 101 board:
 ### ARC core application
 ```
     $ cd arc
-    $ make pristine && make BOARD=arduino_101_sss_factory
-    $ sudo dfu-util -a sensor_core -D outdir/zephyr.bin
+    $ make pristine && make BOARD=arduino_101_sss
+    $ sudo dfu-util -a sensor_core -D outdir/arduino_101_sss/zephyr.bin
 ```
 
 ### x86 core application
 ```
     $ cd ../x86
-    $ make pristine && make BOARD=arduino_101_factory
-    $ sudo dfu-util -a x86_app -D outdir/zephyr.bin
+    $ make pristine && make BOARD=arduino_101
+    $ sudo dfu-util -a x86_app -D outdir/arduino_101/zephyr.bin
 ```
-
-## Data flow and usage
-The sensor app uses standard BLE's ESS (Environmental Sensing Service) service and attributes to send data. It acts as a BLE peripheral device advertising itself as a "Zephyr Environmental Sensor" that any client can scan, connect and have the data via "read" or "notify" methods. On Android or iOS devices with BLE support, BLE apps like nRF Connect can be used to communicate and receive sensor data. In the SmartHome-Demo system, a remote OCF resource server using BLE connects, receives data from the sensor and shares to other devices in the same network.
-
-The OCF resource server is implemented in `ocf-servers/js-servers/environmental_sensor.js`. Use the following command to launch it:
-```
-    $ node <path>/environmental_sensor.js
-```
-
-Please note that it requires noble to run. noble can be installed by using following command in the SmartHome-Demo folder:
-```
-    $ npm install noble@^1.6.0
-```
-Please make sure that BLE is enabled on the device running the OCF resource server(i.e. `ocf-servers/js-servers/environmental_sensor.js`), you can enable it via below command:
-```
-    # rfkill unblock bluetooth
-```
-Use command `hciconfig` to check if it is unblocked and running.
 
 ## Supported Zephyr versions:
-The code has been verified to work with Zephyr v1.4.0 and v1.5.0
+The code has been verified to work with Zephyr v1.6.0

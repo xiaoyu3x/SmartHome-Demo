@@ -35,7 +35,6 @@
 #define ADC_BUFFER_SIZE 4
 
 #define INTERVAL        1000
-#define SLEEPTICKS MSEC(INTERVAL)
 
 #define SENSOR_CHAN_UV_INDEX 99
 
@@ -61,12 +60,8 @@ void main(void)
 	struct device *ipm, *bme280, *adc;
 	struct sensor_value temp, press, humidity;
 	uint8_t uv_index;
-	struct nano_timer timer;
-	uint32_t data[2] = {0, 0};
-	int32_t uv_signal;
+	int16_t uv_signal;
 	float uv_intensity;
-
-	nano_timer_init(&timer, data);
 
 	ipm = device_get_binding("ess_ipm");
 	if (ipm == NULL) {
@@ -105,10 +100,8 @@ void main(void)
 
 	while (1) {
 		if (adc_read(adc, &table) == 0) {
-			uv_signal = (uint32_t) seq_buffer[0]
-					| (uint32_t) seq_buffer[1] << 8
-					| (uint32_t) seq_buffer[2] << 16
-					| (uint32_t) seq_buffer[3] << 24;
+			uv_signal = ((uint16_t) seq_buffer[0])
+					| ((uint16_t) seq_buffer[1] << 8);
 			uv_intensity = (float) uv_signal * 3.3 / 4096 * 307;
 			uv_index = (uint8_t)(uv_intensity / 200);
 			if (ipm_send(ipm, 1, SENSOR_CHAN_UV_INDEX, &uv_index, sizeof(uv_index))) {
@@ -174,7 +167,6 @@ void main(void)
 		glcd_print(glcd, row, strlen(row));
 #endif
 
-		nano_timer_start(&timer, SLEEPTICKS);
-		nano_timer_test(&timer, TICKS_UNLIMITED);
+		k_sleep(INTERVAL);
 	}
 }

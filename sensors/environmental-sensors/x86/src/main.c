@@ -35,8 +35,8 @@
 #define UV_INDEX_CUD			"UV Index"
 #define SENSOR_CHAN_UV_INDEX		99
 
-/* Interval between notifications (second) */
-#define INTERVAL	1
+/* Interval between notifications (millisecond) */
+#define INTERVAL	500
 
 QUARK_SE_IPM_DEFINE(ess_ipm, 0, QUARK_SE_IPM_INBOUND);
 
@@ -52,9 +52,9 @@ static struct bt_gatt_ccc_cfg pressure_ccc_cfg[CONFIG_BLUETOOTH_MAX_PAIRED] = {}
 static struct bt_gatt_ccc_cfg uv_index_ccc_cfg[CONFIG_BLUETOOTH_MAX_PAIRED] = {};
 struct bt_conn *default_conn;
 
-static void sensor_ccc_cfg_changed(uint16_t value)
+static void sensor_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
-        ccc_value = value;;
+        ccc_value = (value == BT_GATT_CCC_NOTIFY) ? 1 : 0;
 }
 
 static ssize_t read_u16(struct bt_conn *conn, const struct bt_gatt_attr *attr,
@@ -230,19 +230,19 @@ void main(void)
 		if (default_conn) {
 			value16 = sys_cpu_to_le16(temp_value);
 			bt_gatt_notify(default_conn, &attrs[2], &value16, sizeof(value16));
-			task_sleep(INTERVAL * sys_clock_ticks_per_sec);
+			k_sleep(INTERVAL);
 
 			value16 = sys_cpu_to_le16(humidity_value);
 			bt_gatt_notify(default_conn, &attrs[6], &value16, sizeof(value16));
-			task_sleep(INTERVAL * sys_clock_ticks_per_sec);
+			k_sleep(INTERVAL);
 
 			value32 = sys_cpu_to_le32(pressure_value);
 			bt_gatt_notify(default_conn, &attrs[10], &value32, sizeof(value32));
-			task_sleep(INTERVAL * sys_clock_ticks_per_sec);
+			k_sleep(INTERVAL);
 
 			value16 = sys_cpu_to_le16(uv_index_value);
 			bt_gatt_notify(default_conn, &attrs[14], &uv_index_value, sizeof(uv_index_value));
 		}
-		task_sleep(INTERVAL * sys_clock_ticks_per_sec);
+		k_sleep(INTERVAL);
 	}
 }

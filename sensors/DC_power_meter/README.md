@@ -53,14 +53,14 @@ In order to build the Zephyr app for the Arduino 101 board, first setup the Zeph
 
 In the app source folder, use the following commands to build and flash the sensor app to Arduino 101 board:
 ```
-    $ make pristine && make BOARD=arduino_101_sss_factory ARCH=arc
-    $ sudo -E dfu-util -a sensor_core -D outdir/zephyr.bin
+    $ make pristine && make BOARD=arduino_101_sss ARCH=arc
+    $ sudo -E dfu-util -a sensor_core -D outdir/arduino_101_sss/zephyr.bin
 ```
 Use the following commands to build and flash the BLE app to the Arduino 101 board:
 ```
-    $ make pristine && make BOARD=arduino_101_factory ARCH=x86
-    $ sudo -E dfu-util -a x86_app -D outdir/zephyr.bin
+    $ make BOARD=arduino_101 ARCH=x86
+    $ sudo -E dfu-util -a x86_app -D outdir/arduino_101/zephyr.bin
 ```
 
 ## Supported Zephyr versions:
-The code has been verified to work with Zephyr v1.4.0 and v1.5.0
+The code has been verified to work with Zephyr v1.6.0
