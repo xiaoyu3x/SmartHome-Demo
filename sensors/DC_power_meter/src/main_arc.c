@@ -161,12 +161,12 @@ void main(void)
 		/* Read power on board 1 */
 		read_reg16(i2c_dev, 0x03, data, I2C_SLV_BOARD1_ADDR);
 		power1 = (data[0] << 8) | data[1];
-		power1 *= PWR_LSB;
+		power1 *= PWR_LSB / 1000;
 
 		/* Read power on board 2*/
 		read_reg16(i2c_dev, 0x03, data, I2C_SLV_BOARD2_ADDR);
 		power2 = (data[0] << 8) | data[1];
-		power2 *= PWR_LSB;
+		power2 *= PWR_LSB / 1000;
 
 		// send data over ipm to x86 side
 		if (ipm) {
@@ -180,15 +180,15 @@ void main(void)
 		if (glcd) {
 			glcd_clear(glcd);
 			glcd_cursor_pos_set(glcd, 0, 0);
-			sprintf(str, "House: %d mW", power1 / 1000);
+			sprintf(str, "House: %d mW", power1);
 			glcd_print(glcd, str, strlen(str));
 			glcd_cursor_pos_set(glcd, 0, 1);
-			sprintf(str, "Solar: %d mW", power2 / 1000);
+			sprintf(str, "Solar: %d mW", power2);
 			glcd_print(glcd, str, strlen(str));
 		}
 
 		// print out in JSON format
-		printk("{\"ch-1\": %d, \"ch-2\": %d}\n", power1 / 1000, power2 / 1000);
+		printk("{\"ch-1\": %d, \"ch-2\": %d}\n", power1, power2);
 
 		/* wait a while */
 		k_sleep(SLEEPTIME);

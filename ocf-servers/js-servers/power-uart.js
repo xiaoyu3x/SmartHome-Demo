@@ -127,7 +127,7 @@ function setupHardware() {
 
                             if (consumptionCharacteristic) {
                                 consumptionCharacteristic.on('read', function(data, isNotification) {
-                                    power1 = data.readUInt32LE(0) / 1000;
+                                    power1 = data.readUInt32LE(0);
                                     debuglog('Consumption = ', power1 + ' mW');
                                 });
 
@@ -138,7 +138,7 @@ function setupHardware() {
 
                             if (solarCharacteristic) {
                                 solarCharacteristic.on('read', function(data, isNotification) {
-                                    power2 = data.readUInt32LE(0) / 1000;
+                                    power2 = data.readUInt32LE(0);
                                     debuglog('Solar = ', power2 + ' mW');
                                 });
 
