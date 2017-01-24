@@ -13,7 +13,7 @@ var options = {
     rulesEngineMode: false
 };
 
-const usage = "Usage: node uart_sample.js [options]\n" +
+const usage = "Usage: node gateway-server.js [options]\n" +
     "options: \n" +
     "  -h, --help \n" +
     "  -r, --rulesengine\n";
@@ -162,7 +162,7 @@ function updateProperties(Type, values)
     }
 }
 
-//when a server seends data to gatway
+//when a server sends data to gatway
 function obsReqCB(payload, resourceId) {
     var eventType;
     if ("id" in payload) {
