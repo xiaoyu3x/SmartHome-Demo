@@ -116,59 +116,57 @@ $(function() {
 			$("#container4").html(newmsg);
 			$("#container5").html(newmsg);
     	},
-    	sendrequest: function () {
+    	send_request: function () {
 			if(window.panel != 2) return;
-            //var converted = moment.tz(moment(), timezone).format("YYYY-MM-DD");
-            //console.log("timezone today: " + moment.tz(moment(), timezone).format());
+
 			var full_format = "YYYY-MM-DD HH:mm:ss";
             // for the current day
-            var utc_start_time = moment.tz(timezone).startOf('day').utc().format(full_format);;
-            var utc_end_time = moment.tz(timezone).endOf('day').utc().format(full_format);;
+            var utc_start_time = moment.tz(timezone).startOf('day').utc().format(full_format);
+            var utc_end_time = moment.tz(timezone).endOf('day').utc().format(full_format);
+            var gateway_id = getCookie("gateway_id");
+
+            if(!gateway_id){
+                // redirect to login page if there is no gateway in cookie
+                if (!window.location.origin) {
+                    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                }
+                $(window).attr("location", window.location.origin + "/login");
+                return;
+            }
 
             console.log("utc start and end: " + utc_start_time + " " + utc_end_time);
-			window.socket.emit('my data', {data: "temperature", date: [utc_start_time, utc_end_time]});
-			window.socket.emit('my data', {data: "gas", date: [utc_start_time, utc_end_time]});
-			window.socket.emit('my data', {data: "illuminance", date: [utc_start_time, utc_end_time]});
-			window.socket.emit('my data', {data: "buzzer", date: [utc_start_time, utc_end_time]});
+            var sensor_list = ['temperature', 'gas', 'buzzer', 'illuminance'];
+            $.each(sensor_list, function(indx, val){
+                window.socket.emit('my data', {sensor: val, date_range: [utc_start_time, utc_end_time]});
+            });
     	},
-    	socketinit: function () {
+    	socket_init: function () {
             var now = moment.utc();
             var hour = getHour(now, utc_offset);
             //var hour = moment(time).format();
             console.log('utc offset: ' + utc_offset + ' hour:' + hour);
-			namespace = '/index'; // change to an empty string to use the global namespace
-			var day = ['0', '1',
-						'2', '3', '4',
-						'5', '6','7',
-						'8','9','10','11','12',
-						'13','14',
-						'15','16','17','18',
-						'19','20','21','22','23'];
-			// the socket.io documentation recommends sending an explicit package upon connection
-			// this is specially important when using the global namespace
-			if(window.socket != null)
-			{
-				$.sh.before.sendrequest();
-				return;
-			}
 
-			window.socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+			// get hours of the day like ['0', '1', ... '21','22','23'];
+            var day = range(0, 24);
 
+            $.sh.make_socket_connection($.sh.before.send_request);
+
+            //update data every 1 hour
 			setInterval($.sh.before.sendrequest,3600000);
 
 			// event handler for server sent data
 			// the data is displayed in the "Received" section of the page
 			socket.on('my response', function (msg) {
-				//alert(msg.data);
+				console.log(msg.data);
 			});
 			// event handler for new connections
 			socket.on('connect', function () {
-				console.log("i'm connected!");
+				console.log("Connected to server!");
 			});
-			socket.on( 'my temperature', function (msg ) {
-				console.log( "temperature");
+			socket.on('my temperature', function (msg ) {
+				console.log( "On temperature");
 				var temp_data = msg.data;
-                console.log(temp_data);
+                // console.log(temp_data);
 				if(temp_data.length==0)
 				{
 					var content = "<div style='text-align:center'><label>There is no data today.</label></div>";
@@ -181,7 +179,7 @@ $(function() {
                     var local_hour;
                     var is_Celsius = true;
                     var temp_unit = "°";
-                    console.log('index: ' + timezone.indexOf("US") + " tz: " + timezone);
+                    // console.log('index: ' + timezone.indexOf("US") + " tz: " + timezone);
                     if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
                         is_Celsius = false;
                         temp_unit += "F";
@@ -196,7 +194,7 @@ $(function() {
                         else if (local_hour > 24)
                             local_hour -= 24;
                         //console.log('local hour: ' + local_hour);
-                        console.log("is: " + is_Celsius + " c: " + parseFloat(temp_data[i][0].toFixed(2)) + " f:" + convertToF(parseFloat(temp_data[i][0]), 2));
+                        // console.log("is: " + is_Celsius + " c: " + parseFloat(temp_data[i][0].toFixed(2)) + " f:" + convertToF(parseFloat(temp_data[i][0]), 2));
                         var temp = is_Celsius? parseFloat(temp_data[i][0].toFixed(2)): parseFloat(convertToF(parseFloat(temp_data[i][0]), 2));
                         chart_data[local_hour] = temp;
 						average_temp += temp;
@@ -209,7 +207,7 @@ $(function() {
 				}
 			});
 			socket.on('my gas', function (msg) {
-				console.log("gas");
+				console.log("On gas");
 				var num = msg.data;
                 //console.log(num);
 				if(num.length==0)
@@ -238,8 +236,9 @@ $(function() {
 
 			});
 			socket.on('my buzzer', function (msg) {
-				console.log("buzzer");
+				console.log("On buzzer");
 				var num = msg.data;
+				// console.log(num);
 				if(num.length==0)
 				{
 					var content = "<div style='text-align:center'><label>There is no data today.</label></div>";
@@ -259,9 +258,8 @@ $(function() {
                     drawcontainerchart('container3', day, chart_data, getDay(), 'Time(hour)', 'total times', 'times');
                 }
 			});
-
 			socket.on('my illuminance', function (msg) {
-				console.log("illuminance");
+				console.log("On illuminance");
 				var light_data = msg.data;
 				if(light_data.length==0)
 				{
@@ -285,7 +283,7 @@ $(function() {
 				}
 			});
 
-			$.sh.before.sendrequest();
+			// $.sh.before.send_request();
     	},	
 		init: function() {
 			console.log("init before page.");
@@ -299,7 +297,7 @@ $(function() {
 			$.sh.before.register_actions();
 			$.sh.before.loading();
             $.sh.before.update_billing("#tab1");
-			$.sh.before.socketinit();
+			$.sh.before.socket_init();
             $.sh.before.update_static_data();
 		}
 	};

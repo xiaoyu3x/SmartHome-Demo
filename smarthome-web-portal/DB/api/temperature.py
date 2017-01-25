@@ -54,9 +54,10 @@ def get_latest_by_gateway_uuid(session, resource_id, ):
 
 @database.run_in_session()
 # @utils.wrap_to_dict(["avg_temp", "hour"])
-def get_data_by_time(session, start_time, end_time):
+def get_data_by_time(session, start_time, end_time, resource_list):
     return utils.list_db_objects_by_group(session, Temperature,
                                           select=[func.avg(Temperature.temperature).label("avg_temp"),
                                                   func.hour(Temperature.created_at).label("hour")],
                                           group_by=func.hour(Temperature.created_at),
-                                          created_at={'ge': str(start_time), 'le': str(end_time)})
+                                          created_at={'ge': str(start_time), 'le': str(end_time)},
+                                          resource_id={'in': resource_list})

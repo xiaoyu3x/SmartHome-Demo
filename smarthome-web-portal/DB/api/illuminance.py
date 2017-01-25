@@ -51,13 +51,11 @@ def get_latest_by_gateway_uuid(session, resource_id, ):
 
 
 @database.run_in_session()
-def get_data_by_time(session, start_time, end_time):
+def get_data_by_time(session, start_time, end_time, resource_list):
     #return utils.list_db_objects(session, Illuminance, created_at={'ge': str(start_time), 'le': str(end_time)})
     return utils.list_db_objects_by_group(session, Illuminance,
                                           select=[func.avg(Illuminance.illuminance).label("avg_illuminance"),
                                                   func.hour(Illuminance.created_at).label("hour")],
                                           group_by=func.hour(Illuminance.created_at),
-                                          created_at={'ge': str(start_time), 'le': str(end_time)})
-
-if __name__ == '__main__':
-    print get_latest_by_gateway_uuid(gateway_id=1, uuid="34626661-6330-3662-2d32-6538322d3430")
+                                          created_at={'ge': str(start_time), 'le': str(end_time)},
+                                          resource_id={'in': resource_list})

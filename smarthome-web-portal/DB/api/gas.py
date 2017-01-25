@@ -62,11 +62,12 @@ def get_latest_by_gateway_uuid(session, resource_id, ):
 
 @database.run_in_session()
 # @utils.wrap_to_dict(RESP_FIELDS)  # wrap the raw DB object into dict
-def get_data_by_time(session, start_time, end_time):
+def get_data_by_time(session, start_time, end_time, resource_list):
     # return utils.list_db_objects(session, Gas, status=True, created_at={'ge': str(start_time), 'le': str(end_time)})
     return utils.list_db_objects_by_group(session, Gas,
                                           select=[func.count(Gas.status).label("cnt"),
                                                   func.hour(Gas.created_at).label("hour")],
                                           group_by=func.hour(Gas.created_at),
                                           status=True,
-                                          created_at={'ge': str(start_time), 'le': str(end_time)})
+                                          created_at={'ge': str(start_time), 'le': str(end_time)},
+                                          resource_id={'in': resource_list})

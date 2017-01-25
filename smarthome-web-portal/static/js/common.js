@@ -60,45 +60,12 @@ dismiss = function(obj) {
 getLocalDate = function(dt, offset) {
     //console.log('datetime: ' + dt + ' and tz: ' + offset );
     //var local = moment(dt).utcOffset(parseInt(offset) * -1).format('HH:mm:ss');
-    var local = moment(dt).clone();
-    local.add(offset * 60, 'minutes');
+    var utc = moment(dt).clone();
+    var local = utc.utcOffset(offset * 60);
+    // local.add(offset * 60, 'minutes');
     //local = local.format('HH:mm:ss');
     //console.log('local time: ' + local);
     return local;
-}
-
-getLocalDate2 = function(date, offset) {
-    //console.log('datetime: ' + dt + ' and tz: ' + offset );
-    //var local = moment(dt).utcOffset(parseInt(offset) * -1).format('HH:mm:ss');
-    //var local = moment(dt).clone();
-    //local.add(offset * 60, 'minutes');
-    //local = local.format('HH:mm:ss');
-    //console.log('local time: ' + local);
-    // console.log("offset is :" + offset);
-    // console.log("utc date is :" + date);
-	var newDate = new Date(date.getTime() + (offset * 1000 * 60 * 60 ));
-    // console.log("utc date mm :" + date.getTime());
-    // console.log("mm in hour:" + offset * 1000 * 60 * 60);
-    // console.log("new date is:" + newDate);
-    return newDate;
-}
-
-
-getUTCDate = function(){
-    var date = new Date()
-    var y =  date.getUTCFullYear();    
-    var m = date.getUTCMonth() ;
-    var d = date.getUTCDate();
-    var h= date.getUTCHours();
-	
-	//console.log("utc hour:" +h)
-    var M = date.getUTCMinutes();
-    var s = date.getUTCSeconds();
-    var utc = Date.UTC(y,m,d,h,M,s);
-	//console.log("utc objetc:" +utc)
-	var utc_date = new Date(y,m,d,h,M,s);
-	//console.log("utc date：" +utc_date)
-	return utc_date
 }
 
 getTime = function(dt, offset, timezone) {
@@ -384,67 +351,13 @@ function getWeek(){
       return d+" "+year[m]+"-"+getDay();
 }
 
-function getDate_future(offset){
-
-	  var list = new Array();	  
-	  date_b1 = addDayfromUTC(-3, offset);
-	  var data_b1_Str = date_b1.toLocaleDateString();
-	  list[0] = data_b1_Str
-	  
-	  date_b2 = addDayfromUTC(-2, offset);
-	  var data_b2_Str = date_b2.toLocaleDateString();
-	  list[1] = data_b2_Str
-	  
-	  date_b3 = addDayfromUTC(-1, offset);
-	  var data_b3_Str = date_b3.toLocaleDateString();
-	  list[2] = data_b3_Str
-	  
-	  date_today = addDayfromUTC(0, offset);
-	  var data_today_Str = date_today.toLocaleDateString();
-	  list[3] = data_today_Str
-	  
-	  date_f1 = addDayfromUTC(1, offset);
-	  var data_f1_Str = date_f1.toLocaleDateString();
-	  list[4] = data_f1_Str
-	  
-	  date_f2 = addDayfromUTC(2, offset);
-	  var data_f2_Str = date_f2.toLocaleDateString();
-	  list[5] = data_f2_Str
-	  
-	  date_f3 = addDayfromUTC(3, offset);
-	  var data_f3_Str = date_f3.toLocaleDateString();
-	  list[6] = data_f3_Str
-	 
-	  //alist = get_StortDateList(list)
-      return list;
-}
-
-function get_StortDateList(DateList){
+function get_date_axis(today){
+    // return the date range axis 3 days before and after today
     var list = new Array();
-    for(var i=0;i<DateList.length;i++){
-	    var date = getDate(DateList[i])
-		var year = date.getFullYear();
-		var month = date.getMonth()+1; 
-		var day = date.getDate();
-		list[i] = month+"-"+day
-	}
-	return list;
-}
-
-
-addDayfromUTC = function(dayNumber,offset){
-        //date = date ? date : new Date();
-		utc_date = getUTCDate()
-		local_date = getLocalDate2(utc_date, offset)
-        var ms = dayNumber * (1000 * 60 * 60 * 24)
-        var newDate = new Date(local_date.getTime() + ms);
-        return newDate;
-}
-
-function getDate(strDate) {
-        var date = eval('new Date(' + strDate.replace(/\d+(?=-[^-]+$)/,
-        function (a) { return parseInt(a, 10) - 1; }).match(/\d+/g) + ')');
-        return date;
+    for(var i=-3; i<4; i++){
+      list.push(moment(today).add(i, 'd').format("MM/DD/YYYY"));
+    }
+    return list;
 }
 
 function getMonth(){
@@ -901,20 +814,6 @@ function getRandomPecentbyIndex(min, max, index, length) {
   return (((index + 1) / length * (max - min)) + min) * 0.01;
 }
 
-function getRequest(url,type,data,successCallback,failCallback){
-    if(!type) type = "GET";
-    $.ajax({
-        type: type,
-        url: url,
-		async: false,
-        dataType: "json",
-        contentType:'application/json;charset=UTF-8',
-        data:JSON.stringify(data),
-        success: successCallback,
-        error: failCallback,
-    });    
-}
-
 function convertToRgb(input) {
     // input: [255,255,255]
     // output: rgb(255, 255, 255)
@@ -936,6 +835,15 @@ function convertToStr(input) {
         output.push(Math.round(input._b));
     }
     return output;
+}
+
+
+function range(start, count) {
+    // return an array with supplied bounds
+    return Array.apply(0, Array(count))
+    .map(function (element, index) {
+      return index + start;
+    });
 }
 
 

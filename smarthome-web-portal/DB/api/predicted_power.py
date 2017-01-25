@@ -31,6 +31,7 @@ def new(session, src_dic, content={}):
 def get_power(session, **kwargs):
     return utils.list_db_objects(session, PredictedPower, **kwargs)
 
+
 @database.run_in_session()
 @utils.wrap_to_dict(RESP_FIELDS)
 def get_power_by_date(session, start_time, end_time, **kwargs):

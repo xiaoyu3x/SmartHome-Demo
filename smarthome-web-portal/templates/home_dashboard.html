@@ -26,7 +26,8 @@
 
     .card-inside-td{ width:35px; height:30px; position:absolute;z-index:5555;
         right:-10px;top:-10px;
-        background-image:{{ static_url_prefix }}image/td.png;}
+        background-image:"{{ static_url_prefix }}image/td.png";
+    }
 
     .status-card {
         overflow: visible;
@@ -37,11 +38,11 @@
     }
 
     </style>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.css">
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/css/select2.min.css" rel="stylesheet" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.css">
 {#    <script src="{{ static_url_prefix }}js/jquery-dateFormat.min.js"></script>#}
 {#    <script type="text/javascript" src="{{ static_url_prefix }}js/common.js"></script>#}
 	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-now.js"></script>
@@ -72,7 +73,7 @@
 	    <div class="mdl-layout__tab-bar mdl-js-ripple-effect">
 	      <a href="#sh-now" class="mdl-layout__tab is-active">NOW</a>
 	      <a href="#sh-before" class="mdl-layout__tab">BEFORE</a>
-		  <a href="#sh-future" class="mdl-layout__tab">FUTURE<a>
+		  <a href="#sh-future" class="mdl-layout__tab">FUTURE</a>
 	    </div>
         <!-- Link -->
         <div id="logout">
@@ -849,9 +850,9 @@
                         <h6>Billing</h6>
                         <div class="mdl-layout-spacer"></div>
 						<div class="mdl-card_Current_Price">
-						    <a style="color:#01e676; font-size:30;">Current Price $</a>
+						    <a style="color:#01e676; ">Current Price $</a>
 							<input class="card-input-text" id="unit_price" style="padding-left:5px;" type="text" value="0.06">
-							<a style="color:#01e676; font-size:15;">per KWH</a>
+							<a style="color:#01e676;">per KWH</a>
 						</div>
                         <div class="mdl-card__title mdl-card--expand">
                             <div class="mdl-card__menu">
@@ -881,8 +882,8 @@
 							<div class="card-inside card-shadow">
 							    <div class="card-inside-title"><a style="font-size: 12px">Daily Energy</a></div>
 								<div class="card-inside-value"> 
-									<a id="daily_power_1" style="font-size:60px; color:#14e2fa;margin-left:20px;">13.6</a>
-									<a style="font-size:20px; color:#14e2fa;">KWH</a>
+									<a id="daily_power_1" style="font-size:50px; color:#14e2fa;margin-left:20px;">13.6</a>
+									<a style="font-size:15px; color:#14e2fa;">KWH</a>
 								</div>
 								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
 							</div>
@@ -899,8 +900,8 @@
 							<div class="card-inside card-shadow">
 							    <div class="card-inside-title"><a style="font-size: 12px">Daily Energy</a></div>
 								<div class="card-inside-value"> 
-									<a id="daily_power_2" style="font-size:60px; color:#14e2fa;margin-left:20px;">12.6</a>
-									<a style="font-size:20px; color:#14e2fa;">KWH</a>
+									<a id="daily_power_2" style="font-size:50px; color:#14e2fa;margin-left:20px;">12.6</a>
+									<a style="font-size:15px; color:#14e2fa;">KWH</a>
 								</div>
 								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
 							</div>
@@ -917,8 +918,8 @@
 							<div class="card-inside card-shadow">
 							    <div class="card-inside-title"><a style="font-size: 12px">Daily Energy</a></div>
 								<div class="card-inside-value"> 
-									<a id="daily_power_3" style="font-size:60px; color:#14e2fa;margin-left:20px;">13.2</a>
-									<a style="font-size:20px; color:#14e2fa;">KWH</a>									
+									<a id="daily_power_3" style="font-size:50px; color:#14e2fa;margin-left:20px;">13.2</a>
+									<a style="font-size:15px; color:#14e2fa;">KWH</a>
 								</div>
 								<div class="card-inside-td"><img src="{{ static_url_prefix }}image/td.png"/></div>
 							</div>
@@ -969,15 +970,15 @@
 						
 						<div class="mdl-tabs__panel is-active" id="grid-tab1">
                             <div class="mdl-grid mdl-grid--no-spacing">
-                                <div  style="height=70px;padding: 0px 25px;">
+                                <div  style="height:70px;padding: 0px 25px;">
                                     <a style="font-size:45px;text-align:center;" id="a_temp_today">41</a><a style="vertical-align:super; font-size:45px">◦</a>
                                 </div>
-                                <div  style="text-align:left;height=70px; padding-bottom:15px;">
+                                <div  style="text-align:left;height:70px; padding-bottom:15px;">
 								   <button id="temperature_convert" class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64; margin-left:-1px;">F</button>
                                     <h6 style="margin:0px;font-size:13px;">Today's Temperature</h6>
                                 </div>
 								
-                                <div class="mdl-cell mdl-cell--12-col" style="height=250px;">
+                                <div class="mdl-cell mdl-cell--12-col" style="height:250px;">
                                     <div id="container_temperature" style="width: 100%; height: 200px; margin: 0 auto"></div>
                                 </div>
                             </div>
@@ -995,15 +996,16 @@
                             <i class="material-icons">more_vert</i>
                             </button>
                         </div>
-						<div class="width:100%;heght:100%">
-						
+						<div class="width:100%; height:100%">
 						   <div style="width:90%;height:300px;position:relative;margin:0 auto;padding-bottom:15px;">
-						     <div id="div_gs"  class="card-inside card-shadow" style="width:250px;height:140px;float:left;margin-left:20px; display:none;position:absolute; right:0px; top:0px; z-index:99999; background-color:rgba(255,234,82,.3);transition: transform  3s;">
-					          <div class="card-inside-title" style="width:250px; margin-left:40px;"><a style="font-size:25px;">y = ax<a style="vertical-align:super; font-size:18px">2</a><a style="font-size:25px"> + c</a></div>
+                               <img id="img_gs" style="" src="{{ static_url_prefix }}image/model/linear_shanghai.png"/>
+						     <div id="div_gs"  class="card-inside card-shadow">
+                                 <div class="card-inside-title" style="width:250px; margin-left:40px;">
+                                     <a style="font-size:25px;">y = ax</a><a style="vertical-align:super; font-size:18px">2</a><a style="font-size:25px"> + c</a>
+                                 </div>
 							  <div class="card-inside-title" style="width:240px; margin-top:26px; margin-left:40px;" ><a style="font-size:20px;font-weight:300;" >a = 0.45</a></div>
 							  <div class="card-inside-title" style="width:240px; margin-top:26px; margin-left:40px;" ><a style="font-size:20px;font-weight:300;">c = 1.923</a></div>
 						     </div>
-					         <img id="img_gs" style="width:100%;height:300px; margin-bottom:5px;" src="{{ static_url_prefix }}image/model/linear_shanghai.png"/>
 						   </div>
 						</div>
 						

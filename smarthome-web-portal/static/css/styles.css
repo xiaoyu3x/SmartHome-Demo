@@ -899,3 +899,28 @@ body {
     position: relative;
     /*margin: 5px;*/
 }
+
+#div_gs {
+    width:250px;
+    height:140px;
+	float:left;
+    margin-left:20px;
+    position:absolute;
+    right:0px;
+    top:0px;
+    z-index:99999;
+    opacity: 0;
+    background-color:rgba(255,234,82,.3);
+    -webkit-transition: opacity .25s;
+    transition: opacity .25s;
+}
+
+#img_gs {
+    width:100%;
+    height:300px;
+    margin-bottom:5px;
+}
+
+#img_gs:hover + #div_gs {
+    opacity: 1;
+}

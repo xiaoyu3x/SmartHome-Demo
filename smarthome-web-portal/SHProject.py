@@ -68,17 +68,19 @@ def authenticated_only(f):
     return wrapped
 
 
-@socketio.on('my event', namespace='/index')
-def test_message(message):
-    emit('my response', {'data': message['data']})
+# @socketio.on('my event', namespace='/index')
+# def test_message(message):
+#     emit('my response', {'data': message['data']})
 
 
-def _get_historical_data(sensor, start_time, end_time):
+def _get_historical_data(sensor, start_time, end_time, res_list=[]):
     try:
+        if not res_list:
+            return []
         get_data = util.get_class("DB.api.{}.get_data_by_time".format(sensor))
-        dic = get_data(start_time, end_time)
+        dic = get_data(start_time, end_time, res_list)
         # print dic
-        return [] if len(dic) == 0 else dic
+        return [] if not dic else dic
     except ImportError:
         abort(400)
 
@@ -88,36 +90,43 @@ def get_historical_data(message):
     """
     Get average sensor data in a period of time
     """
-    sensor = message['data']
-    date_range = message['date']
-    print sensor, date_range
-    start_time = date_range[0]
-    end_time = date_range[1]
-    data = _get_historical_data(sensor, start_time, end_time)
+    sensor = message['sensor']
+    date_range = message['date_range']
+    gateway_id = session['gateway_id']
+    print sensor, date_range, gateway_id
+    res_list = resource.list_resource(gateway_id=gateway_id)
+    res_id = [res['id'] for res in res_list if res['sensor_type']['mapping_class'] == sensor]
+
+    data = []
+    if res_id:
+        start_time = date_range[0]
+        end_time = date_range[1]
+        data = _get_historical_data(sensor, start_time, end_time, res_id)
+
+    print res_id, data
     emit('my ' + sensor, {'data': data})
 
 
-@socketio.on('my broadcast event', namespace='/index')
-def test_message(message):
-    emit('my response', {'data': message['data']}, broadcast=True)
+# @socketio.on('my broadcast event', namespace='/index')
+# def test_message(message):
+#     emit('my response', {'data': message['data']}, broadcast=True)
 
 
 @socketio.on('connect', namespace='/index')
 @authenticated_only
-def test_connect():
+def on_connect():
     logger.info('Connected.')
-    emit('my response', {'data': 'Connected'})
+    emit('my response', {'data': 'User “{0}” has joined.'.format(session['username'])})
 
 
 @socketio.on('disconnect', namespace='/index')
-def test_disconnect():
-    #disconnect()
+def on_disconnect():
     logger.info('Client disconnected')
 
 
 @socketio.on_error('/index')  # handles the '/index' namespace
-def error_handler_chat(e):
-    print e
+def error_handler_index(e):
+    logger.info(e.message)
 
 
 def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, result):
@@ -510,129 +519,140 @@ def logout():
     return resp
 
 
-@app.route('/temp_actual')
-@login_required
-def temp_actual():
-    region = request.args.get('region')
-    today_date_str = request.args.get('today_date')
-    print "######temp_actual"
+@socketio.on('my temp', namespace='/index')
+def get_temp(message):
+    typ = message.get('type')
+    region = message.get('region')
+    today_date_str = message.get('today_date')
+    data, error = None, None
     print today_date_str
 
-    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-    startDate = today_date - timedelta(days=3)
-    endDate = today_date + timedelta(days=3)
-    print startDate
-    print endDate
-    his_temper_info = his_weather.get_weather_by_date(startDate, endDate, order_by=[('publish_date', False)])
-    print his_temper_info
-    for info in his_temper_info:
-        info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
-    json_str=json.dumps(his_temper_info)
-    return json_str, 200
+    try:
+        today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()
+    except ValueError:
+        error = "Invalid date format: " + today_date_str
+
+    start_date = today_date - timedelta(days=3)
+    end_date = today_date + timedelta(days=3)
+    print start_date, end_date
+
+    if typ == "forecast":
+        actual = temp_actual(region, start_date, end_date)
+        future = temp_future(region, start_date, end_date)
+        if not actual or not future:
+            error = "Incomplete data"
+        else:
+            data = {
+                "actual": actual,
+                "future": future
+            }
+    elif typ == "today":
+        data = temp_today(region, start_date, end_date)
+    else:
+        error = "Invalid request type: " + typ
+
+    if data:
+        emit('my temp {}'.format(typ), {'data': data})
+    else:
+        emit('my temp {}'.format(typ), {'error': error})
 
 
-@app.route('/temp_future')
-@login_required
-def temp_future():
-    region = request.args.get('region')
-    today_date_str = request.args.get('today_date')
+def temp_actual(region, start, end):
+    print "######temp_actual"
+    his_weather_info = his_weather.get_weather_by_date(start, end, region_id=1, order_by=[('publish_date', False)])
+    print his_weather_info
+
+    # convert the date object to string
+    for info in his_weather_info:
+        info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
+    return his_weather_info
+
+
+def temp_future(region, start, end):
     print "######temp_future"
-
-    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-
-    startDate = today_date - timedelta(days=3) 
-    endDate = today_date + timedelta(days=3)
-    print startDate
-    acutal_weather_info = actual_weather.get_weather_by_date(today_date, today_date, region_id=1, order_by=[('publish_date', False)])
-    print acutal_weather_info
-    for info in acutal_weather_info:
+    actual_weather_info = actual_weather.get_weather_by_date(start, end, region_id=1, order_by=[('publish_date', False)])
+    print actual_weather_info
+    for info in actual_weather_info:
         info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
         info['forecast_date'] = info['forecast_date'].strftime('%Y-%m-%d')
-    json_str = json.dumps(acutal_weather_info)
-    return json_str, 200
+    return actual_weather_info
 
 
-@app.route('/temp_today')
-@login_required
-def temp_today():
-    region = request.args.get('region')
-    today_date_str = request.args.get('today_date')
+def temp_today(region, start, end):
     print "######temp_today"
-
-    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-
-    startDate = today_date - timedelta(days=3) 
-    endDate = today_date + timedelta(days=3)
-    print startDate
-    acutal_weather_info = actual_weather.get_weather_by_date(today_date, today_date, order=0, region_id=1, order_by=[('publish_date', False)])
-    print acutal_weather_info
-    for info in acutal_weather_info:
-        info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
-        info['forecast_date']=info['forecast_date'].strftime('%Y-%m-%d')
-    json_str=json.dumps(acutal_weather_info)
-    return json_str, 200
+    actual_weather_info = actual_weather.get_weather_by_date(start, end, order=0, region_id=1,
+                                                             order_by=[('publish_date', False)])
+    print actual_weather_info
+    for info in actual_weather_info:
+        info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
+        info['forecast_date'] = info['forecast_date'].strftime('%Y-%m-%d')
+    return actual_weather_info
 
 
-@app.route('/power_actual')
-@login_required
-def power_actual():
-    region = request.args.get('region')
-    today_date_str = request.args.get('today_date')
+@socketio.on('my power', namespace='/index')
+def get_power(message):
+    region = message.get('region')
+    today_date_str = message.get('today_date')
+    data, error = None, None
+    print today_date_str
+
+    try:
+        today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()
+    except ValueError:
+        error = "Invalid date format: " + today_date_str
+
+    start_date = today_date - timedelta(days=3)
+    end_date = today_date + timedelta(days=3)
+    print start_date, end_date
+
+    actual = power_actual(region, start_date, end_date)
+    predict_his = power_predict_his(region, start_date, end_date)
+    future = power_future(region, today_date)
+    if not actual or not future or not predict_his:
+        error = "Incomplete data"
+    else:
+        data = {
+            "actual": actual,
+            "future": future,
+            'predict_his': predict_his
+        }
+
+    if data:
+        emit('my power resp', {'data': data})
+    else:
+        emit('my power resp', {'error': error})
+
+
+def power_actual(region, start_date, end_date):
     print "######power_actual"
 
-    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-    startDate = today_date - timedelta(days=3) 
-    endDate = today_date + timedelta(days=3)
-    print startDate
-    actual_power_info = actual_power.get_power_by_date(startDate, endDate, region_id=1, order_by=[('collect_date', False)])
+    actual_power_info = actual_power.get_power_by_date(start_date, end_date, region_id=1, order_by=[('collect_date', False)])
     for info in actual_power_info:
         info['collect_date']=info['collect_date'].strftime('%Y-%m-%d')
-    json_str=json.dumps(actual_power_info)
     print actual_power_info
-    return json_str, 200
+
+    return actual_power_info
 
 
-@app.route('/power_predict_his')
-@login_required
-def power_predict_his():
-    region = request.args.get('region')
-    today_date_str = request.args.get('today_date')
+def power_predict_his(region, start_date, end_date):
     print "#########power_predict_his"
 
-    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-
-    startDate = today_date - timedelta(days=3)
-    endDate = today_date + timedelta(days=3)
-
-    predict_power_info = predicted_power.get_power_by_date(startDate,endDate, order=0, region_id=1, order_by=[('publish_date', False)])
+    predict_power_info = predicted_power.get_power_by_date(start_date, end_date, order=0, region_id=1,
+                                                           order_by=[('publish_date', False)])
     for info in predict_power_info:
         info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
-    json_str = json.dumps(predict_power_info)
     print predict_power_info
-    return json_str, 200
+    return predict_power_info
 
 
-@app.route('/power_future')
-@login_required
-def power_future():
-    region = request.args.get('region')
-    today_date_str = request.args.get('today_date')
+def power_future(region, today_date):
     print "#########power_future"
-
-    today_date = datetime.datetime.strptime(today_date_str, "%m/%d/%Y").date()	
-
-    #startDate = today_date - timedelta(days=3) 
-    #endDate = today_date + timedelta(days=3)
 
     predict_power_info = predicted_power.get_power(publish_date=today_date, order_by=[('publish_date', False)])
     for info in predict_power_info:
         info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
-    json_str=json.dumps(predict_power_info)
     print predict_power_info
-    return json_str, 200
-
-#@app.route('/get_power')
-#def get_power():
+    return predict_power_info
 
 
 if __name__ == '__main__':
