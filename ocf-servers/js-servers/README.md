@@ -76,6 +76,28 @@ Not having those available will disable the corresponding device and switch to s
 
 Once you are all set, start the OCF server as follows: **`node solar.js &`**
 
+Note that when using the [Ostro OS](https://ostroproject.org), its firewall will block the IoTivity network traffic by default. A brute-force approach is to disable the firewall altogether as follows:
+```
+# systemctl disable iptables
+# systemctl disable ip6tables
+```
+A better solution would be to open up just the ports that are required. Port 5683 is used by the CoAP protocol during the device discovery phase, 5684 is used for secured traffic (*note:* this will be used when IoTivity turns on the `SECURED` compile-time flag) and other (random) ports are used later to communicate with the device. If you wish to open up just the required ports, you can do so as follows:
+```
+# iptables -A INPUT -p udp --dport 5683 -j ACCEPT
+# iptables -A INPUT -p udp --dport 5684 -j ACCEPT
+```
+To open ports for the IPv6 traffic, do:
+```
+# ip6tables -A INPUT -s fe80::/10 -p udp -m udp --dport 5683 -j ACCEPT
+# ip6tables -A INPUT -s fe80::/10 -p udp -m udp --dport 5684 -j ACCEPT
+```
+A range of ports can also be specified as follows:
+```
+# iptables -A INPUT -p udp --dport <start>:<end> -j ACCEPT
+# ip6tables -A INPUT -s fe80::/10 -p udp -m udp --dport <start>:<end> -j ACCEPT
+```
+For more information on how to make these changes permanent in your own [Ostro OS](https://ostroproject.org) image, please follow the instructions on the [Configuring Ostro OS Firewall](https://ostroproject.org/documentation/howtos/firewall-configuration.html) page.
+
 [Solar Panel]: http://www.adafruit.com/products/200
 [Line Actuator]: http://www.robotshop.com/en/firgelli-technologies-l12-30-210-12-p.html
 [Actuator Control Board]: http://www.robotshop.com/en/firgelli-technologies-linear-actuator-control-board.html
