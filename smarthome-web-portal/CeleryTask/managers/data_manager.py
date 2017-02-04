@@ -73,8 +73,8 @@ class FetchData(threading.Thread):
                 power_add = get_class("DB.api.power.new")
                 energy_add = get_class("DB.api.energy.new")
 
-                new_energy = data.get('properties').get('power1')
-                new_power = data.get('properties').get('power2')
+                new_energy = data.get('power1')
+                new_power = data.get('power2')
 
                 if new_power != 0:
                     content = {
@@ -86,29 +86,25 @@ class FetchData(threading.Thread):
 
                 if new_energy != 0:
                     content = {
-                            # 'uuid': uuid,
                             'resource_id': resource_id,
                             'value': int(new_energy),
-
                     }
                     # energy_add(content)
                     print('update energy: {}'.format(str(energy_add(content))))
             else:
-                # sensor = data.get('properties').get('id')
                 add_method = get_class("DB.api.{}.new".format(sensor))
                 status_method = get_class("DB.api.{}.get_latest_by_gateway_uuid".format(sensor))
 
                 content = {
                     'resource_id': resource_id,
                 }
-                # obj = status_method(gateway_id, uuid)
                 if sensor == 'solar':
-                    new_tilt = data.get('properties').get('tiltPercentage')
+                    new_tilt = data.get('tiltPercentage')
                     if new_tilt is not None:
                         content.update({
                             'tiltpercentage': new_tilt,
-                            'lcd_first': data.get('properties').get('lcd1'),
-                            'lcd_second': data.get('properties').get('lcd2'),
+                            'lcd_first': data.get('lcd1'),
+                            'lcd_second': data.get('lcd2'),
                         })
 
                         # add_method(content)
@@ -116,7 +112,7 @@ class FetchData(threading.Thread):
                     else:
                         print("Unable to get tilt percentage.")
                 elif sensor == 'illuminance':
-                    new_ill = data.get('properties').get('illuminance')
+                    new_ill = data.get('illuminance')
                     if new_ill is not None:
                         content.update({
                             'illuminance': new_ill,
@@ -126,12 +122,12 @@ class FetchData(threading.Thread):
                     else:
                         print("Unable to get Illuminance status.")
                 elif sensor == 'temperature':
-                    new_temp = data.get('properties').get('temperature')
+                    new_temp = data.get('temperature')
                     if new_temp is not None:
                         content.update({
                             'temperature': new_temp,
-                            'units': data.get('properties').get('units'),
-                            'range': data.get('properties').get('range'),
+                            'units': data.get('units'),
+                            'range': data.get('range'),
                         })
 
                         # add_method(content)
@@ -139,58 +135,54 @@ class FetchData(threading.Thread):
                     else:
                         print("Unable to get Temperature status.")
                 elif sensor == 'audio':
-                    audio_data = data.get('properties')
-                    if audio_data is not None:
+                    if data is not None:
                         content.update({
-                            'mute': audio_data.get('mute'),
-                            'volume': audio_data.get('volume'),
+                            'mute': data.get('mute'),
+                            'volume': data.get('volume'),
                         })
                         # add_method(content)
                         print('update audio: {}'.format(str(add_method(content))))
                     else:
                         print("Unable to get Audio sensor status .")
                 elif sensor == 'brightness':
-                    bright_data = data.get('properties')
-                    if bright_data is not None:
+                    if data is not None:
                         content.update({
-                            'brightness': bright_data.get('brightness'),
+                            'brightness': data.get('brightness'),
                         })
                         # add_method(content)
                         print('update brightness: {}'.format(str(add_method(content))))
                     else:
                         print("Unable to get Brightness sensor status .")
                 elif sensor == 'mp3player':
-                    mp3player_data = data.get('properties')
-                    if mp3player_data is not None:
+                    if data is not None:
                         content.update({
-                            'media_states': json.dumps(mp3player_data.get('mediaStates')),
-                            'playlist': json.dumps(mp3player_data.get('playList')),
-                            'state': mp3player_data.get('state'),
-                            'title': mp3player_data.get('title'),
+                            'media_states': json.dumps(data.get('mediaStates')),
+                            'playlist': json.dumps(data.get('playList')),
+                            'state': data.get('state'),
+                            'title': data.get('title'),
                         })
                         # add_method(content)
                         print('update mp3player: {}'.format(str(add_method(content))))
                     else:
                         print("Unable to get Mp3player sensor status .")
                 elif sensor == 'rgbled':
-                    new_rgb = data.get('properties').get('rgbValue')
+                    new_rgb = data.get('rgbValue')
                     if new_rgb is not None:
                         content.update({
                             'rgbvalue': str(new_rgb),
-                            'range': str(data.get('properties').get('range')),
+                            'range': str(data.get('range')),
                         })
                         # add_method(content)
                         print('update rdbled: {}'.format(str(add_method(content))))
                     else:
                         print("Unable to get Rgbled status .")
                 elif sensor == 'environment':
-                    env_data = data.get('properties')
-                    if env_data is not None:
+                    if data is not None:
                         content.update({
-                            'temperature': env_data.get('temperature'),
-                            'pressure': env_data.get('pressure'),
-                            'humidity': env_data.get('humidity'),
-                            'uv_index': env_data.get('uvIndex'),
+                            'temperature': data.get('temperature'),
+                            'pressure': data.get('pressure'),
+                            'humidity': data.get('humidity'),
+                            'uv_index': data.get('uvIndex'),
                         })
                         # add_method(content)
                         print('update environment: {}'.format(str(add_method(content))))
@@ -199,7 +191,7 @@ class FetchData(threading.Thread):
                 else:
                     obj = status_method(resource_id)
                     status = bool(obj.get('status')) if obj else None
-                    new_sts = bool(data.get('properties').get('value'))
+                    new_sts = bool(data.get('value'))
                     if status != new_sts:
                         content.update({
                             'status': new_sts,

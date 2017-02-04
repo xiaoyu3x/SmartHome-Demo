@@ -3,9 +3,6 @@
  */
 $(function() {
 
-    // var now_timer;
-    // var time_timer;
-	// var weather_timer;
 	$.sh.before = {
 		register_actions: function(){
 			console.log('sh-before: register_actions');
@@ -26,18 +23,6 @@ $(function() {
                     }
 				});
             });
-
-
-            // switch between the other tabs
-            //$("a.mdl-tabs__tab").on("click", function(){
-				//var tid = $(this).attr( "href" );
-            //    //$(this).parent().siblings("div.mdl-tabs__panel").hide();
-            //    //$("div" + tid).show();
-            //    $("div" + tid).find("div[id*='container']").each(function () {
-            //        if(tid.indexOf('#static') == 0)
-            //            $(this).highcharts().reflow();
-            //    });
-            //});
 		},
         update_billing: function(tab) {
             //set up tab bar
@@ -109,12 +94,21 @@ $(function() {
             drawcontainerchart('container5_b',month,monthlight, getMonth(),'Month(Day)', 'average illuminance', 'lm');
             drawcontainerchart('container5_c',year,yearlight, getYear(),'Year(Month)', 'average illuminance', 'lm');
         },
-    	loading: function () {
-			var newmsg="<div style = 'text-align:center;'><img src='image/loading.gif' width='24px' height ='24px'/></div>";
-			$("#container2").html(newmsg);
+        change_label: function(newmsg) {
+		    $("#container2").html(newmsg);
 			$("#container3").html(newmsg);
 			$("#container4").html(newmsg);
 			$("#container5").html(newmsg);
+        },
+    	loading: function () {
+			var newmsg="<div style='text-align:center;'><img src='image/loading.gif' width='24px' height='24px'/></div>";
+			$.sh.before.change_label(newmsg);
+			// var errMsg = "<div style='text-align:center'><label>Failed to fetch data.</label></div>";
+			// var alertMsg = "Server offline or session expired. Plz check your network and sign in again.";
+			// setTimeout(function(){
+			//     $.sh.before.change_label(errMsg);
+			//     createSnackbar(alertMsg, "Dismiss");
+			// }, 30000);
     	},
     	send_request: function () {
 			if(window.panel != 2) return;
@@ -163,6 +157,13 @@ $(function() {
 			socket.on('connect', function () {
 				console.log("Connected to server!");
 			});
+			socket.on('connect_error', function() {
+                console.log("Connection error !");
+                var errMsg = "<div style='text-align:center'><label>Failed to fetch data.</label></div>";
+                var alertMsg = "Server offline or session expired. Plz check your network and sign in again.";
+                $.sh.before.change_label(errMsg);
+                createSnackbar(alertMsg, "Dismiss");
+            });
 			socket.on('my temperature', function (msg ) {
 				console.log( "On temperature");
 				var temp_data = msg.data;

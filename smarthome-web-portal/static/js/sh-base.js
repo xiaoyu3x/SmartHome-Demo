@@ -53,15 +53,21 @@ $(function() {
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
             if (window.socket != null) {
-                callback();
-                return;
+                if(socket.connected) {
+                    callback();
+                    return;
+                }
+                else{
+                    // delete socket obj if it is not connected
+                    delete window.socket;
+                }
             }
 
             window.socket = io.connect('http://' + document.domain + ':' + location.port + namespace, {
                 'reconnection': true,
                 'reconnectionDelay': 1000,
                 'reconnectionDelayMax': 5000,
-                'reconnectionAttempts': 5
+                'reconnectionAttempts': 3
             });
 
             callback();

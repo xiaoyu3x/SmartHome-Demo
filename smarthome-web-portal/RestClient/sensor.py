@@ -55,8 +55,8 @@ class Sensor(object):
         ret = False
         uri = "{}?di={}".format(self.path, self.id)
         if isinstance(data, dict):
-            self.resp = self._client.put(uri, json.dumps(data))
-            print "########PUT data " + json.dumps(data)
+            self.resp = self._client.post(uri, json.dumps(data))
+            # print "########POST data " + json.dumps(data)
             if self.resp.ok():
                 # print "The response status is " + str(self.resp.status_code)
                 ret = True
