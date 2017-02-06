@@ -1,4 +1,18 @@
-var	device = require('iotivity-node')('server'),
+// Copyright 2017 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var device = require('iotivity-node'),
 	debuglog = require('util').debuglog('environmental_sensor'),
 	BLE_DEV_NAME = 'Zephyr Environmental Sensor',
 	// UUID of the environmental sensing service
@@ -10,7 +24,8 @@ var	device = require('iotivity-node')('server'),
 	resourceTypeName = 'oic.r.sensor.environment',
 	resourceInterfaceName = '/a/env',
 	hasUpdate = false,
-	noObservers = false,
+    exitId,
+    observerCount = 0,
 	resourceData = {temperature : 0.0,
 			humidity : 0.0,
 			pressure : 0.0,
@@ -199,16 +214,17 @@ function getProperties() {
 function notifyObservers() {
 	properties = getProperties();
 
+    notifyObserversTimeoutId = null;
 	if (hasUpdate) {
 		envSensorResource.properties = properties;
 		hasUpdate = false;
 
 		debuglog('Send out the sensor data');
-		device.notify(envSensorResource).catch(
+		envSensorResource.notify().catch(
 			function(error) {
 				debuglog('Failed to notify observers with error: ', error);
-				noObservers = error.noObservers;
-				if (noObservers) {
+                if (error.observers.length === 0) {
+                    observerCount = 0;
 					if (notifyObserversTimeoutId) {
 						clearTimeout(notifyObserversTimeoutId);
 						notifyObserversTimeoutId = null;
@@ -218,32 +234,27 @@ function notifyObservers() {
 		);
 	}
 
-	if (!noObservers) {
+	if (observerCount > 0) {
 		notifyObserversTimeoutId = setTimeout(notifyObservers, 2000);
 	}
 }
 
 // Event handlers for the registered resource.
-function observeHandler(request) {
-    envSensorResource.properties = getProperties();
-	request.sendResponse(envSensorResource).catch(handleError);
-
-	noObservers = false;
-	hasUpdate = true;
-
-	if (!notifyObserversTimeoutId)
-		setTimeout(notifyObservers, 2000);
-}
-
 function retrieveHandler(request) {
     envSensorResource.properties = getProperties();
-	request.sendResponse(envSensorResource).catch(handleError);
+	request.respond(envSensorResource).catch(handleError);
+
+    if ("observe" in request) {
+        observerCount += request.observe ? 1 : -1;
+        if (observerCount > 0)
+		    setTimeout(notifyObservers, 2000);
+    }
 }
 
 device.device = Object.assign(device.device, {
 	name: 'Smart Home Environmental Sensor',
-	coreSpecVersion: "1.0.0",
-	dataModels: [ "v1.1.0-20160519" ]
+	coreSpecVersion: 'core.1.1.0',
+	dataModels: ['res.1.1.0']
 });
 
 function handleError(error) {
@@ -257,47 +268,39 @@ device.platform = Object.assign(device.platform, {
 	firmwareVersion: '0.0.1'
 });
 
-// Enable presence
-device.enablePresence().then(
-	function() {
-        debuglog('Create environmental sensor resource.');
+if (device.device.uuid) {
+    debuglog('Create environmental sensor resource.');
 
-		// Register sensor resource
-		device.register({
-			id: { path: resourceInterfaceName },
-			resourceTypes: [ resourceTypeName ],
-			interfaces: [ 'oic.if.baseline' ],
-			discoverable: true,
-			observable: true,
-			properties: getProperties()
-		}).then(
-			function(resource) {
-				debuglog('register() resource successful');
-				envSensorResource = resource;
+    // Register sensor resource
+    device.server.register({
+        resourcePath: resourceInterfaceName,
+        resourceTypes: [ resourceTypeName ],
+        interfaces: [ 'oic.if.baseline' ],
+        discoverable: true,
+        observable: true,
+        properties: getProperties()
+    }).then(
+        function(resource) {
+            debuglog('register() resource successful');
+            envSensorResource = resource;
 
-				// Add event handlers for each supported request type
-				device.addEventListener('observerequest', observeHandler);
-				device.addEventListener('retrieverequest', retrieveHandler);
-			},
-			function(error) {
-				debuglog('register() resource failed with: ', error);
-			});
-	},
-	function(error) {
-		debuglog('device.enablePresence() failed with: ', error);
-	}
-);
+            // Add event handlers for each supported request type
+            resource.onretrieve(retrieveHandler);
+        },
+        function(error) {
+            debuglog('register() resource failed with: ', error);
+        });
+}
 
 // Cleanup on SIGINT
-process.on('SIGINT', function() {
+function exitHandler() {
 	debuglog('Delete environmental sensor resource.');
 
-	// Remove event listeners
-	device.removeEventListener('observerequest', observeHandler);
-	device.removeEventListener('retrieverequest', retrieveHandler);
+    if (exitId)
+        return;
 
 	// Unregister resource.
-	device.unregister(envSensorResource).then(
+	envSensorResource.unregister().then(
 		function() {
 			debuglog('unregister() resource successful');
 		},
@@ -306,16 +309,10 @@ process.on('SIGINT', function() {
 		}
 	);
 
-	// Disable presence
-	device.disablePresence().then(
-		function() {
-			debuglog('device.disablePresence() successful');
-		},
-		function(error) {
-			debuglog('device.disablePresence() failed with: ', error);
-		}
-	);
-
 	// Exit
-	process.exit(0);
-});
+    exitId = setTimeout(function() { process.exit(0); }, 1000);
+}
+
+// Exit gracefully
+process.on('SIGINT', exitHandler);
+process.on('SIGTERM', exitHandler);

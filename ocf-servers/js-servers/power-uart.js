@@ -1,12 +1,27 @@
-var device = require('iotivity-node')('server'),
+// Copyright 2017 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var device = require('iotivity-node'),
     debuglog = require('util').debuglog('power-uart'),
     powerResource,
     uart,
     resourceTypeName = 'oic.r.energy.consumption',
     resourceInterfaceName = '/a/power',
     notifyObserversTimeoutId,
+    exitId,
     hasUpdate = false,
-    noObservers = true,
+    observerCount = 0,
     power1 = 100,  // For simulation only
     power2 = 1000; // Ditto
 
@@ -173,11 +188,11 @@ function readJsonFromUart() {
 
     var start = false; end = false;
 
-    var json = "", last = "", count = 0;
+    var json = '', last = '', count = 0;
 
     while (uart.dataAvailable(0)) {
         var ch = uart.readStr(1);
-        count++
+        count++;
         if (ch == '{')
             start = true;
         else if (ch == '}' && start == true)
@@ -193,11 +208,11 @@ function readJsonFromUart() {
         }
         /* In some cases the reading wont stop, make it stop. */
         if (count >= 4096) {
-          debuglog("UART read error.");
-          break;
+            debuglog('UART read error.');
+            break;
         }
     }
-    debuglog("read: %d bytes", count);
+    debuglog('read: %d bytes', count);
     return last;
 }
 
@@ -222,8 +237,8 @@ function getProperties() {
     try {
         obj = JSON.parse(data);
     }
-    catch(e) {
-        debuglog("Invalid data: ", e.message);
+    catch (e) {
+        debuglog('Invalid data: ', e.message);
     }
 
     // Format the properties.
@@ -241,16 +256,18 @@ function getProperties() {
 // Set up the notification loop
 function notifyObservers() {
     var properties = getProperties();
+
+    notifyObserversTimeoutId = null;
     if (hasUpdate) {
         powerResource.properties = properties;
         hasUpdate = false;
 
         debuglog('Send observe response.');
-        device.notify(powerResource).catch(
+        powerResource.notify().catch(
             function(error) {
                 debuglog('Failed to notify observers with error: ', error);
-                noObservers = error.noObservers;
-                if (noObservers) {
+                if (error.observers.length === 0) {
+                    observerCount = 0;
                     if (notifyObserversTimeoutId) {
                         clearTimeout(notifyObserversTimeoutId);
                         notifyObserversTimeoutId = null;
@@ -261,32 +278,29 @@ function notifyObservers() {
 
     // After all our clients are complete, we don't care about any
     // more requests to notify.
-    if (!noObservers) {
+    if (observerCount > 0) {
         notifyObserversTimeoutId = setTimeout(notifyObservers, 2000);
     }
 }
 
 // Event handlers for the registered resource.
-function observeHandler(request) {
-    powerResource.properties = getProperties();
-    request.sendResponse(powerResource).catch(handleError);
-
-    noObservers = false;
-    hasUpdate = true;
-
-    if (!notifyObserversTimeoutId)
-        setTimeout(notifyObservers, 200);
-}
-
 function retrieveHandler(request) {
     powerResource.properties = getProperties();
-    request.sendResponse(powerResource).catch(handleError);
+    request.respond(powerResource).catch(handleError);
+
+    if ('observe' in request) {
+        hasUpdate = true;
+        observerCount += request.observe ? 1 : -1;
+        if (!notifyObserversTimeoutId && observerCount > 0)
+            setTimeout(notifyObservers, 200);
+    }
+
 }
 
 device.device = Object.assign(device.device, {
     name: 'Smart Home Energy Consumption',
-    coreSpecVersion: "1.0.0",
-    dataModels: [ "v1.1.0-20160519" ]
+    coreSpecVersion: 'core.1.1.0',
+    dataModels: ['res.1.1.0']
 });
 
 function handleError(error) {
@@ -300,42 +314,35 @@ device.platform = Object.assign(device.platform, {
     firmwareVersion: '0.0.1'
 });
 
-// Enable presence
-device.enablePresence().then(
-    function() {
+if (device.device.uuid) {
+    // Setup uart
+    setupHardware();
 
-        // Setup uart
-        setupHardware();
+    debuglog('Create Power resource.');
 
-        debuglog('Create Power resource.');
+    // Register Power resource
+    device.server.register({
+        resourcePath: resourceInterfaceName,
+        resourceTypes: [resourceTypeName],
+        interfaces: ['oic.if.baseline'],
+        discoverable: true,
+        observable: true,
+        properties: getProperties()
+    }).then(
+        function(resource) {
+            debuglog('register() resource successful');
+            powerResource = resource;
 
-        // Register Power resource
-        device.register({
-            id: { path: resourceInterfaceName },
-            resourceTypes: [ resourceTypeName ],
-            interfaces: [ 'oic.if.baseline' ],
-            discoverable: true,
-            observable: true,
-            properties: getProperties()
-        }).then(
-            function(resource) {
-                debuglog('register() resource successful');
-                powerResource = resource;
+            // Add event handlers for each supported request type
+            resource.onretrieve(retrieveHandler);
+        },
+        function(error) {
+            debuglog('register() resource failed with: ', error);
+        });
+}
 
-                // Add event handlers for each supported request type
-                device.addEventListener('observerequest', observeHandler);
-                device.addEventListener('retrieverequest', retrieveHandler);
-            },
-            function(error) {
-                debuglog('register() resource failed with: ', error);
-            });
-    },
-    function(error) {
-        debuglog('device.enablePresence() failed with: ', error);
-    });
-
-// Cleanup on SIGINT
-process.on('SIGINT', function() {
+// Cleanup when interrupted
+function exitHandler() {
     debuglog('Disconnect any existing BLE connection');
     if (blePeripheral) {
         blePeripheral.disconnect(function(err) {
@@ -347,12 +354,11 @@ process.on('SIGINT', function() {
 
     debuglog('Delete Power Resource.');
 
-    // Remove event listeners
-    device.removeEventListener('observerequest', observeHandler);
-    device.removeEventListener('retrieverequest', retrieveHandler);
+    if (exitId)
+        return;
 
     // Unregister resource.
-    device.unregister(powerResource).then(
+    powerResource.unregister().then(
         function() {
             debuglog('unregister() resource successful');
         },
@@ -360,15 +366,10 @@ process.on('SIGINT', function() {
             debuglog('unregister() resource failed with: ', error);
         });
 
-    // Disable presence
-    device.disablePresence().then(
-        function() {
-            debuglog('device.disablePresence() successful');
-        },
-        function(error) {
-            debuglog('device.disablePresence() failed with: ', error);
-        });
-
     // Exit
-    process.exit(0);
-});
+    exitId = setTimeout(function() { process.exit(0); }, 1000);
+}
+
+// Exit gracefully
+process.on('SIGINT', exitHandler);
+process.on('SIGTERM', exitHandler);

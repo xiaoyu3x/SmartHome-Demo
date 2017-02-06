@@ -1,4 +1,18 @@
-var device = require('iotivity-node')('server'),
+// Copyright 2017 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var device = require('iotivity-node'),
     debuglog = require('util').debuglog('solar'),
     solarResource,
     lcdPin,
@@ -9,6 +23,8 @@ var device = require('iotivity-node')('server'),
     lcd1 = 'Solar Connected!!',
     lcd2 = '',
     simulationTimerId = null, noObservers = false, simulationMode = false, updatePos = 0,
+    exitId,
+    observerCount = 0,
     solarProperties = {};
 
 // Require the MRAA library
@@ -102,12 +118,12 @@ function startSimulation(properties) {
     solarProperties.tiltPercentage = solarProperties.tiltPercentage + updatePos;
 
     // Update LCD's first row with time and location.
-    solarProperties.lcd1.setTime(solarProperties.lcd1.getTime() + 4*60*1000);
+    solarProperties.lcd1.setTime(solarProperties.lcd1.getTime() + 4 * 60 * 1000);
     var demoTime = solarProperties.lcd1.toTimeString().split(' ')[0];
-    var locationInfo = demoTime + " " + solarProperties.locationInfo;
+    var locationInfo = demoTime + ' ' + solarProperties.locationInfo;
 
     // Update LCD's second row with tilt percentage.
-    var percentage = Math.round(solarProperties.tiltPercentage).toFixed(1) + "%  ";
+    var percentage = Math.round(solarProperties.tiltPercentage).toFixed(1) + '%  ';
 
     updateSolarPanel(solarProperties.tiltPercentage, locationInfo, percentage);
     if (!noObservers)
@@ -142,7 +158,7 @@ function updateProperties(properties) {
         if (locationInfo && typeof locationInfo === 'string')
             solarProperties.locationInfo = locationInfo;
         else
-            solarProperties.locationInfo = "Europe/Helsinki"
+            solarProperties.locationInfo = 'Europe/Helsinki';
 
         startSimulation();
     } else {
@@ -183,41 +199,42 @@ function processObserve() {
 function notifyObservers(request) {
     solarResource.properties = getProperties();
 
-    device.notify(solarResource).catch(
+    solarResource.notify().catch(
         function(error) {
             debuglog('Failed to notify observers with error: ', error);
-            noObservers = error.noObservers;
-            if (noObservers) {
+            if (error.observers.length === 0) {
                 resetLCDScreen();
             }
         });
 }
 
 // Event handlers for the registered resource.
-function observeHandler(request) {
-    processObserve();
-    noObservers = false;
-    request.sendResponse(solarResource).catch(handleError);
-    setTimeout(notifyObservers, 200);
-}
-
 function retrieveHandler(request) {
     solarResource.properties = getProperties();
-    request.sendResponse(solarResource).catch(handleError);
+    request.respond(solarResource).catch(handleError);
+
+    if ('observe' in request) {
+        observerCount += request.observe ? 1 : -1;
+        if (observerCount > 0) {
+            processObserve();
+            setTimeout(notifyObservers, 200);
+        }
+    }
 }
 
-function changeHandler(request) {
-    updateProperties(request.res);
+function updateHandler(request) {
+    updateProperties(request.data);
 
     solarResource.properties = getProperties();
-    request.sendResponse(solarResource).catch(handleError);
-    setTimeout(notifyObservers, 200);
+    request.respond(solarResource).catch(handleError);
+    if (observerCount > 0)
+        setTimeout(notifyObservers, 200);
 }
 
 device.device = Object.assign(device.device, {
     name: 'Smart Home Solar',
-    coreSpecVersion: "1.0.0",
-    dataModels: [ "v1.1.0-20160519" ]
+    coreSpecVersion: 'core.1.1.0',
+    dataModels: ['res.1.1.0']
 });
 
 function handleError(error) {
@@ -231,43 +248,40 @@ device.platform = Object.assign(device.platform, {
     firmwareVersion: '0.0.1'
 });
 
-// Enable presence
-device.enablePresence().then(
-    function() {
-        // Setup Solar sensor.
-        setupHardware();
+if (device.device.uuid) {
+    // Setup Solar sensor.
+    setupHardware();
 
-        debuglog('Create Solar resource.');
+    debuglog('Create Solar resource.');
 
-        // Register Solar resource
-        device.register({
-            id: { path: resourceInterfaceName },
-            resourceTypes: [ resourceTypeName ],
-            interfaces: [ 'oic.if.baseline' ],
-            discoverable: true,
-            observable: true,
-            properties: getProperties()
-        }).then(
-            function(resource) {
-                debuglog('register() resource successful');
-                solarResource = resource;
+    // Register Solar resource
+    device.server.register({
+        resourcePath: resourceInterfaceName,
+        resourceTypes: [resourceTypeName],
+        interfaces: ['oic.if.baseline'],
+        discoverable: true,
+        observable: true,
+        properties: getProperties()
+    }).then(
+        function(resource) {
+            debuglog('register() resource successful');
+            solarResource = resource;
 
-                // Add event handlers for each supported request type
-                device.addEventListener('observerequest', observeHandler);
-                device.addEventListener('retrieverequest', retrieveHandler);
-                device.addEventListener('changerequest', changeHandler);
-            },
-            function(error) {
-                debuglog('register() resource failed with: ', error);
-            });
-    },
-    function(error) {
-        debuglog('device.enablePresence() failed with: ', error);
-    });
+            // Add event handlers for each supported request type
+            resource.onretrieve(retrieveHandler);
+            resource.onupdate(updateHandler);
+        },
+        function(error) {
+            debuglog('register() resource failed with: ', error);
+        });
+}
 
-// Cleanup on SIGINT
-process.on('SIGINT', function() {
+// Cleanup when interrupted
+function exitHandler() {
     debuglog('Delete Solar Resource.');
+
+    if (exitId)
+        return;
 
     // Stop moving solar panel before we tear down the resource.
     if (simulationTimerId)
@@ -276,13 +290,8 @@ process.on('SIGINT', function() {
     // Reset LCD screen.
     resetLCDScreen();
 
-    // Remove event listeners
-    device.removeEventListener('observerequest', observeHandler);
-    device.removeEventListener('retrieverequest', retrieveHandler);
-    device.removeEventListener('changerequest', changeHandler);
-
     // Unregister resource.
-    device.unregister(solarResource).then(
+    solarResource.unregister().then(
         function() {
             debuglog('unregister() resource successful');
         },
@@ -290,16 +299,10 @@ process.on('SIGINT', function() {
             debuglog('unregister() resource failed with: ', error);
         });
 
-    // Disable presence
-    device.disablePresence().then(
-        function() {
-            debuglog('device.disablePresence() successful');
-        },
-        function(error) {
-            debuglog('device.disablePresence() failed with: ', error);
-        });
-
-
     // Exit
-    process.exit(0);
-});
+    exitId = setTimeout(function() { process.exit(0); }, 1000);
+}
+
+// Exit gracefully
+process.on('SIGINT', exitHandler);
+process.on('SIGTERM', exitHandler);

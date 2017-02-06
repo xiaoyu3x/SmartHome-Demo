@@ -1,12 +1,27 @@
-var device = require('iotivity-node')('server'),
+// Copyright 2017 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var device = require('iotivity-node'),
     debuglog = require('util').debuglog('ambient_light'),
     illuminanceResource,
     sensorPin,
     notifyObserversTimeoutId,
+    exitId,
     resourceTypeName = 'oic.r.sensor.illuminance',
     resourceInterfaceName = '/a/illuminance',
     hasUpdate = false,
-    noObservers = false,
+    observerCount = 0,
     lux = 0.0;
 
 // Require the MRAA library
@@ -34,7 +49,7 @@ function getProperties() {
         var raw_value = sensorPin.read();
 
         // Conversion to lux
-        temp = 10000.0 / Math.pow(((1023.0 - raw_value) * 10.0 / raw_value) * 15.0,4.0 / 3.0);
+        temp = 10000.0 / Math.pow(((1023.0 - raw_value) * 10.0 / raw_value) * 15.0, 4.0 / 3.0);
     } else {
         // Simulate real sensor behavior. This is
         // useful for testing on desktop without mraa.
@@ -61,16 +76,17 @@ function getProperties() {
 function notifyObservers() {
     properties = getProperties();
 
+    notifyObserversTimeoutId = null;
     if (hasUpdate) {
         illuminanceResource.properties = properties;
         hasUpdate = false;
 
         debuglog('Send the lux value: ', lux);
-        device.notify(illuminanceResource).catch(
+        illuminanceResource.notify().catch(
             function(error) {
-                debuglog('Failed to notify observers with error: ', error);
-                noObservers = error.noObservers;
-                if (noObservers) {
+                debuglog('Failed to notify observers: ', error);
+                if (error.observers.length === 0) {
+                    observerCount = 0;
                     if (notifyObserversTimeoutId) {
                         clearTimeout(notifyObserversTimeoutId);
                         notifyObserversTimeoutId = null;
@@ -81,32 +97,27 @@ function notifyObservers() {
 
     // After all our clients are complete, we don't care about any
     // more requests to notify.
-    if (!noObservers) {
+    if (observerCount > 0) {
         notifyObserversTimeoutId = setTimeout(notifyObservers, 2000);
     }
 }
 
-// Event handlers for the registered resource.
-function observeHandler(request) {
-    illuminanceResource.properties = getProperties();
-    request.sendResponse(illuminanceResource).catch(handleError);
-
-    noObservers = false;
-    hasUpdate = true;
-
-    if (!notifyObserversTimeoutId)
-        setTimeout(notifyObservers, 200);
-}
-
 function retrieveHandler(request) {
     illuminanceResource.properties = getProperties();
-    request.sendResponse(illuminanceResource).catch(handleError);
+    request.respond(illuminanceResource).catch(handleError);
+
+    if ('observe' in request) {
+        hasUpdate = true;
+        observerCount += request.observe ? 1 : -1;
+        if (!notifyObserversTimeoutId && observerCount > 0)
+            setTimeout(notifyObservers, 200);
+    }
 }
 
 device.device = Object.assign(device.device, {
     name: 'Smart Home Illuminance Sensor',
-    coreSpecVersion: "1.0.0",
-    dataModels: [ "v1.1.0-20160519" ]
+    coreSpecVersion: 'core.1.1.0',
+    dataModels: ['res.1.1.0']
 });
 
 function handleError(error) {
@@ -120,49 +131,42 @@ device.platform = Object.assign(device.platform, {
     firmwareVersion: '0.0.1'
 });
 
-// Enable presence
-device.enablePresence().then(
-    function() {
-        // Setup Illuminance sensor pin.
-        setupHardware();
+if (device.device.uuid) {
+    // Setup Illuminance sensor pin.
+    setupHardware();
 
-        debuglog('Create Illuminance sensor resource.');
+    debuglog('Create Illuminance sensor resource.');
 
-        // Register illuminance resource
-        device.register({
-            id: { path: resourceInterfaceName },
-            resourceTypes: [ resourceTypeName ],
-            interfaces: [ 'oic.if.baseline' ],
-            discoverable: true,
-            observable: true,
-            properties: getProperties()
-        }).then(
-            function(resource) {
-                debuglog('register() resource successful');
-                illuminanceResource = resource;
+    // Register illuminance resource
+    device.server.register({
+        resourcePath: resourceInterfaceName,
+        resourceTypes: [resourceTypeName],
+        interfaces: ['oic.if.baseline'],
+        discoverable: true,
+        observable: true,
+        properties: getProperties()
+    }).then(
+        function(resource) {
+            debuglog('register() resource successful');
+            illuminanceResource = resource;
 
-                // Add event handlers for each supported request type
-                device.addEventListener('observerequest', observeHandler);
-                device.addEventListener('retrieverequest', retrieveHandler);
-            },
-            function(error) {
-                debuglog('register() resource failed with: ', error);
-            });
-    },
-    function(error) {
-        debuglog('device.enablePresence() failed with: ', error);
-    });
+            // Add event handlers for each supported request type
+            resource.onretrieve(retrieveHandler);
+        },
+        function(error) {
+            debuglog('register() resource failed with: ', error);
+        });
+}
 
-// Cleanup on SIGINT
-process.on('SIGINT', function() {
+// Cleanup when interrupted
+function exitHandler() {
     debuglog('Delete Illuminance sensor Resource.');
 
-    // Remove event listeners
-    device.removeEventListener('observerequest', observeHandler);
-    device.removeEventListener('retrieverequest', retrieveHandler);
+    if (exitId)
+        return;
 
     // Unregister resource.
-    device.unregister(illuminanceResource).then(
+    illuminanceResource.unregister().then(
         function() {
             debuglog('unregister() resource successful');
         },
@@ -170,16 +174,10 @@ process.on('SIGINT', function() {
             debuglog('unregister() resource failed with: ', error);
         });
 
-    // Disable presence
-    device.disablePresence().then(
-        function() {
-            debuglog('device.disablePresence() successful');
-        },
-        function(error) {
-            debuglog('device.disablePresence() failed with: ', error);
-        });
-
     // Exit
-    process.exit(0);
-});
+    exitId = setTimeout(function() { process.exit(0); }, 1000);
+}
 
+// Exit gracefully
+process.on('SIGINT', exitHandler);
+process.on('SIGTERM', exitHandler);

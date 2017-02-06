@@ -1,10 +1,26 @@
-var device = require('iotivity-node')('server'),
+// Copyright 2017 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+var device = require('iotivity-node'),
     debuglog = require('util').debuglog('switch'),
     switchResource,
     sensorPin,
     notifyObserversTimeoutId,
     resourceTypeName = 'oic.r.switch.binary',
     resourceInterfaceName = '/a/binarySwitch',
+    exitId,
+    observerCount = 0,
     hasUpdate = false,
     noObservers = false,
     sensorState = false;
@@ -62,16 +78,17 @@ function getProperties() {
 function notifyObservers() {
     properties = getProperties();
 
+    notifyObserversTimeoutId = null;
     if (hasUpdate) {
         switchResource.properties = properties;
         hasUpdate = false;
 
         debuglog('Send the response: ', sensorState);
-        device.notify(switchResource).catch(
+        switchResource.notify().catch(
             function(error) {
                 debuglog('Failed to notify observers with error: ', error);
-                noObservers = error.noObservers;
-                if (noObservers) {
+                if (error.observers.length === 0) {
+                    observerCount = 0;
                     if (notifyObserversTimeoutId) {
                         clearTimeout(notifyObserversTimeoutId);
                         notifyObserversTimeoutId = null;
@@ -82,32 +99,28 @@ function notifyObservers() {
 
     // After all our clients are complete, we don't care about any
     // more requests to notify.
-    if (!noObservers) {
+    if (observerCount > 0) {
         notifyObserversTimeoutId = setTimeout(notifyObservers, 1000);
     }
 }
 
 // Event handlers for the registered resource.
-function observeHandler(request) {
-    switchResource.properties = getProperties();
-    request.sendResponse(switchResource).catch(handleError);
-
-    noObservers = false;
-    hasUpdate = true;
-
-    if (!notifyObserversTimeoutId)
-        setTimeout(notifyObservers, 200);
-}
-
 function retrieveHandler(request) {
     switchResource.properties = getProperties();
-    request.sendResponse(switchResource).catch(handleError);
+    request.respond(switchResource).catch(handleError);
+
+    if ('observe' in request) {
+        hasUpdate = true;
+        observerCount += request.observe ? 1 : -1;
+        if (!notifyObserversTimeoutId && observerCount > 0)
+            setTimeout(notifyObservers, 200);
+    }
 }
 
 device.device = Object.assign(device.device, {
     name: 'Smart Home Binary Switch',
-    coreSpecVersion: "1.0.0",
-    dataModels: [ "v1.1.0-20160519" ]
+    coreSpecVersion: 'core.1.1.0',
+    dataModels: ['res.1.1.0']
 });
 
 function handleError(error) {
@@ -121,48 +134,41 @@ device.platform = Object.assign(device.platform, {
     firmwareVersion: '0.0.1'
 });
 
-// Enable presence
-device.enablePresence().then(
-    function() {
-        // Setup binary switch pin.
-        setupHardware();
+if (device.device.uuid) {
+    // Setup binary switch pin.
+    setupHardware();
 
-        debuglog('Create button resource.');
-        // Register binary switch resource
-        device.register({
-            id: { path: resourceInterfaceName },
-            resourceTypes: [ resourceTypeName ],
-            interfaces: [ 'oic.if.baseline' ],
-            discoverable: true,
-            observable: true,
-            properties: getProperties()
-        }).then(
-            function(resource) {
-                debuglog('register() resource successful');
-                switchResource = resource;
+    debuglog('Create button resource.');
+    // Register binary switch resource
+    device.server.register({
+        resourcePath: resourceInterfaceName,
+        resourceTypes: [resourceTypeName],
+        interfaces: ['oic.if.baseline'],
+        discoverable: true,
+        observable: true,
+        properties: getProperties()
+    }).then(
+        function(resource) {
+            debuglog('register() resource successful');
+            switchResource = resource;
 
-                // Add event handlers for each supported request type
-                device.addEventListener('observerequest', observeHandler);
-                device.addEventListener('retrieverequest', retrieveHandler);
-            },
-            function(error) {
-                debuglog('register() resource failed with: ', error);
-            });
-    },
-    function(error) {
-        debuglog('device.enablePresence() failed with: ', error);
-    });
+            // Add event handlers for each supported request type
+            resource.onretrieve(retrieveHandler);
+        },
+        function(error) {
+            debuglog('register() resource failed with: ', error);
+        });
+}
 
-// Cleanup on SIGINT
-process.on('SIGINT', function() {
+// Cleanup when interrupted
+function exitHandler() {
     debuglog('Delete Switch Resource.');
 
-    // Remove event listeners
-    device.removeEventListener('observerequest', observeHandler);
-    device.removeEventListener('retrieverequest', retrieveHandler);
+    if (exitId)
+        return;
 
     // Unregister resource.
-    device.unregister(switchResource).then(
+    switchResource.unregister().then(
         function() {
             debuglog('unregister() resource successful');
         },
@@ -170,16 +176,10 @@ process.on('SIGINT', function() {
             debuglog('unregister() resource failed with: ', error);
         });
 
-    // Disable presence
-    device.disablePresence().then(
-        function() {
-            debuglog('device.disablePresence() successful');
-        },
-        function(error) {
-            debuglog('device.disablePresence() failed with: ', error);
-        });
-
     // Exit
-    process.exit(0);
-});
+    exitId = setTimeout(function() { process.exit(0); }, 1000);
+}
 
+// Exit gracefully
+process.on('SIGINT', exitHandler);
+process.on('SIGTERM', exitHandler);
