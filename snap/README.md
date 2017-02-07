@@ -24,7 +24,7 @@ does not use apt-get or deb packages. Please see 'snap --help'
 for app installation and transactional updates.
 ```
 #### On the SSH session connected to Intel Joule Development Kit ####
-Use the following command to authenticate on `snapd` and the snap store, the credentials will be saved for further communication with snapd.
+Use the following command to authenticate on `snapd` and the snap store, the credentials will be saved for further communication with snapd (authenticating is recommended but optional).
 ```
 $ snap login
 Email address: <Your_registered_email_address_to_store>
@@ -32,9 +32,9 @@ Password of "<Your_registered_email_address_to_store>":
 ```
 Install the snap from the `edge` channel:
 ```
-$ snap install iotivity-smarthome-demo --edge
+$ sudo snap install iotivity-smarthome-demo --edge
 ```
-The [REST API server](https://github.com/01org/iot-rest-api-server) will be started after installing the snap. You could verify the gateway function by launching a web browser and accessing the web service of URL `/api/system` on Intel Joule development kit at port 8000, or enter the following equivalent command on the development console.
+The [IoT REST API server](https://github.com/01org/iot-rest-api-server) will be started after installing the snap. You could verify the gateway function by launching a web browser and accessing the web service of URL `/api/system` on Intel Joule development kit at port 8000, or enter the following equivalent command on the development console.
 ```
 $ wget -O- <IP_address_of_Intel_Joule_board>:8000/api/system
 Connecting to 192.168.1.105:8000... connected.
@@ -108,5 +108,5 @@ Once successful building the `iotivity-smarthome-demo_`*&lt;version&gt;*`_amd64.
 
 #### Install the snap file without enforcing security on Intel Joule Development Kit ####
 ```
-$ snap install iotivity-smarthome-demo_<version>_amd64.snap --devmode
+$ sudo snap install iotivity-smarthome-demo_<version>_amd64.snap --devmode
 ```
