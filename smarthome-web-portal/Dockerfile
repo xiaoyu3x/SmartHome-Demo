@@ -49,7 +49,7 @@ RUN apt-get install -y debconf-utils libmysqlclient-dev \
     && sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
 # Install rabbitmq
-RUN apt-get install -y rabbitmq-server git python-pip python-dev ca-certificates git-core ssh supervisor
+RUN apt-get install -y rabbitmq-server git python-pip python-dev ca-certificates git-core ssh supervisor python-scipy python-numpy python-matplotlib
 
 # Install source code
 COPY . /opt/SmartHome-Demo/smarthome-web-portal/
