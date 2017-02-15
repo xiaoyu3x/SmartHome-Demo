@@ -1,5 +1,5 @@
 name: iotivity-smarthome-demo
-version: 0.1
+version: 0.2
 summary: IoTivity SmartHome Demo
 description: The IoTivity based SmartHome demo snap
 confinement: strict  # use 'strict' once the snap have the right plugs and slots
@@ -14,6 +14,14 @@ apps:
   run-gateway-server:
     command: env NODE_PATH=$SNAP/lib/node_modules:$SNAP/lib/node_modules/iot-rest-api-server/node_modules node $SNAP/gateway/gateway-server.js
     plugs: [ network-bind ]
+
+  hciconfig:
+    command: bin/hciconfig
+    plugs: [ bluez, bluetooth-control ]
+
+  rfkill:
+    command: usr/sbin/rfkill
+    plugs: [ network-control ]
 
 parts:
   # Part adding SmartHome-Demo local repo
@@ -34,7 +42,17 @@ parts:
       # adding gateway-server dependencies
       - express
       - websocket
+      # adding additional node.js modules
+      - noble
+      - bleno
     filesets:
       exports: [ bin/*, lib/* ]
     stage: [ $exports ]
     snap:  [ $exports ]
+
+  # Part installs Ubuntu packages
+  ubuntu:
+    plugin: nil
+    stage-packages:
+      - rfkill          # provides /usr/sbin/rfkill
+      - bluez           # provides /bin/hciconfig

@@ -46,6 +46,53 @@ Saving to: ‘STDOUT’
 {"hostname":"localhost.localdomain","type":"Linux","platform":"linux","arch":"x64","release":"4.4.0-1000-joule"...
 ```
 
+#### Connect the required interfaces ####
+Snaps are sandboxed, they need to communicate or share resources through interfaces. However, some interfaces are not auto-connected by `snapd` on install, enter the following commands to list the disconnected interfaces and manually connect the interfaces required by the commands of this snap. Although it shows only `bluetooth-control` and `network-control` interfaces were not auto-connected in below screenshot, you might need to manually connect any interfaces that are not connected (e.g. `bluez`, `home` interfaces) on install.
+```
+$ snap interfaces iotivity-smarthome-demo
+Slot           Plug
+bluez:service  bluez:client,iotivity-smarthome-demo:bluez
+:network-bind  docker,iotivity-smarthome-demo,snapweb
+-              iotivity-smarthome-demo:bluetooth-control
+-              iotivity-smarthome-demo:network-control
+
+$ snap connect iotivity-smarthome-demo:bluetooth-control
+
+$ snap connect iotivity-smarthome-demo:network-control
+
+$ snap connect iotivity-smarthome-demo:bluez bluez
+...
+
+$ snap interfaces iotivity-smarthome-demo
+Slot                Plug
+bluez:service       bluez:client,iotivity-smarthome-demo:bluez
+:bluetooth-control  iotivity-smarthome-demo
+:network-bind       docker,iotivity-smarthome-demo,snapweb
+:network-control    iotivity-smarthome-demo
+```
+
+#### Commands introduced by the snap ####
+In the SSH session with the Intel Joule development kit installed this snap, reference the following list for the defined commands and their functions:
+* **run-gateway-server**  
+  This command launches the Smart Home gateway server which supports 3D webGL UI at port 8080, and run the rule engine that handles the interactions between discovered OCF servers.
+* **rfkill**  
+  Linux command line tool for enabling and disabling wireless devices. For example, issue the following command to unblock the Bluetooth interface.
+```
+$ sudo iotivity-smarthome-demo.rfkill unblock bluetooth
+```
+* **hciconfig**  
+  Linux command line tool for configuring Bluetooth devices. Enter the following commands to turn on the Bluetooth radio.
+```
+$ sudo iotivity-smarthome-demo.hciconfig hci0 up
+
+$ iotivity-smarthome-demo.hciconfig
+hci0:  Type: BR/EDR  Bus: USB
+       BD Address: 00:C2:C6:E6:9B:81  ACL MTU: 1021:4  SCO MTU: 96:6
+       UP RUNNING
+       RX bytes:42755 acl:28 sco:0 events:4177 errors:0
+       TX bytes:590809 acl:28 sco:0 commands:3452 errors:0
+```
+
 ## Build the snap from source
 
 To build the Smart Home demo snap from the source in this repository, you’ll need to have `snapcraft` tools installed in the development PC. **Snapcraft** is a set of tools for easily creating snap packages for Linux distributions. Follow through [this tutorial](http://snapcraft.io/create/) to get familiar with the snaps build process.
