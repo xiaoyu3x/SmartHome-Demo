@@ -22,7 +22,7 @@ class Sensor(object):
         self.resp = None
         self._object_map = Sensor.get_sensor_types_map()
         if self.resource_type not in self._object_map:
-            raise Exception("Unsupported resource type: {}. ". format(self.path))
+            raise Exception("(Sensor): Unsupported resource type: {}. ". format(self.path))
         self.connect(username)
 
     @staticmethod

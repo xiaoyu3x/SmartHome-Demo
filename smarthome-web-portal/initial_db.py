@@ -61,7 +61,7 @@ SENSOR_TYPES = [
     ('buzzer', 'oic.r.buzzer'),
     ('temperature', 'oic.r.temperature'),
     ('rgbled', 'oic.r.colour.rgb'),
-    ('led', 'oic.r.led'),
+    ('led', 'oic.r.switch.binary'),
     ('button', 'oic.r.button'),
     ('power', 'oic.r.energy.consumption'),
     ('environment', 'oic.r.sensor.environment'),

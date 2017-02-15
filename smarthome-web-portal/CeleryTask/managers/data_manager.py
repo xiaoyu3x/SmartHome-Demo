@@ -243,7 +243,8 @@ class DataManager(base.BaseTask):
         for i, v in enumerate(active_resource):
             uuid, href, typ = v[0], v[1], v[2]
             if typ not in self._sensor_type_map.keys():
-                self.log.error("Unsupported resource type: {}.".format(typ))
+                self.log.error("(update_resource): Unsupported resource type: {}.".format(typ))
+                active_resource[i] = v + (None,)
                 continue
 
             try:
@@ -305,7 +306,7 @@ class DataManager(base.BaseTask):
             self.log.info('dead ids: ' + str(dead_id))
 
             # latest resource ids pulled from the gateway
-            existing_id_list = [str(rid) for di, href, rt, rid in ls]
+            existing_id_list = [str(rid) for di, href, rt, rid in ls if rid is not None]
 
             # find threads with obsolete ids and remove them
             zombie_id = set(connections.keys()) - set(existing_id_list)
@@ -318,7 +319,7 @@ class DataManager(base.BaseTask):
                                                                  len(connections.keys())))
 
             for di, href, rt, rid in ls:
-                if str(rid) not in connections.keys() and str(rid) not in running_id:
+                if rid and str(rid) not in connections.keys() and str(rid) not in running_id:
                     if len(connections) >= self.MAX_THREAD:
                         # quit the loop cos it exceeds max threads limit
                         self.log.info("Exceeded maximal thread threshold {}, queuing request "

@@ -907,6 +907,10 @@ $(function() {
             // </button>\
             // <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{brillo}-{1}">\
             // </ul>\
+            if(!("mp3player" in data) || !("rgb" in data) || !("brightness" in data) || !("audio" in data)) {
+                console.log("The brillo component is incomplete. ");
+                return;
+            }
 
             var value = $("#"+ uuid);
             var plist = JSON.parse(data['mp3player'].playlist);

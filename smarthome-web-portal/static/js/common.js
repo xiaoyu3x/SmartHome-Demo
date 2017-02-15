@@ -3,7 +3,7 @@
  */
 var week = moment.weekdaysShort();
 var month = ['4th', '8th', '12th', '16th', '20th', '24th', '28th'];
-var month_str=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var month_str= moment.monthsShort();
 var year = moment.monthsShort();
 
 function isArray(obj){
@@ -58,40 +58,27 @@ dismiss = function(obj) {
 
 //get local time by the client's timezone
 getLocalDate = function(dt, offset) {
-    //console.log('datetime: ' + dt + ' and tz: ' + offset );
-    //var local = moment(dt).utcOffset(parseInt(offset) * -1).format('HH:mm:ss');
-    var utc = moment(dt).clone();
-    var local = utc.utcOffset(offset * 60);
-    // local.add(offset * 60, 'minutes');
-    //local = local.format('HH:mm:ss');
-    //console.log('local time: ' + local);
+    var utc = moment.utc(dt).clone();
+    var local = utc.utcOffset(parseInt(offset) * 60);
     return local;
 }
 
+
 getTime = function(dt, offset, timezone) {
-    var date = getLocalDate(dt,offset);
+    var date = getLocalDate(dt, offset);
     if(timezone.indexOf("America") >= 0)
-        return date.format('HH:mm:ss a');
+        return date.format('hh:mm:ss a');
     else
         return date.format('HH:mm:ss');
 }
 
 getHourMinute = function(dt, offset, timezone) {
     var date = getLocalDate(dt,offset);
-    var hour = date.hour();
-    var ampm = "";
 
-    if(timezone && timezone.indexOf("America") >= 0) {
-        if (hour >= 13) {
-            date.add(-12, "hours");
-            ampm = "pm";
-        }
-        else
-        {
-            ampm = "am";
-        }
-    }
-    return date.format("HH:mm") + " " + ampm;
+    if(timezone.indexOf("America") >= 0)
+        return date.format('hh:mm a');
+    else
+        return date.format('HH:mm');
 }
 
 getFormattedDateString = function(dt, offset){
