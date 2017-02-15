@@ -30,6 +30,9 @@ QUARK_SE_IPM_DEFINE(temp_ipm, 0, QUARK_SE_IPM_INBOUND);
 
 static struct k_sem block;
 static double temp;
+enum {C, F, K};
+static const char *tempUnit[] = {"C", "F", "K"};
+static const char *tempRange[] = {"-40,125", "-40, 257", "233.15,398.15"};
 
 static void set_device_custom_property(void *data)
 {
@@ -52,12 +55,43 @@ static void get_temperature(oc_request_t *request,
 {
 	(void)user_data;
 	PRINT("GET_temperature:\n");
+	char *requestUnit = 0;
+	double resTemp;
+	int index;
+
+	int ret = oc_get_query_value(request, "units", &requestUnit);
+	if (ret != -1) {
+		if (strcmp(requestUnit, tempUnit[C]) == 0) {
+			resTemp = temp;
+			index = C;
+		}
+		else if (strcmp(requestUnit, tempUnit[F]) == 0) {
+			resTemp = temp * 1.8 + 32.0;
+			index = F;
+		}
+		else if (strcmp(requestUnit, tempUnit[K]) == 0) {
+			resTemp = temp + 273.15;
+			index = K;
+		}
+		else {
+			oc_ignore_request(request);
+			return;
+		}
+	}
+	else {
+		// fallback to default Fahrenheit unit
+		resTemp = temp * 1.8 + 32.0;
+		index = F;
+	}
+
 	oc_rep_start_root_object();
 	switch (interface) {
 	case OC_IF_BASELINE:
 		oc_process_baseline_interface(request->resource);
 	case OC_IF_R:
-		oc_rep_set_int(root, temperature, temp);
+		oc_rep_set_double(root, temperature, resTemp);
+		oc_rep_set_text_string(root, units, tempUnit[index]);
+		oc_rep_set_text_string(root, range, tempRange[index]);
 		break;
 	default:
 		break;
