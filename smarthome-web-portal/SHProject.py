@@ -196,6 +196,12 @@ def _compose_sensor_data(sensor_type, latest_data, record_key, result_key, resul
             result[result_key].update({uuid: {sensor_type: val_dict}})
         else:
             result[result_key][uuid].update({sensor_type: val_dict})
+    elif result_key == "generic":
+        rid = latest_data.get('resource').get('id')
+        if result[result_key].get(rid) is None:
+            result[result_key].update({rid: val_dict})
+        else:
+            result[result_key][rid].update(val_dict)
     else:
         if result[result_key].get(sensor_type) is None:
             result[result_key].update({sensor_type: [val_dict, ]})
@@ -211,6 +217,7 @@ def _get_sensor_data(token_dict):
         'status': {},
         'data': {},
         'brillo': {},
+        'generic': {}
     }
     for sensor in res:
         typ = sensor.get('sensor_type').get('mapping_class')
@@ -253,6 +260,8 @@ def _get_sensor_data(token_dict):
                 for key in key_words:
                     sensor_type = typ if typ != "environment" else key
                     _compose_sensor_data(sensor_type, latest_data, key, 'data', ret)
+            elif typ == "generic":
+                _compose_sensor_data(typ, latest_data, 'json_data', 'generic', ret)
         elif href.startswith("/brillo/"):
             latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(
                 resource_id=resource_id)
@@ -356,8 +365,7 @@ def update_sensor():
     except:
         abort(404)
     print "content: " + str(content)
-    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'),
-                    resource_type=res.get('sensor_type').get('type'), username=session.get('username'))
+    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'), username=session.get('username'))
     try:
         sts = sensor.update_status(data)
         return jsonify({'status': sts}), 201

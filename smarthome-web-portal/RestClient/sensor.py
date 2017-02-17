@@ -15,21 +15,21 @@ logger = logging.getLogger(__name__)
 class Sensor(object):
     _client = None
 
-    def __init__(self, uuid, path, resource_type, username):
+    def __init__(self, uuid, path, username):
         self.path = path
         self.id = uuid
-        self.resource_type = resource_type.strip() if resource_type else None
+        # self.resource_type = resource_type.strip() if resource_type else None
         self.resp = None
-        self._object_map = Sensor.get_sensor_types_map()
-        if self.resource_type not in self._object_map:
-            raise Exception("(Sensor): Unsupported resource type: {}. ". format(self.path))
+        # self._object_map = Sensor.get_sensor_types_map()
+        # if self.resource_type not in self._object_map:
+        #     raise Exception("(Sensor): Unsupported resource type: {}. ". format(self.path))
         self.connect(username)
 
-    @staticmethod
-    def get_sensor_types_map():
-        types = sensor_type.get_all_types()
-        mapping = [t_dict['type'] for t_dict in types]
-        return mapping
+    # @staticmethod
+    # def get_sensor_types_map():
+    #     types = sensor_type.get_all_types()
+    #     mapping = [t_dict['type'] for t_dict in types]
+    #     return mapping
 
     def connect(self, username):
         """

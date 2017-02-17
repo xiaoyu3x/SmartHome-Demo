@@ -62,8 +62,32 @@ class Resource(object):
             logging.error("Failed to get resources: {}".format(str(result.errors())))
         return sensors
 
+    def list_device(self):
+        """
+            Return all the devices discovered in the network
+        """
+        result = self._client.get('/d')
 
-
+        devices = dict()
+        if result.ok():
+            for item in result:
+                """
+                sample response in json
+                [{
+                    di: "de356706-13cf-49b5-a023-f1f45079ff72",
+                    n: "Smart Home Fan",
+                    icv: "core.1.1.0"
+                },]
+                """
+                try:
+                    device_id = str(item['di'])
+                    device_name = str(item['n'])
+                    devices[device_id] = device_name
+                except:
+                    logging.error("Failed to get device: index out of range. ")
+        else:
+            logging.error("Failed to get devices: {}".format(str(result.errors())))
+        return devices
 
 
 

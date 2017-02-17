@@ -68,6 +68,7 @@ SENSOR_TYPES = [
     ('mp3player', 'x.com.intel.demo.mp3player'),
     ('audio', 'oic.r.audio'),
     ('brightness', 'oic.r.light.brightness'),
+    ('generic', 'generic'),
 ]
 
 SENSOR_GROUPS = [

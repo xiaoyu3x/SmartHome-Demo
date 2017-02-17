@@ -18,9 +18,9 @@ from RestClient.api.NexmoClient import NexmoClient
 
 
 class FetchData(threading.Thread):
-    """Threaded device ata observer and parser.
+    """Threaded device observer and parser.
     Username: username
-    Resource_info: (href, dev_id, resource_type, resource_id)
+    Resource_info: (href, dev_id, resource_id)
     """
     def __init__(self, username, resource_info):
         threading.Thread.__init__(self)
@@ -37,7 +37,7 @@ class FetchData(threading.Thread):
         return "%s" % self.href
 
     def connect(self):
-        self.client_conn = client.Sensor(self.dev_id, self.href, self.resource_type, self.username)
+        self.client_conn = client.Sensor(self.dev_id, self.href, self.username)
 
     def run(self):
         try:
@@ -98,6 +98,7 @@ class FetchData(threading.Thread):
                 content = {
                     'resource_id': resource_id,
                 }
+
                 if sensor == 'solar':
                     new_tilt = data.get('tiltPercentage')
                     if new_tilt is not None:
@@ -188,6 +189,15 @@ class FetchData(threading.Thread):
                         print('update environment: {}'.format(str(add_method(content))))
                     else:
                         print("Unable to get Environment sensor status .")
+                elif sensor == 'generic':
+                    if data is not None:
+                        content.update({
+                            'json_data': json.dumps(data),
+                        })
+                        # add_method(content)
+                        print('update generic {}: {}'.format(data.get('id'), str(add_method(content))))
+                    else:
+                        print("Unable to get Generic sensor {} status .".format(data.get('id')))
                 else:
                     obj = status_method(resource_id)
                     status = bool(obj.get('status')) if obj else None
@@ -215,6 +225,7 @@ class DataManager(base.BaseTask):
         self._sensor_type_map = DataManager.get_sensor_types_map()
         self.username = username
         self.gateway_id = IoTClient.get_gatewayid_by_user(username)
+        self.devices = dict()
 
     @staticmethod
     def get_sensor_types_map():
@@ -225,6 +236,11 @@ class DataManager(base.BaseTask):
     def _connect(self):
         if not self._client:
             self._client = rsclient.Resource(self.username)
+
+    def _get_devices(self):
+        """get all devices in the network """
+        self._connect()
+        return self._client.list_device()
 
     def _get_active_resource(self):
         """
@@ -243,9 +259,7 @@ class DataManager(base.BaseTask):
         for i, v in enumerate(active_resource):
             uuid, href, typ = v[0], v[1], v[2]
             if typ not in self._sensor_type_map.keys():
-                self.log.error("(update_resource): Unsupported resource type: {}.".format(typ))
-                active_resource[i] = v + (None,)
-                continue
+                typ = "generic"
 
             try:
                 ret = resource.get_resource(exception_when_missing=False, path=href, uuid=uuid)
@@ -253,12 +267,17 @@ class DataManager(base.BaseTask):
                 continue
 
             if not ret:
+                if typ == "generic" and uuid not in self.devices.keys():
+                    self.devices = self._get_devices()
+                    self.log.info('Update device list: {}'.format(str(self.devices)))
+
                 ret = resource.add_resource({
                     'uuid': uuid,
                     'sensor_type_id': self._sensor_type_map[typ],
                     'gateway_id': self.gateway_id,
                     'status': True,
                     'path': href,
+                    'tag': self.devices.get(uuid) if self.devices.get(uuid) else None
                 })
                 self.log.info('Resource {} is added.'.format(str(ret)))
                 active_resource_ids.append(ret.get('id'))

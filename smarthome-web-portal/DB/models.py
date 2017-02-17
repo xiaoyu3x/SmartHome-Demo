@@ -458,6 +458,25 @@ class MP3Player(Base, HelperMixin, DefaultMixin):
                (str(self.id), self.mediaStates, self.playList, self.state, self.title, str(self.created_at))
 
 
+class Generic(Base, HelperMixin, DefaultMixin):
+    """
+    the database model for generic resource
+    """
+    __tablename__ = 'generic'
+
+    json_data = Column(TEXT)
+    resource_id = Column(Integer, ForeignKey('resource.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    resource = relationship('Resource', backref="generic", lazy=False)
+
+    def __init__(self, json_data=None, resource_id=None):
+        self.json_data = json_data
+        self.resource_id = resource_id
+
+    def __repr__(self):
+        return "<Generic(id='%s',json_data='%s', created_at='%s')>" % \
+               (str(self.id), self.json_data, str(self.created_at))
+
+
 class EventLog(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'eventlog'
 

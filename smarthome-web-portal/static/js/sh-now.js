@@ -341,6 +341,164 @@ $(function() {
                 });
                 return false;
             });
+
+            $("#generic-container").on('click', '.edit', function() {
+                // show text field
+                var text = $(this).closest("td").prev().text();
+                var tbody = $(this).closest("tbody");
+                var row = $(this).closest("tr");
+                var pos = row.position();
+
+                // calculate div top
+                var top = pos.top - tbody.position().top;
+                if(row.index() % 2 !== 0 ){
+                		top = top - row.height();
+                }
+                if(row.index === tbody.children('tr').length - 1){
+                		top = top - row.height();
+                }
+
+                var div = document.createElement('div');
+                var DATA_TYPE = ['-----', 'int', 'float', 'string', 'bool', 'null', 'array', 'dict'];
+                var options = '';
+                $.each(DATA_TYPE, function(indx, elem){
+                    options += String.format('<option value={0}>{1}</option>',indx, elem);
+                });
+
+                $(div).addClass("overlay")
+                    .html(String.format('<input type="text" required="required" placeholder="{0}">\
+                    <select>\
+                    {1}\
+                    </select>\
+                    <i class="material-icons update">save</i>\
+                    <i class="material-icons cancel">cancel</i>', text, options))
+                    .css({
+                        position: 'absolute',
+                        top: top,
+                        left: pos.left,
+                        width: row.width(),
+                        height: row.height(),
+                        "z-index": 10000,
+                        "background-color": "Silver",
+                        opacity: 0.8
+                    })
+                    .appendTo($(this).closest("tr"));
+                $(div).click(function (e) {
+                    e.stopPropagation();
+                });
+
+                $(div).children(".update").click(function(){
+                    // input validation
+                    var text = $(this).parent().find("input").val();
+                    var input = $(this).parent().find("input");
+                    var select = $(this).parent().find("select");
+                    var key = $(this).closest("tr").find("td:first").text();
+                    var resource_id = $(this).closest("table").data("id");
+                    var overlay = $(this).closest(".overlay");
+                    var data = {};
+
+                    //reset validation
+                    input[0].setCustomValidity("");
+                    select[0].setCustomValidity("");
+
+                    if(text.length == 0) {
+                        input[0].setCustomValidity("Value is empty.");
+                        input.select();
+                        return;
+                    }
+
+                    switch(select[0].value){
+                        case "0":
+                            select.select();
+                            select[0].setCustomValidity("Data type is empty.");
+                            return;
+                        case "1":
+                            // int
+                            if($.isNumeric(text)){
+                                data[key] = parseInt(text);
+                            }
+                            else{
+                                input[0].setCustomValidity("Value and data type mismatches.");
+                                input.select();
+                                return;
+                            }
+                            break;
+                        case "2":
+                            // float
+                            if($.isNumeric(text)){
+                                data[key] = parseFloat(text).toFixed(2);
+                            }
+                            else {
+                                input[0].setCustomValidity("Value and data type mismatches.");
+                                input.select();
+                                return;
+                            }
+                            break;
+                        case "3":
+                            // string
+                            data[key] = text;
+                            if (!isJSON(JSON.stringify(data))) {
+                                //the json is not ok
+                                //var title = "Expecting 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['. ";
+                                delete data[key];
+                                input[0].setCustomValidity("Value and data type mismatches.");
+                                input.select();
+                                return;
+                            }
+                            break;
+                        case "4":
+                            // bool
+                            var bool = JSON.parse(text);
+                            if(bool !== true && bool !== false) {
+                                input[0].setCustomValidity("Value and data type mismatches.");
+                                input.select();
+                                return;
+                            }
+                            else
+                                data[key] = bool;
+                            break;
+                        case "5":
+                            // null
+                            var nul = JSON.parse(text);
+                            if(nul !== null) {
+                                input[0].setCustomValidity("Value and data type mismatches.");
+                                input.select();
+                                return;
+                            }
+                            else
+                                data[key] = nul;
+                            break;
+                        case "6":
+                        case "7":
+                            // array, dict
+                            if (!isJSON(text)) {
+                                //the json is not ok
+                                input[0].setCustomValidity("Value and data type mismatches.");
+                                input.select();
+                                return;
+                            }
+                            else
+                                data[key] = JSON.parse(text);
+                            break;
+                    }
+
+                    console.log("the post json data: " + JSON.stringify(data));
+                    update_sensor_status(resource_id, data, null, function(data){
+                        createSnackbar('Resource ' + resource_id + '\'s property is updated.', 'Dismiss');
+                        overlay.remove();
+                    });
+                });
+
+                $(div).children(".cancel").click(function(){
+                    $(this).parent().remove();
+                });
+
+                $(div).children("select, input").on("change", function(){
+                    $(this)[0].setCustomValidity("");
+                });
+
+                $(div).find("input").select();
+            });
         },
         _update_sensor_group: function(value, color, buttonElem) {
             $.ajax({
@@ -461,9 +619,11 @@ $(function() {
                 }
             });
             $.sh.now.clear_brillo_data(data);
+            $.sh.now.clear_generic_data(data);
         },
         clear_brillo_data: function(data) {
-            if(data["brillo"]){
+            if(Object.keys(data["brillo"]).length > 0){
+                $('#brillo-container').show();
                 var sensor_list = Object.keys(data["brillo"]);
                 $('#brillo-container .mdl-card__supporting-text').each(function(){
                     var ID = $(this).attr('id');
@@ -472,6 +632,22 @@ $(function() {
                     }
                 });
             }
+            else{
+                $('#brillo-container').hide();
+            }
+        },
+        clear_generic_data:function(data) {
+            if(Object.keys(data["data"]).length > 0)
+                $('#data-container').show();
+            else
+                $('#data-container').hide();
+            var g_list = Object.keys(data["generic"]);
+            $('#generic-container .mdl-card__supporting-text table').each(function(){
+                    var ID = $(this).data('id') + '';
+                    if (!g_list.includes(ID)) {
+                        $(this).closest(".generic").remove();
+                    }
+            });
         },
         dismiss_alert_card: function(obj){
             dismiss(obj);
@@ -1104,6 +1280,89 @@ $(function() {
                 }
             }
         },
+        update_generic_data: function(resource_id, data, show_uuid){
+            var uuid_cell = '';
+            if(show_uuid)
+                uuid_cell = '<span class="mdl-card__subtitle-text" style="font-size: 70%; flex-basis: 100%;">ID: '
+                    + data.uuid + '</span>';
+
+            var title = "";
+            if(data.tag){
+                title = "(" + data.tag + ")";
+            }
+
+            var value = $(".generic button[id='generic-" + data.resource_id + "']");
+            if(value.length == 0){
+                var rows = '';
+                if(data.value){
+                    var jData = JSON.parse(data.value);
+                    $.each(jData, function(key, value){
+                        if($.isArray(value) || value instanceof Object)
+                            value= JSON.stringify(value);
+                        rows += String.format('<tr>\
+                        <td class="mdl-data-table__cell--non-numeric" title="{0}">{0}</td>\
+                        <td title="{1}">{1}</td>\
+                        <td><i class="material-icons edit">edit</i></td>\
+                        </tr>', key, value);
+                    });
+                }
+                var html = String.format('<div class="generic sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
+                    <div class="mdl-card__title" style="display: flex; flex-flow: row wrap;">\
+                        <button id="generic-{0}" class="mdl-button mdl-js-button mdl-button--raised" style="background:white; display: none;">\
+                        </button>\
+                        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="generic-{0}">\
+                        </ul>\
+			  	        <h6>Generic resource {3}</h6>\
+			  	        {1}\
+                    </div>\
+                    <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
+                        <table data-id="{0}" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">\
+                            <thead>\
+                                <tr>\
+                                  <th>Key</th>\
+                                  <th>Value</th>\
+                                  <th>   </th>\
+                                </tr>\
+                            </thead>\
+                            <tbody>\
+                                {2}\
+                            </tbody>\
+                        </table>\
+                    </div>\
+                </div>', resource_id, uuid_cell, rows, title);
+                $("#generic-container").append(html);
+                // resize the column width
+                var tb = $(".generic table[data-id='" + data.resource_id + "']");
+                var width = tb.width() - 10;
+                tb.find("th:nth-child(1), tr td:nth-child(1)").css(
+                    {"max-width": width * 0.3,
+                    "min-width": width * 0.3
+                    });
+                tb.find("th:nth-child(2), tr td:nth-child(2)").css(
+                    {"max-width": width * 0.45,
+                    "min-width": width * 0.45
+                    });
+            }
+            else{
+                // update table
+                if(data.value) {
+                    var jData = JSON.parse(data.value);
+                    var tbody = $(".generic table[data-id='" + data.resource_id + "'] tbody");
+                    $.each(tbody.children(), function () {
+                        // iterate each table row and update them one by one
+                        if($(this).find("div.overlay").length === 0){
+                            var key = $(this).children(':first-child').text();
+                            if(key){
+                                // console.log(jData[key]);
+                                $(this).children(':nth-child(2)').text(jData[key]);
+                                $(this).children(':nth-child(2)').attr('title', jData[key]);
+                            }
+                        }
+                    });
+                }
+                // value.parent().next().find("tbody").html(rows);
+            }
+        },
         get_temperature_in_timezone: function(value) {
 		    var house_temp = null;
             var temp_unit = "°";
@@ -1250,6 +1509,10 @@ $(function() {
                             show_uuid = true;
                         $.sh.now.update_brillo_data(key, value, show_uuid);
                     });
+                    $.each(sensors['generic'], function(key, value) {
+                        var show_uuid = true;
+                        $.sh.now.update_generic_data(key, value, show_uuid);
+                    });
                 }
             }).done(function() {
 			   //console.log( "second success" );
@@ -1300,4 +1563,20 @@ $(function() {
     $.sh.init();
     $.sh.now.init();
     updateWelcomeCardsDateTime(utc_offset, timezone);
+
+    $( window ).resize(function() {
+        // resize the generic table column width
+        $("#generic-container table").each(function(){
+            var tb = $(this);
+            var width = tb.width() - 10;
+            tb.find("th:nth-child(1), tr td:nth-child(1)").css(
+                {"max-width": width * 0.3,
+                "min-width": width * 0.3
+                });
+            tb.find("th:nth-child(2), tr td:nth-child(2)").css(
+                {"max-width": width * 0.45,
+                "min-width": width * 0.45
+                });
+        });
+    });
 });
