@@ -2,7 +2,7 @@
 .package_container:hover {-webkit-box-shadow: 3px 3px 10px #515151; box-shadow: 3px 3px 10px #515151;}
 
 .package_title{width:270px; height:40px; }
-.package_title  p{color:#FFFFFF; font:20px bold italic;margin:0 auto; height40px; line-height:40px;font-family:Tahoma; text-align:center;}
+.package_title  p{color:#FFFFFF; font:20px bold italic;margin:0 auto; height:40px; line-height:40px;font-family:Tahoma; text-align:center;}
 .package_content{width:270px; height:130px;}
 .package_content p{color:#959da1; font:50px normal italic; margin:0 auto; height:100px; line-height:100px;text-align:center;}
 .package_bottom{width:270px; height:30px; background:#a3b2b9; margin:auto 0; position:absolute; bottom:0;}

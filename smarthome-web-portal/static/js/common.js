@@ -61,7 +61,7 @@ getLocalDate = function(dt, offset) {
     var utc = moment.utc(dt).clone();
     var local = utc.utcOffset(parseInt(offset) * 60);
     return local;
-}
+};
 
 
 getTime = function(dt, offset, timezone) {
@@ -70,7 +70,7 @@ getTime = function(dt, offset, timezone) {
         return date.format('hh:mm:ss a');
     else
         return date.format('HH:mm:ss');
-}
+};
 
 getHourMinute = function(dt, offset, timezone) {
     var date = getLocalDate(dt,offset);
@@ -79,7 +79,7 @@ getHourMinute = function(dt, offset, timezone) {
         return date.format('hh:mm a');
     else
         return date.format('HH:mm');
-}
+};
 
 getFormattedDateString = function(dt, offset){
     var date = getLocalDate(dt,offset);
@@ -89,12 +89,12 @@ getFormattedDateString = function(dt, offset){
     var year = date.format('YYYY');
 
     return weekday + " " + month + " " + day + ", " + year;
-}
+};
 
 getHour = function(dt, offset) {
     var date = getLocalDate(dt,offset);
     return date.hour();
-}
+};
 
 function showDialog(options) {
     options = $.extend({
@@ -310,7 +310,7 @@ toggle_status = function(resource_id, obj, title) {
 function convertToC(fTemp, frag_digit) {
 	var fTempVal = parseFloat(fTemp);
 	return ((fTempVal - 32) * (5 / 9)).toFixed(frag_digit);
-};
+}
 
 function convertToF(cTemp, frag_digit) {
 	var cTempVal = parseFloat(cTemp);
@@ -362,7 +362,7 @@ function drawcontainer(div, xray, yray, description) {
 }
 
 function drawcontainer2(div, xray, yray1,yray2, description) {
-    drawcontainerchart2(div, xray, yray1,yray2, description, '', 'Actual Temperature','Temperature Forecast', 'F◦','#f60404');
+    drawcontainerchart2(div, xray, yray1,yray2, description, '', 'Actual Temperature','Temperature Forecast', 'F◦','#ee8719');
 }
 
 function drawcontainer3(div, xray, yray1,yray2,yray3, description) {
@@ -566,18 +566,18 @@ function drawcontainerchart3(div,xray,yray1,yray2,yray3,title,xtext,name1,name2,
         title: {
             text: '',
             textStyle: {
-                fontWeight: 'normal',
+                fontWeight: 'normal'
             },
-            left: '10%',
+            left: '10%'
         },
         tooltip: {
             trigger: 'axis',
             axisPointer: {
                 lineStyle: {
                     color: '#fff',
-                    opacity: 0,
+                    opacity: 0
                 }
-            },
+            }
         },
 		legend: {
 		    //right: 30,
@@ -591,23 +591,23 @@ function drawcontainerchart3(div,xray,yray1,yray2,yray3,title,xtext,name1,name2,
             boundaryGap: false,
             data :xray,
             axisLine: {
-                show: false,
+                show: false
             },
             axisTick: {
-                show: false,
+                show: false
             }
         },
         yAxis: {
             scale: true,
             type: 'value',
             axisLine: {
-                show: false,
+                show: false
             },
             axisLabel: {
-                show: false,
+                show: false
             },
             axisTick: {
-                show: false,
+                show: false
             },
             splitLine: {
                 show: false
@@ -638,12 +638,12 @@ function drawcontainerchart3(div,xray,yray1,yray2,yray3,title,xtext,name1,name2,
             symbolSize: 8,
             itemStyle: {
                normal:{
-                   color: '#EE2C2C',
+                   color: '#ee8719',
                }
             },
             lineStyle: {
                 normal: {
-                    color: '#EE2C2C',
+                    color: '#ee8719',
                     width: 2
                 }
             }
@@ -821,7 +821,6 @@ function convertToStr(input) {
     }
     return output;
 }
-
 
 function range(start, count) {
     // return an array with supplied bounds

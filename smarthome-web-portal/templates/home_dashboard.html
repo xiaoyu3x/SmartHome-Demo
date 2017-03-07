@@ -43,8 +43,9 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.2/js/select2.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.js"></script>
     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.css">
-{#    <script src="{{ static_url_prefix }}js/jquery-dateFormat.min.js"></script>#}
-{#    <script type="text/javascript" src="{{ static_url_prefix }}js/common.js"></script>#}
+
+    <!-- get current gateway datetime -->
+    <script type="text/javascript" src="{{ static_url_prefix }}js/geo2time.js"></script>
 	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-now.js"></script>
 	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-before.js"></script>
 	<script type="text/javascript" src="{{ static_url_prefix }}js/sh-future.js"></script>
@@ -950,9 +951,8 @@
                             <i class="material-icons">more_vert</i>
                         </button>
                         </div>
-						<div class="mdl-tabs__panel is-active" id="grid-tab1" style="height:320px;">
+						<div class="mdl-tabs__panel is-active" style="height:320px;">
                             <div class="mdl-grid mdl-grid--no-spacing" style="height:320px;">
-                              
                                 <div class="mdl-cell mdl-cell--12-col" style="height:320px;">
                                     <div id="container_power" style="width: 100%; height:320px; margin: 0 auto"></div>
                                 </div>
@@ -972,10 +972,10 @@
                             </button>
                         </div>
 						
-						<div class="mdl-tabs__panel is-active" id="grid-tab1">
+						<div class="mdl-tabs__panel is-active">
                             <div class="mdl-grid mdl-grid--no-spacing">
                                 <div  style="height:70px;padding: 0px 25px;">
-                                    <a style="font-size:45px;text-align:center;" id="a_temp_today">41</a><a style="vertical-align:super; font-size:45px">◦</a>
+                                    <a style="font-size:45px;text-align:center;" id="a_temp_today"> </a><a style="vertical-align:super; font-size:45px">◦</a>
                                 </div>
                                 <div  style="text-align:left;height:70px; padding-bottom:15px;">
 								   <button id="temperature_convert" class="mdl-button mdl-js-button mdl-button--icon" style="color: #455a64; margin-left:-1px;">F</button>
@@ -1002,7 +1002,7 @@
                         </div>
 						<div class="width:100%; height:100%">
 						   <div style="width:90%;height:300px;position:relative;margin:0 auto;padding-bottom:15px;">
-                               <img id="img_gs" style="" src="{{ static_url_prefix }}image/model/linear_shanghai.png"/>
+                               <img id="img_gs"/>
 						     <div id="div_gs"  class="card-inside card-shadow">
                                  <div class="card-inside-title" style="width:250px; margin-left:40px;">
                                      <a style="font-size:25px;">y = ax</a><a style="vertical-align:super; font-size:18px">2</a><a style="font-size:25px"> + c</a>
@@ -1012,22 +1012,6 @@
 						     </div>
 						   </div>
 						</div>
-						
-				
-					    <!--<div class="model" style="float:left; margin-left:20px;margin-top:5px;">
-							    <div class="model-title"><p>ShangHai_Linear</p></div>
-								<div class="model-type"><p>Linear</p></div>
-								<div class="model-bottom"><p>2016-12-12 14:55</p></div>
-					    </div>
-							
-					    <div class="Dataset" style="float:left;margin-left:20px;margin-top:5px;">
-							    <div class="Dataset-title"><p>ShangHai_2013</p></div>
-								<div class="Dataset-type"><p>CSV</p></div>
-								<div class="Dataset-bottom"><p>2016-12-10 13:20</p></div>
-						</div>-->
-				
-					
-						
 					</div><!-- Training Model -->
 					
 				

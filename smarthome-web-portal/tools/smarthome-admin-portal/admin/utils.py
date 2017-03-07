@@ -25,7 +25,7 @@ def get_vcap_service():
                 mysql_creds = decoded_config[key][0]['credentials']
                 return "{}?charset=utf8".format(str(mysql_creds['uri']))
     else:
-        return 'mysql://root:zaq12wsx@localhost:13306/smart_home'
+        return 'mysql+pymysql://root:zaq12wsx@localhost:13306/smart_home_test'
 
 #PROJECT_ROOT = dirname(dirname(__file__))
 

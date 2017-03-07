@@ -4,10 +4,7 @@ Initialize Flask app
 """
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+
 
 # Create an Instance of Flask
 app = Flask(__name__, static_url_path='')

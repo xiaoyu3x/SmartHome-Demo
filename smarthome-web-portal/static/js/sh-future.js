@@ -46,9 +46,15 @@ $(function() {
             $('#alert-status-card').hide();
             $("#demo-welcome-message").html("This demo tells you the <b>prediction of home energy consumption.</b>");
             $.sh.future.register_actions();
-
+            var load ="<div style='text-align:center;'><img src='image/loading.gif' width='24px' height='24px' " +
+                "style='position: absolute; left: 50%; top: 50%; margin-left: -24px; margin-top: -24px;'/></div>";
+            $.sh.future.clear_container(load);
             $.sh.future.socket_init();
 		},
+        clear_container: function(html){
+            $("#container_power").html(html);
+            $("#container_temperature").html(html);
+        },
         socket_init: function() {
             $.sh.make_socket_connection($.sh.future.send_request);
 
@@ -59,26 +65,64 @@ $(function() {
 			});
 
 			$.sh.future.update_weather();
-			$.sh.future.update_billing();
+			// $.sh.future.update_billing();
 			$.sh.future.update_power_data();
 			$.sh.future.update_model_picture();
         },
+        callbacks: function(current_date) {
+            today_str = moment(current_date, "YYYY-MM-DD HH-mm").format("MM/DD/YYYY");
+            console.log("today is : " + current_date);
+            if(!getCookie("today")){
+                // set gateway's date in cookie and refresh each hour
+                createCookie('today', current_date, 1/24);
+            }
+            socket.emit('my temp', {today_date: today_str});
+            // socket.emit('my temp', {type: 'today', today_date: today_str});
+            socket.emit('my power', {today_date: today_str});
+            $.sh.future.update_billing(current_date);
+        },
         send_request: function() {
-            var today = getLocalDate(moment.utc(), utc_offset);
-            today_str = today.format("MM/DD/YYYY");
-            socket.emit('my temp', {type: 'forecast', region: timezone, today_date: today_str});
-            socket.emit('my temp', {type: 'today', region: timezone, today_date: today_str});
-            socket.emit('my power', {region: timezone, today_date: today_str});
+            var today = getCookie('today');
+            if(today){
+                $.sh.future.callbacks(today);
+            }
+            else {
+                $.getJSON('/get_geo_location', function (data) {
+                    if (data.error != null) {
+                        console.error('Future: failed to get gateway geo location.');
+                        $.sh.future.clear_container("");
+                    } else {
+                        getDateByGeolocation(data.geo.latitude, data.geo.longitude, $.sh.future.callbacks);
+                    }
+                });
+            }
+            socket.emit('my model');
+        },
+        set_default_weather: function() {
+            $('#a_temp_today').html(0);
+            if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
+                $("#temperature_convert").html('F');
+            }
+            else {
+                $("#temperature_convert").html('C');
+            }
         },
         update_weather: function(){
-			socket.on('my temp forecast', function(msg){
+			socket.on('my temp resp', function(msg){
                 if(msg.error) {
+                    $("#container_temperature").html("");
                     console.error('Error: ' + msg.error);
                     onFailure(msg.error);
+                    $.sh.future.set_default_weather();
                     return;
                 }
                 temp_actual = get_actual(msg.data.actual, 'temperature');
                 temp_future = get_future(msg.data.future, 'temperature');
+                if(temp_actual.length == 0 || temp_future.length == 0) {
+                    createSnackbar("Error: incomplete weather data. Plz load weather in admin portal.", "Dismiss");
+                    $.sh.future.set_default_weather();
+                    return;
+                }
 
                 var c_temp_actual = [];
                 for(var i=0;i<temp_actual.length;i++){
@@ -93,35 +137,24 @@ $(function() {
                 date_axis = get_date_axis(today);
 
                 drawcontainer2('container_temperature', date_axis, c_temp_actual, c_temp_future, '');
-            });
 
-            socket.on('my temp today', function(msg) {
-                if (msg.error) {
-                    console.error('Error: ' + msg.error);
-                    onFailure(msg.error);
-                    return;
+                // update today's temperature and its unit
+                var index = parseInt(temp_actual.length/2);
+                var temp_in_Fahrenheit = temp_actual[index];
+                $('#a_temp_today').html();
+                if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
+                    $("#temperature_convert").html('F');
+                    $('#a_temp_today').html(temp_in_Fahrenheit);
                 }
-                if(msg.data) {
-                    var temp_in_Fahrenheit = msg.data[0]['temperature'];
-                    $('#a_temp_today').html();
-                    if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
-                        $("#temperature_convert").html('F');
-                        $('#a_temp_today').html(temp_in_Fahrenheit);
-                    }
-                    else {
-                        $("#temperature_convert").html('C');
-                        var temp_convert = convertToC(parseInt(temp_in_Fahrenheit), 0);
-                        $('#a_temp_today').html(temp_convert);
-                    }
+                else {
+                    $("#temperature_convert").html('C');
+                    var temp_convert = convertToC(parseInt(temp_in_Fahrenheit), 0);
+                    $('#a_temp_today').html(temp_convert);
                 }
             });
         },
-		update_billing:function(){
-            console.log("time zone is:" + timezone);
-            console.log("offset hour is:" + utc_offset);
-
-            // var utc_now = moment.utc();
-            var today = getLocalDate(moment.utc(), utc_offset);
+		update_billing:function(today){
+            var today = moment(today);
             var today1 = moment(today).add(1, 'd');
             var today2 = moment(today).add(2, 'd');
 
@@ -132,6 +165,7 @@ $(function() {
 		update_power_data: function() {
             socket.on("my power resp", function(msg){
                 if(msg.error) {
+                    $("#container_power").html("");
                     console.error('Error: ' + msg.error);
                     onFailure(msg.error);
                     return;
@@ -139,19 +173,30 @@ $(function() {
                 power_actual = get_actual(msg.data.actual, 'power');
                 power_future = get_future(msg.data.future, 'power');
                 power_predict_his = get_actual(msg.data.predict_his, 'power');
+                if(power_future.length == 0 || power_actual.length == 0 || power_predict_his.length == 0) {
+                    createSnackbar("Error: incomplete power data. Plz load weather in admin portal.", "Dismiss");
+                    return;
+                }
                 drawcontainer3('container_power', date_axis, power_actual, power_predict_his, power_future, '');
                 $.sh.future.update_billing_power(msg.data.future);
             });
-
 		},
         update_model_picture:function(){
-			// todo: switch picture by gateway id
-			$("#img_gs").attr('src',"../image/model/linear_shanghai.png"); 
-		},
+			// switch model images by gateway id
+            socket.on("my model resp", function(msg) {
+                if (msg) {
+                    $("#img_gs").attr('src', msg);
+                }
+                else {
+                    onFailure("The gateway is not bound with any data model.");
+                }
+                return;
+            });
 
+		},
         convert_temperature: function(){
             var temp_unit = $("#temperature_convert").html();
-             console.log("temp_unit:" + temp_unit);
+            console.log("temp_unit:" + temp_unit);
             if(temp_unit == "F")
             {
                 var tTemp = $('#a_temp_today').html();
@@ -177,7 +222,7 @@ $(function() {
             else if(temp_unit == "C"){
 
                 var cTemp = $('#a_temp_today').html();
-                var temp_convert = convertToF(parseInt(cTemp), 0)
+                var temp_convert = convertToF(parseInt(cTemp), 0);
                 $('#a_temp_today').html(temp_convert);
                 $("#temperature_convert").html("F");
                 console.log("cTemp:" + cTemp);
@@ -207,30 +252,32 @@ $(function() {
 	
 	function get_actual(result, key){
 	    var list = [];
-	    if(result.length > 0) {
-            console.log(result[0][key]);
-            for (var i = 0; i < 4; i++) {
-            	if(typeof result[i] !== 'undefined')
-                	list.push(result[i][key]);
-            	else
-            	    list.push(null);
-            }
-            list.push(null, null, null);
+	    if(result.length != 4) {
+            return list;
         }
+        console.log(result[0][key]);
+        for (var i = 0; i < 4; i++) {
+            if(typeof result[i] !== 'undefined')
+                list.push(result[i][key]);
+            else
+                list.push(null);
+        }
+        list.push(null, null, null);
 		return list;
 	}
 
 	function get_future(result, key){
 	    var list = [];
-	    if(result.length > 0) {
-	        list.push(null, null, null);
-            console.log(result[0][key]);
-            for (var i = 0; i < 4; i++) {
-            	if( typeof result[i] !== 'undefined')
-                	list.push(result[i][key]);
-            	else
-            	    list.push(null);
-            }
+	    if(result.length != 4) {
+            return list;
+        }
+        list.push(null, null, null);
+        console.log(result[0][key]);
+        for (var i = 0; i < 4; i++) {
+            if( typeof result[i] !== 'undefined')
+                list.push(result[i][key]);
+            else
+                list.push(null);
         }
 		return list;
 	}
