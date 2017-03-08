@@ -42,5 +42,27 @@
         ],
         "remove":{
         }
+    },
+    "button":{
+        "add":{
+        },
+        "update":[
+            {
+                "name":"value",
+                "condition":"new_value === true",
+                "actions":[
+                    { "Type": "buzzer", "att": { "value": true }, "Event": "update" }
+                ]
+            },
+            {
+                "name":"value",
+                "condition": "new_value === false",
+                "actions":[
+                    { "Type": "buzzer", "att": { "value": false }, "Event": "update" }
+                ]
+            }
+        ],
+        "remove":{
+        }
     }
 }
