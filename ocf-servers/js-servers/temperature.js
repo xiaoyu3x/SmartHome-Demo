@@ -24,7 +24,8 @@ var device = require('iotivity-node'),
     observerCount = 0,
     hasUpdate = false,
     temperature = 0,
-    desiredTemperature = {};
+    desiredTemperature = {},
+    SimulationMode = false;
 
 // Units for the temperature.
 var units = {
@@ -33,16 +34,30 @@ var units = {
     K: 'K',
 };
 
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        SimulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
+
+
 // Require the MRAA library.
 var mraa = '';
-try {
-    mraa = require('mraa');
-    if(mraa.adcSupportedBits() == 0 ){
-        mraa.Aio =  require('./helper-function/mraa_MinnowBoard_ADC.js').Aio;
+if (!SimulationMode) {
+    try {
+        mraa = require('mraa');
+        if(mraa.adcSupportedBits() == 0 ){
+            mraa.Aio =  require('./helper-function/mraa_MinnowBoard_ADC.js').Aio;
+        }
     }
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        SimulationMode = true;
+    }
 }
 
 // Setup Temperature sensor pin.
@@ -76,7 +91,7 @@ function getRange(tempUnit) {
 // This function construct the payload and returns when
 // the GET request received from the client.
 function getProperties(tempUnit) {
-    if (mraa) {
+    if (!SimulationMode) {
         var raw_value = sensorPin.read();
         var temp = 0.0;
 
@@ -103,8 +118,7 @@ function getProperties(tempUnit) {
         if (!desiredTemperature[tempUnit] || temperature >= desiredTemperature[tempUnit])
             hasUpdate = true;
     } else {
-        // Simulate real sensor behavior. This is useful
-        // for testing on desktop without mraa.
+        // Simulate real sensor behavior. This is useful for testing.
         temperature = temperature + 0.1;
         debuglog('Temperature: ', temperature);
         hasUpdate = true;
