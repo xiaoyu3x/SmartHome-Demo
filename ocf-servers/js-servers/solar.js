@@ -27,21 +27,39 @@ var device = require('iotivity-node'),
     observerCount = 0,
     solarProperties = {};
 
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
+
+
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 var lcd = '';
-try {
-    lcd = require('jsupm_i2clcd');
-}
-catch (e) {
-    debuglog('No lcd module: ', e.message);
+if (!simulationMode) {
+    try {
+        lcd = require('jsupm_i2clcd');
+    }
+    catch (e) {
+        debuglog('No lcd module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 function resetLCDScreen() {

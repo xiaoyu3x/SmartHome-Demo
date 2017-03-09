@@ -23,15 +23,29 @@ var device = require('iotivity-node'),
     exitId,
     observerCount = 0,
     hasUpdate = false,
-    gasDetected = false;
+    gasDetected = false,
+    simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 // Setup Gas sensor pin.
@@ -45,7 +59,7 @@ function setupHardware() {
 // This function construct the payload and returns when
 // the GET request received from the client.
 function getProperties() {
-    if (mraa) {
+    if (!simulationMode) {
         val = sensorPin.read();
         density = val * 500 / 1024;
 
@@ -62,8 +76,7 @@ function getProperties() {
             }
         }
     } else {
-        // Simulate real sensor behavior. This is useful
-        // for testing on desktop without mraa.
+        // Simulate real sensor behavior. This is useful for testing.
         gasDetected = !gasDetected;
         hasUpdate = true;
     }

@@ -20,15 +20,29 @@ var device = require('iotivity-node'),
     observerCount = 0,
     sensorState = false,
     resourceTypeName = 'oic.r.led',
-    resourceInterfaceName = '/a/led';
+    resourceInterfaceName = '/a/led',
+    simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 // Setup LED sensor pin.
@@ -47,7 +61,7 @@ function updateProperties(properties) {
 
     debuglog('Update received. value: ', sensorState);
 
-    if (!mraa)
+    if (simulationMode)
         return;
 
     if (sensorState)

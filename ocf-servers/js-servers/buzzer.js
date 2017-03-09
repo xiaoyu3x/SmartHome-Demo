@@ -22,15 +22,29 @@ var device = require('iotivity-node'),
     exitId,
     sensorState = false,
     resourceTypeName = 'oic.r.buzzer',
-    resourceInterfaceName = '/a/buzzer';
+    resourceInterfaceName = '/a/buzzer',
+    simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 // Setup Buzzer sensor pin.
@@ -60,7 +74,7 @@ function updateProperties(properties) {
 
     debuglog('Update received. value: ', sensorState);
 
-    if (!mraa)
+    if (simulationMode)
         return;
 
     if (sensorState) {

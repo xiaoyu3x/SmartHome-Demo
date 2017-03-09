@@ -24,15 +24,29 @@ var device = require('iotivity-node'),
     range = [0,255],
     rgbValue = [0,0,0],
     clockPin,
-    dataPin;
+    dataPin,
+    simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 // Setup LED pin.
@@ -130,7 +144,7 @@ function updateProperties(properties) {
     if (!checkColour(r) || !checkColour(g) || !checkColour(b))
         return;
 
-    if (mraa)
+    if (!simulationMode)
         setColourRGB(r, g, b);
     rgbValue = input;
 

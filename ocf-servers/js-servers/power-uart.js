@@ -23,7 +23,8 @@ var device = require('iotivity-node'),
     hasUpdate = false,
     observerCount = 0,
     power1 = 100,  // For simulation only
-    power2 = 1000; // Ditto
+    power2 = 1000, // Ditto
+    simulationMode = false;
 
 var BLE_DEV_NAME = 'Zephyr DC Power Meter',
     powerServiceUUID = '9c10c448308244cd853d08266c070be5',
@@ -31,35 +32,50 @@ var BLE_DEV_NAME = 'Zephyr DC Power Meter',
     solarCharacteristicUUID = '0609e802afd24d56b61c12ba1f80ccb6',
     blePeripheral = null;
 
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
+
 var noble = '';
-try {
-    noble = require('noble');
-}
-catch(e) {
-    console.log('No noble module: ' + e.message + '. Switching to wire connection.');
+if (!simulationMode) {
+    try {
+        noble = require('noble');
+    }
+    catch(e) {
+        console.log('No noble module: ' + e.message);
+        console.log('Attempting to use wire connection.');
+    }
 }
 
 // Require the MRAA library
 var mraa = '',
-    serialDev = '/dev/ttyUSB0',
-    args;
+    serialDev = '/dev/ttyUSB0';
 
-if (!noble) {
-    try {
-        mraa = require('mraa');
-    }
-    catch (e) {
-        debuglog('No mraa module: ', e.message);
-    }
+if (!simulationMode) {
+    if (!noble) {
+        try {
+            mraa = require('mraa');
+        }
+        catch (e) {
+            debuglog('No mraa module: ', e.message);
+            debuglog('Automatically switching to simulation mode');
+            simulationMode = true;
+        }
 
     if (mraa) {
-        /* Default: MinnowBoard MAX/Turbot, raw mode
-         * or specify the port, e.g, "$ node power-uart.js /dev/ttyS0
-         */
-        args = process.argv.slice(2);
-        args.forEach(function(entry) {
-            serialDev = entry;
-        });
+           /* Default: MinnowBoard MAX/Turbot, raw mode
+            * or specify the port, e.g, "$ node power-uart.js /dev/ttyS0
+            */
+            args.forEach(function(entry) {
+                if (entry !== "--simulation" && entry !== "-s")
+                    serialDev = entry;
+            });
+        }
     }
 }
 
@@ -222,13 +238,17 @@ function getProperties() {
     var data = null;
     var obj = {"ch-1": 0, "ch-2": 0};
 
-    if (noble) {
-        data = "{\"ch-1\": " + power1 + ", \"ch-2\": " + power2 + "}";
-    } else if (mraa) {
-        data = readJsonFromUart();
+    if (!simulationMode) {
+        if (noble) {
+            data = "{\"ch-1\": " + power1 + ", \"ch-2\": " + power2 + "}";
+        } else if (mraa) {
+            data = readJsonFromUart();
+        }
     } else {
+        // Simulate real sensor behavior. This is useful for testing.
         data = "{\"ch-1\": " + power1++ + ", \"ch-2\": " + power2++ + "}";
     }
+
     if (data != null && data != "") {
         debuglog(data);
         hasUpdate = true;

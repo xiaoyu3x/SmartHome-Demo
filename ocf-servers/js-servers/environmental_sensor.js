@@ -24,8 +24,8 @@ var device = require('iotivity-node'),
 	resourceTypeName = 'oic.r.sensor.environment',
 	resourceInterfaceName = '/a/env',
 	hasUpdate = false,
-    exitId,
-    observerCount = 0,
+	exitId,
+	observerCount = 0,
 	resourceData = {temperature : 0.0,
 			humidity : 0.0,
 			pressure : 0.0,
@@ -34,19 +34,32 @@ var device = require('iotivity-node'),
 			humidity : 0.0,
 			pressure : 0.0,
 			uvIndex : 0},
-			simData = 0.0;
+	simData = 0.0,
+	simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 var noble = '';
-try {
-	noble = require('noble');
-}
-catch(e) {
-	// proceed to send simulated data if no noble module's found. 
-	console.log('No noble module: ' + e.message + '. Switching to simulation mode');
-	//process.exit(0);
+if (!simulationMode) {
+	try {
+		noble = require('noble');
+	}
+	catch(e) {
+		// proceed to send simulated data if no noble module's found. 
+		console.log('No noble module: ' + e.message);
+		debuglog('Automatically switching to simulation mode');
+		simulationMode = true;
+	}
 }
 
-if(noble){
+if (!simulationMode) {
 	// intitialize BLE, make sure BT is enabled with 'rfkill unblock bluetooth'
 	noble.on('stateChange', function(state) {
 		debuglog('on -> stateChange');
@@ -171,10 +184,8 @@ if(noble){
 }
 
 function getProperties() {
-	if(!noble)
-	{
-		// Simulate real sensor behavior. This is
-		// useful for testing on desktop without noble.
+	if (simulationMode) {
+		// Simulate real sensor behavior. This is useful for testing.
 		simData = simData + 0.1;
 		sensorData.temperature = simData;
 		sensorData.humidity = simData;
@@ -214,7 +225,7 @@ function getProperties() {
 function notifyObservers() {
 	properties = getProperties();
 
-    notifyObserversTimeoutId = null;
+	notifyObserversTimeoutId = null;
 	if (hasUpdate) {
 		envSensorResource.properties = properties;
 		hasUpdate = false;

@@ -22,15 +22,29 @@ var device = require('iotivity-node'),
     resourceInterfaceName = '/a/illuminance',
     hasUpdate = false,
     observerCount = 0,
-    lux = 0.0;
+    lux = 0.0,
+    simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 // Setup ambient light sensor pin.
@@ -45,14 +59,13 @@ function setupHardware() {
 // the GET request received from the client.
 function getProperties() {
     var temp = 0;
-    if (mraa) {
+    if (!simulationMode) {
         var raw_value = sensorPin.read();
 
         // Conversion to lux
         temp = 10000.0 / Math.pow(((1023.0 - raw_value) * 10.0 / raw_value) * 15.0, 4.0 / 3.0);
     } else {
-        // Simulate real sensor behavior. This is
-        // useful for testing on desktop without mraa.
+        // Simulate real sensor behavior. This is useful for testing.
         temp = lux + 0.1;
     }
 

@@ -23,15 +23,29 @@ var device = require('iotivity-node'),
     observerCount = 0,
     hasUpdate = false,
     noObservers = false,
-    sensorState = false;
+    sensorState = false,
+    simulationMode = false;
+
+// Parse command-line arguments
+var args = process.argv.slice(2);
+args.forEach(function(entry) {
+    if (entry === "--simulation" || entry === "-s") {
+        simulationMode = true;
+        debuglog('Running in simulation mode');
+    };
+});
 
 // Require the MRAA library
 var mraa = '';
-try {
-    mraa = require('mraa');
-}
-catch (e) {
-    debuglog('No mraa module: ', e.message);
+if (!simulationMode) {
+    try {
+        mraa = require('mraa');
+    }
+    catch (e) {
+        debuglog('No mraa module: ', e.message);
+        debuglog('Automatically switching to simulation mode');
+        simulationMode = true;
+    }
 }
 
 // Setup binary switch pin.
@@ -48,14 +62,13 @@ function setupHardware() {
 function getProperties() {
     var switchState = false;
 
-    if (mraa) {
+    if (!simulationMode) {
         if (sensorPin.read() >= 1)
             switchState = true;
         else
             switchState = false;
     } else {
-        // Simulate real sensor behavior. This is
-        // useful for testing on desktop without mraa.
+        // Simulate real sensor behavior. This is useful for testing.
         switchState = !sensorState;
     }
 
