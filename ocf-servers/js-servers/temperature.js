@@ -25,7 +25,7 @@ var device = require('iotivity-node'),
     hasUpdate = false,
     temperature = 0,
     desiredTemperature = {},
-    SimulationMode = false;
+    simulationMode = false;
 
 // Units for the temperature.
 var units = {
@@ -38,7 +38,7 @@ var units = {
 var args = process.argv.slice(2);
 args.forEach(function(entry) {
     if (entry === "--simulation" || entry === "-s") {
-        SimulationMode = true;
+        simulationMode = true;
         debuglog('Running in simulation mode');
     };
 });
@@ -46,7 +46,7 @@ args.forEach(function(entry) {
 
 // Require the MRAA library.
 var mraa = '';
-if (!SimulationMode) {
+if (!simulationMode) {
     try {
         mraa = require('mraa');
         if(mraa.adcSupportedBits() == 0 ){
@@ -56,7 +56,7 @@ if (!SimulationMode) {
     catch (e) {
         debuglog('No mraa module: ', e.message);
         debuglog('Automatically switching to simulation mode');
-        SimulationMode = true;
+        simulationMode = true;
     }
 }
 
@@ -91,7 +91,7 @@ function getRange(tempUnit) {
 // This function construct the payload and returns when
 // the GET request received from the client.
 function getProperties(tempUnit) {
-    if (!SimulationMode) {
+    if (!simulationMode) {
         var raw_value = sensorPin.read();
         var temp = 0.0;
 
