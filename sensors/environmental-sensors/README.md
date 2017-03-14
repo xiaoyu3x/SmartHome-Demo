@@ -96,4 +96,4 @@ to Arduino 101 board:
 ```
 
 ## Supported Zephyr versions:
-The code has been verified to work with Zephyr v1.6.0
+The code has been verified to work with Zephyr v1.6.0 or above

@@ -63,4 +63,4 @@ Use the following commands to build and flash the BLE app to the Arduino 101 boa
 ```
 
 ## Supported Zephyr versions:
-The code has been verified to work with Zephyr v1.6.0
+The code has been verified to work with Zephyr v1.6.0 or above
