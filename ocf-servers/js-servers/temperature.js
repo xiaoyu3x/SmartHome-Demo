@@ -49,9 +49,6 @@ var mraa = '';
 if (!simulationMode) {
     try {
         mraa = require('mraa');
-        if(mraa.adcSupportedBits() == 0 ){
-            mraa.Aio =  require('./helper-function/mraa_MinnowBoard_ADC.js').Aio;
-        }
     }
     catch (e) {
         debuglog('No mraa module: ', e.message);

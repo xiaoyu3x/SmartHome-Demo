@@ -12,9 +12,6 @@ This folder contains JavaScript implementation of various OCF servers, such as:
 * Switch
 * Solar Panel
 
-# JavaScript helper function
-The `helper-function` folder contains code that wraps the MRAA Aio function to use the UPM library in case an A2D (Analog to Digital) converter is required. This is useful to drive analog sensors with the MinnowBoard Turbot.
-
 # Setting up the OCF servers
 ## Software
 All the OCF servers in these folders are written in JavaScript and leverage `iotivity-node` (IoTivity JavaScript bindings) as well as the MRAA JavaScript bindings to access and control the busses (e.g. I2C, GPIO, Analog, etc.).
