@@ -38,17 +38,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                    {% for gw in gateways %}
+                    {% for gw in gateways |sort(attribute='id')%}
                         <tr>
                             <td>{{ gw.id }}</td>
                             <td class="mdl-data-table__cell--non-numeric">{{ gw.name }}</td>
                             <td class="mdl-data-table__cell--non-numeric">{{ gw.url }}</td>
-{#                            {% if gw.address|length < 35 %}#}
                             <td class="mdl-data-table__cell--non-numeric">{{ gw.address }}</td>
-{#                            {%  else %}#}
-{#                                {% set addr = gw.address %}#}
-{#                                <td class="mdl-data-table__cell--non-numeric"><span title="{{ addr }}">{{ addr[:20] }}</span></td>#}
-{#                            {% endif %}#}
                             <td>{{ gw.latitude }}</td>
                             <td>{{ gw.longitude }}</td>
                             <td class="mdl-data-table__cell--non-numeric">{{ gw.created_at }}</td>

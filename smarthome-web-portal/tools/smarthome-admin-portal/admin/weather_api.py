@@ -40,7 +40,8 @@ def get_temp_forecast(geo_location, gateway_id):
     data = json.loads(result)
 
     # the query date
-    publish_date = datetime.strptime(data['query']['created'], '%Y-%m-%dT%H:%M:%SZ').date()
+    today = data['query']['results']['channel']['item']['pubDate'].rsplit(" ", 1)[0]
+    publish_date = datetime.strptime(today, '%a, %d %b %Y %I:%M %p').date()
 
     # forecast for the coming 3 days
     forecast = data['query']['results']['channel']['item']['forecast']

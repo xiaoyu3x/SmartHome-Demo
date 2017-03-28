@@ -42,12 +42,12 @@ DEFAULT_GATEWAYS = [
 DEFAULT_USERS = [
     {
         'username': 'dev',
-        'password': hash_str('dev'),
+        'password': hash_str('P@ssw0rd'),
         'gateway_id': 1,
     },
     {
-        'username': 'ostro',
-        'password': hash_str('ostro'),
+        'username': 'OTC',
+        'password': hash_str('!otivity'),
         'gateway_id': 2,
     },
 ]

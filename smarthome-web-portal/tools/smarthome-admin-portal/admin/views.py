@@ -8,10 +8,12 @@ import json
 import os
 import time
 from datetime import timedelta
-from flask import render_template, request, flash, redirect, url_for, make_response, session, abort
+from flask import render_template, request, flash, redirect, url_for, make_response, session, abort, jsonify
 from admin import db, app
 from admin.models import Gateway, _wrapper_dict, User, DataSet, DataModel, GatewayModel
 from werkzeug.utils import secure_filename
+from sqlalchemy.exc import IntegrityError
+from admin import weather_api
 from admin import weather_api
 from admin.machine_learning import train
 from admin.machine_learning import predict
@@ -30,9 +32,9 @@ def login_required(func):
 
 @app.before_request
 def make_session_permanent():
-    """Set session timeout: 30 mins"""
+    """Set session timeout: 5 mins"""
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=30)
+    app.permanent_session_lifetime = timedelta(minutes=5)
 
 
 @app.route('/')
@@ -95,7 +97,7 @@ def create_gw():
 @app.route('/gateways/', methods=['GET'])
 @login_required
 def list_all_gws():
-    obj = Gateway.query.all()
+    obj = Gateway.query.order_by(Gateway.id).all()
     info = _wrapper_dict(obj, ['id', 'name', 'url', 'address', 'latitude', 'longitude', 'created_at'])
     print info
     return render_template('list.html', gateways=info, username=session.get('username'))
@@ -121,18 +123,69 @@ def delete_gw():
         if gw_str:
             gw_list = gw_str.split(',')
             for gw_id in gw_list:
-                gw = Gateway.get_or_404(gw_id)
-                gw.delete()
-            flash('Gateway {} was successfully deleted.'.format(str(gw_str)))
+                try:
+                    gw = Gateway.get_or_404(gw_id)
+                    gw.delete()
+                    flash('Gateway {} was successfully deleted.'.format(str(gw_str)))
+                except IntegrityError:
+                    flash('Unable to delete gateway {} because it has remaining user bindings. Plz check.'.format(str(gw_str)))
     return redirect(url_for('list_all_gws'), 302)
+
+
+@app.route('/gateway/<gateway_name>')
+def check_gw_exists(gateway_name=None):
+    if gateway_name:
+        exists = db.session.query(db.session.query(Gateway).filter_by(name=gateway_name).exists()).scalar()
+        if not exists:
+            return jsonify(result=True), 200
+    return jsonify(result=False), 200
 
 
 @app.route('/users/', methods=['GET'])
 @login_required
 def list_all_users():
-    obj = User.query.all()
+    obj = User.query.order_by(User.id).all()
     info = _wrapper_dict(obj, ['id', 'username', 'phone', 'gateway', 'created_at'])
     return render_template('list_users.html', users=info, username=session.get('username'))
+
+
+@app.route('/user/delete', methods=['POST', 'DELETE'])
+@login_required
+def delete_user():
+    if request.method == 'POST':
+        user_str = request.form.get('id', None)
+        print user_str
+        if user_str:
+            user_list = user_str.split(',')
+            print user_list
+            for uid in user_list:
+                u = User.get_or_404(int(uid))
+                u.delete()
+            flash('User {} was successfully deleted.'.format(str(user_str)))
+    return redirect(url_for('list_all_users'), 302)
+
+
+@app.route('/user/<username>')
+def check_user_exists(username=None):
+    if username:
+        exists = db.session.query(db.session.query(User).filter_by(username=username).exists()).scalar()
+        if not exists:
+            return jsonify(result=True), 200
+    return jsonify(result=False), 200
+
+
+USER_DATA = ['username', 'password', 'phone', 'gateway_id']
+@app.route('/user/create', methods=['POST'])
+@login_required
+def create_user():
+    post = {}
+    for key in USER_DATA:
+        post[key] = request.form.get(key, None)
+    user = User.create(**post)
+    print user
+    db.session.commit()
+    flash('The entry was successfully created.')
+    return redirect(url_for('list_all_users'), 302)
 
 
 @app.route('/user')
@@ -142,11 +195,13 @@ def show_user(uid=None):
     info = None
     if uid:
         user = User.get_or_404(uid)
-        info = _wrapper_dict(user, ['id', 'username', 'phone'])
-    return render_template('edit_user.html', user=info, username=session.get('username'))
+        info = _wrapper_dict(user, ['id', 'username', 'phone', 'gateway_id', 'gateway'])
+    obj = Gateway.query.all()
+    gws = _wrapper_dict(obj, ['id', 'name', 'url', 'address', 'latitude', 'longitude', 'created_at'])
+    return render_template('edit_user.html', user=info, gateways=gws, username=session.get('username'))
 
 
-USER_FORM_DATA = ['phone']
+USER_FORM_DATA = ['phone', 'gateway_id']
 @app.route('/user/update/<int:uid>', methods=['PUT', 'POST'])
 @login_required
 def update_user(uid):
@@ -324,10 +379,10 @@ def prediction():
 def load_weather():
     obj = Gateway.query.all()
     gws = _wrapper_dict(obj, ['id', 'name', 'url', 'address', 'latitude', 'longitude', 'created_at'])
-    gw_model = GatewayModel.query.all()
+    gw_model = GatewayModel.query.order_by(GatewayModel.id).all()
     ret = _wrapper_dict(gw_model, ['id', 'gateway_id', 'model_id'])
     mapping = {row['gateway_id']: row['model_id'] for row in ret}
-    print mapping
+    # print mapping
     dm = DataModel.query.all()
     models = _wrapper_dict(dm, ['id', 'name'])
     return render_template('load.html', username=session.get('username'), gateways=gws, mapping=mapping, models=models)

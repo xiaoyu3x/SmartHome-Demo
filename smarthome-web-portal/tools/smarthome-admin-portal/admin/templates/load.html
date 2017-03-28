@@ -23,7 +23,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for gw in gateways %}
+                        {% for gw in gateways | sort(attribute='id')%}
                             <tr>
                                 <td>{{ gw.id }}</td>
                                 <td class="mdl-data-table__cell--non-numeric">{{ gw.name }}</td>

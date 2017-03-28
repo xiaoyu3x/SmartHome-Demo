@@ -1,6 +1,15 @@
 {% extends 'index.html' %}
 
 {% block header %}
+    <style type="text/css">
+        #g_name:invalid, #g_name:focus:invalid {
+            color:red;
+        }
+
+        #g_name:valid {
+            color:rgba(0,0,0,.54);
+        }
+    </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9bBaFWuTJ0eh06pTB9kHYnSRHQmf1S7Q&v=3.exp&sensor=false"></script>
     <script src="{{ url_for('static', filename='js/sh-edit.js') }}"></script>
 {% endblock %}
@@ -84,15 +93,6 @@
             {%  else %}
                 <form action="{{ url_for('create_gw') }}" method="post" style="display:inline;">
                     <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
-{#                        <div class="mdl-cell mdl-cell--1-col" >#}
-{#                          <i class="material-icons md-36">toc</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col" >#}
-{#                          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input disabled class="mdl-textfield__input" type="text" pattern="[0-9]*(\.[0-9]+)?" name="id" id='g_id' value="{{ gateway.id }}">#}
-{#                            <label class="mdl-textfield__label" for="g_id">Gateway ID</label>#}
-{#                          </div>#}
-{#                        </div>#}
                         <div class="mdl-cell mdl-cell--1-col">
                             <i class="material-icons md-36">router</i>
                         </div>

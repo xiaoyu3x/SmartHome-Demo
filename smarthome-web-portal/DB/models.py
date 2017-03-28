@@ -544,6 +544,7 @@ class Resource(Base, HelperMixin, DefaultMixin):
     gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     path = Column(VARCHAR(60), nullable=False)
     tag = Column(VARCHAR(200), nullable=True)
+    observable = Column(Boolean)
     sensor_type = relationship('SensorType', backref='resource', lazy=False)
     sensor_group = relationship('SensorGroup', backref='resource', lazy=False)
 

@@ -173,10 +173,11 @@ class User(CRUDMixin, HelperMixin, db.Model):
     gateway = db.relation('Gateway', backref='user', lazy=False)
     created_at = db.Column(db.DateTime, default=utils.get_utc_now)
 
-    def __init__(self, username=None, password=None, gateway_id=None):
+    def __init__(self, username=None, password=None, gateway_id=None, phone=None):
         self.username = username
         self.password = password
         self.gateway_id = gateway_id
+        self.phone = phone
 
     def __repr__(self):
         return "<User(id='%s',username='%s',password='%s',gateway_id='%s',created_at='%s')>" % (

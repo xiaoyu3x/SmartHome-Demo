@@ -1,13 +1,24 @@
 {% extends 'index.html' %}
 
 {% block header %}
+    <style type="text/css">
+        #u_name:invalid, #u_name:focus:invalid {
+{#            color:red;#}
+        }
+
+        #u_name:valid {
+{#            color:rgba(0,0,0,.54);#}
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.2.0/sha.js"></script>
     <script src="{{ url_for('static', filename='js/sh-edit.js') }}"></script>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+
 {% endblock %}
 
 {% block content %}
     <section class="mdl-grid section--center">
-        <div class="mdl-card mdl-cell mdl-cell--8-col mdl-shadow--2dp" style="left:15%; top: 12%;">
+        <div class="mdl-card mdl-cell mdl-cell--8-col mdl-shadow--2dp" style="left:15%; top: 12%; display: block !important;">
             <div class="mdl-card__title mdl-card--expand">
                 <h4 style="margin-left: 4%">User</h4>
                 <hr>
@@ -36,11 +47,25 @@
                           </div>
                         </div>
                         <div class="mdl-cell mdl-cell--1-col">
+                            <i class="material-icons md-36">router</i>
+                        </div>
+                        <div class="mdl-cell mdl-cell--5-col">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                              <select id="gateway_id" name="gateway_id" class="mdl-textfield__input" required>
+                                <option value=""></option>
+                                  {% for gw in gateways %}
+                                        <option value="{{ gw.id }}" {% if user.gateway_id == gw.id %} selected {% endif %}>{{ gw.name }}</option>
+                                  {%  endfor %}
+                              </select>
+                              <label class="mdl-textfield__label" for="gateway_id">Gateway Name</label>
+                            </div>
+                        </div>
+                        <div class="mdl-cell mdl-cell--1-col">
                             <i class="material-icons md-36">smartphone</i>
                         </div>
                         <div class="mdl-cell mdl-cell--5-col">
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                            <input class="mdl-textfield__input" type="tel" name="phone" pattern= "^\+[1-9]{1}[0-9]{3,14}$" id='u_phone' value="{{ user.phone }}" required>
+                            <input class="mdl-textfield__input" type="tel" name="phone" pattern= "^\+[1-9]{1}[0-9]{3,14}$" id='u_phone' value="{{ user.phone }}">
                             <label class="mdl-textfield__label" for="u_phone">Cell Phone</label>
                             <span class="mdl-textfield__error">Enter a mobile number: +[country code][mobile]</span>
                           </div>
@@ -52,73 +77,70 @@
             </form>
             {#  new #}
             {%  else %}
-                 <div> not implemented yet</div>
-{#                <form action="{{ url_for('create_gw') }}" method="post" style="display:inline;">#}
-{#                    <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">#}
-{#                        <div class="mdl-cell mdl-cell--1-col" >#}
-{#                          <i class="material-icons md-36">toc</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col" >#}
-{#                          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input disabled class="mdl-textfield__input" type="text" pattern="[0-9]*(\.[0-9]+)?" name="id" id='g_id' value="{{ gateway.id }}">#}
-{#                            <label class="mdl-textfield__label" for="g_id">Gateway ID</label>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--1-col">#}
-{#                            <i class="material-icons md-36">router</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col" >#}
-{#                          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input class="mdl-textfield__input" type="text" name="name" pattern="[a-zA-Z0-9 ]+" id='g_name' >#}
-{#                            <label class="mdl-textfield__label" for="g_name">Gateway Name</label>#}
-{#                              <span class="mdl-textfield__error">Letters and digits only</span>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--1-col">#}
-{#                            <i class="material-icons md-36">link</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col">#}
-{#                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input class="mdl-textfield__input" type="url" name="url" id='g_url' >#}
-{#                            <label class="mdl-textfield__label" for="g_url">Gateway Url</label>#}
-{#                            <span class="mdl-textfield__error">Legal URL only</span>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--1-col">#}
-{#                            <i class="material-icons md-36">location_on</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col">#}
-{#                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input class="mdl-textfield__input" type="text" name="address" id='g_address' pattern="([a-zA-Z0-9]| |.|,|@|#|\$|%|&)+" >#}
-{#                            <label class="mdl-textfield__label" for="g_address">Address</label>#}
-{#                                <span class="mdl-textfield__error">Letters, digits and spaces only</span>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--1-col">#}
-{#                            <i class="material-icons md-36">my_location</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col">#}
-{#                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input class="mdl-textfield__input" type="text" name="latitude" id='g_lat' pattern="-?[0-9]*(\.[0-9]+)?" >#}
-{#                            <label class="mdl-textfield__label" for="g_lat">Latitude</label>#}
-{#                                <span class="mdl-textfield__error">Digits only</span>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--1-col">#}
-{#                            <i class="material-icons md-36">my_location</i>#}
-{#                        </div>#}
-{#                        <div class="mdl-cell mdl-cell--5-col">#}
-{#                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">#}
-{#                            <input class="mdl-textfield__input" type="text" name="longitude" id='g_lon' pattern="-?[0-9]*(\.[0-9]+)?" >#}
-{#                            <label class="mdl-textfield__label" for="g_lon">Longitude</label>#}
-{#                                <span class="mdl-textfield__error">Digits only</span>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                <div class="mdl-card__actions" style="margin-left: 3%;">#}
-{#                    <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">ADD</a>#}
-{#                </div>#}
-{#            </form>#}
+                <form action="{{ url_for('create_user') }}" method="post" style="display:inline;" onsubmit="return hashPassword(this);">
+                    <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                        <div class="mdl-cell mdl-cell--1-col">
+                            <i class="material-icons md-36">face</i>
+                        </div>
+                        <div class="mdl-cell mdl-cell--5-col" >
+                          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="text" name="username" pattern="[a-zA-Z0-9 ]+" id='u_name'>
+                            <label class="mdl-textfield__label" for="u_name">User Name</label>
+                              <span class="mdl-textfield__error">Letters, digits and space only</span>
+                          </div>
+                        </div>
+                        <div class="mdl-cell mdl-cell--1-col">
+                            <i class="material-icons md-36">vpn_key</i>
+                        </div>
+                        <div class="mdl-cell mdl-cell--5-col">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input pwd" type="password" name="password" id='u_password' pattern="^(?=.*[A-Za-z])(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$">
+{#                            <div>#}
+{#                                <button><i class="material-icons">remove_red_eye</i></button>#}
+{#                            </div>#}
+                                <label class="mdl-textfield__label" for="u_password">Password</label>
+                                <span class="mdl-textfield__error">Minimum 8 characters at least 1 Alphabet and 1 Special Character</span>
+                          </div>
+                        </div>
+                        <div class="mdl-cell mdl-cell--1-col">
+                            <i class="material-icons md-36">vpn_key</i>
+                        </div>
+                        <div class="mdl-cell mdl-cell--5-col">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input pwd" type="password" name="password2" id='u_password2' pattern="^(?=.*[A-Za-z])(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$">
+                            <label class="mdl-textfield__label" for="u_password2">Confirm Password</label>
+                                <span class="mdl-textfield__error">Minimum 8 characters at least 1 Alphabet and 1 Special Character</span>
+                          </div>
+                        </div>
+                        <div class="mdl-cell mdl-cell--1-col">
+                            <i class="material-icons md-36">router</i>
+                        </div>
+                        <div class="mdl-cell mdl-cell--5-col">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                              <select id="gateway_id" name="gateway_id" class="mdl-textfield__input">
+                                <option value=""></option>
+                                  {% for gw in gateways %}
+                                        <option value="{{ gw.id }}" {% if user.gateway_id == gw.id %} selected {% endif %}>{{ gw.name }}</option>
+                                  {%  endfor %}
+                              </select>
+                              <label class="mdl-textfield__label" for="gateway_id">Gateway Name</label>
+                            </div>
+                        </div>
+                        <div class="mdl-cell mdl-cell--1-col">
+                            <i class="material-icons md-36">smartphone</i>
+                        </div>
+                        <div class="mdl-cell mdl-cell--5-col">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="tel" name="phone" pattern= "^\+[1-9]{1}[0-9]{3,14}$" id='u_phone' value="{{ user.phone }}">
+                            <label class="mdl-textfield__label" for="u_phone">Cell Phone</label>
+                            <span class="mdl-textfield__error">Enter a mobile number: +[country code][mobile]</span>
+                          </div>
+                        </div>
+                    </div>
+                <div class="mdl-card__actions" style="margin-left: 3%;">
+                    <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">ADD</a>
+                </div>
+            </form>
             {%  endif %}
         </div>
     </section>

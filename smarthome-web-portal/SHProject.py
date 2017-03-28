@@ -337,7 +337,9 @@ def update_sensor_attr():
 @login_required
 def get_geo_location():
     """Get the Geolocation of the current account"""
-    location = gateway.get_geo(gateway_id=session.get('gateway_id'))
+    location = gateway.get_gateway(gateway_id=session.get('gateway_id'))
+    # remove unnecessary keys
+    location.pop('url', None)
     return jsonify({'geo': location}), 201
 
 
@@ -484,7 +486,9 @@ def list_sensor_groups():
 @app.route('/get_gateways')
 def list_gateways():
     # todo: need some security mechanism to protect the data
-    gateways = gateway.list_gateways(status=True)
+    # list all registered gateways
+    gateways = gateway.list_gateways()
+
     keyword = config.get_map_keyword()
     types = config.get_map_types()
     return jsonify({'gateways': gateways,
@@ -674,7 +678,7 @@ def get_data_model():
                 admin_uri[0] = "smarthome-adminportal"
                 admin_uri = ".".join(admin_uri)
         else:
-            admin_uri = "http://localhost:4000"
+            admin_uri = "localhost:4000"
     emit('my model resp', "http://" + admin_uri + "/images/model/" + data_model['data_model']['name'] + ".png" if data_model and admin_uri else data_model)
 
 
