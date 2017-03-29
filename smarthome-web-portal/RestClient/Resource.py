@@ -53,14 +53,18 @@ class Resource(object):
                 try:
                     href = str(item['links'][0]['href'])
                     rt = str(item['links'][0]['rt'])
-                    bm = item['links'][0]['p']['bm']
-                    secure = item['links'][0]['p']['secure']
+
                     # by default, obs is True
                     observable = True
-                    if bm == 1 and not secure:
-                        observable = False
-                    elif bm == 3 and not secure:
-                        observable = True
+                    # check whether policy param is supported
+                    if item['links'][0].get('p'):
+                        bm = item['links'][0]['p']['bm']
+                        secure = item['links'][0]['p']['secure']
+
+                        if bm == 1 and not secure:
+                            observable = False
+                        elif bm == 3 and not secure:
+                            observable = True
 
                     if rt and not rt.startswith("oic.wk") and href \
                             and (href.startswith("/a/") or href.startswith("/brillo/")):

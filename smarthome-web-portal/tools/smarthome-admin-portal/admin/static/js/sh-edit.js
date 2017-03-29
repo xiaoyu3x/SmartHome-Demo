@@ -9,21 +9,22 @@ $(function() {
                 var isValid = true;
                 var form = $(this).closest('form');
                 if(form[0].checkValidity()) {
-                    if($(this).text() == 'ADD'){
-                        $("form :input").each(function(){
-                            var input = $(this); // This is the jquery object of the input, do what you will
-                            if(input.val().length == 0 && input.attr('name') != "phone"){
+                    $("form :input").each(function(){
+                        var input = $(this); // This is the jquery object of the input, do what you will
+                        if($(this).text() == 'ADD') {
+                            if (input.val().length == 0 && input.attr('name') != "phone") {
                                 isEmpty = true;
                                 createSnackbar(input.attr('name') + " cannot be empty.", "Dismiss");
                             }
-                            if(input.parent().hasClass('is-invalid')){
-                                isValid = false;
-                            }
-                        });
-                    }
-                    if(!isEmpty && isValid)
-                        form.submit();
+                        }
+                        if(input.parent().hasClass('is-invalid')){
+                            isValid = false;
+                        }
+                    });
                 }
+
+                if(!isEmpty && isValid)
+                    form.submit();
                 return false;
             });
 
@@ -66,15 +67,20 @@ $(function() {
                 e.preventDefault();
             });
 
+            var lastVal;
+            $("#u_name").focus(function () {
+                 lastVal = $(this).val();
+
+            });
+
             // check whether username exists
             $("#u_name").on('blur', function () {
                 var name = $.trim($(this).val());
-                if(name.length > 0){
+                if(name.length > 0 & lastVal != $(this).val()){
                     $.get("/user/" + name, function(data) {
                         if (!data.result) {
                             createSnackbar("The username " + name + " already exists.", "Dismiss");
                             $("#u_name").parent().addClass('is-invalid');
-                            // $("#u_name")[0].setCustomValidity("The username \"" + name + "\" already exists.");
                         }
                         else{
                             $("#u_name")[0].setCustomValidity("");

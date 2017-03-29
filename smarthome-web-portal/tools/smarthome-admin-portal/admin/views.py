@@ -201,7 +201,7 @@ def show_user(uid=None):
     return render_template('edit_user.html', user=info, gateways=gws, username=session.get('username'))
 
 
-USER_FORM_DATA = ['phone', 'gateway_id']
+USER_FORM_DATA = ['phone', 'gateway_id', 'username']
 @app.route('/user/update/<int:uid>', methods=['PUT', 'POST'])
 @login_required
 def update_user(uid):
