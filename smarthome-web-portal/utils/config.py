@@ -51,9 +51,9 @@ class Configuration(SingletonMixin):
         if vcap_config:
             decoded_config = json.loads(vcap_config)
             for key, value in decoded_config.iteritems():
-                if key.startswith('mysql56'):
+                if key.startswith('p-mysql'):
                     self.mysql_creds = decoded_config[key][0]['credentials']
-                elif key.startswith('rabbitmq33'):
+                elif key.startswith('p-rabbitmq'):
                     self.rabbitmq_creds = decoded_config[key][0]['credentials']
 
     @staticmethod
@@ -67,7 +67,8 @@ class Configuration(SingletonMixin):
 
     def get_connection_url(self):
         if self.mysql_creds:
-            return "{}?charset=utf8".format(str(self.mysql_creds['uri']))
+            uri = str(self.mysql_creds['uri']).split("?")
+            return "{}?charset=utf8".format(uri[0])
         else:
             return self._get_connection_url_from_file()
 

@@ -311,8 +311,8 @@ def create_model():
 
     # write to DB
     algorithm_type = "Linear"
-    serialization = model_name + ".pkl"
-    description = "This is a model with Linear , using 2012_shanghai dataset"
+    serialization = 0
+    description = "This is a model with Linear model"
     status = "1"
 
     dm = DataModel(dataset_id, model_name, algorithm_type, serialization, description, status)
