@@ -1,7 +1,7 @@
 /**
  * Scripts for the Now page
  */
-$(function() {
+$(function () {
     //Number of alert cards displayed on NOW page
     var alert_card_number = 0;
 
@@ -11,50 +11,50 @@ $(function() {
     // check whether to update the sensor group list
     var dropdown_need_update = false;
 
-	$.sh.now = {
-		register_actions: function(){
-			console.log('sh-now: register_actions');
-			$("a:contains('DISMISS')").on("click", function(){
-				//find parent div
-				dismiss(this);
-			});
+    $.sh.now = {
+        register_actions: function () {
+            console.log('sh-now: register_actions');
+            $("a:contains('DISMISS')").on("click", function () {
+                //find parent div
+                dismiss(this);
+            });
 
-			$("label.mdl-icon-toggle").on('click', function(e) {
-				e.preventDefault();
-				e.stopImmediatePropagation();
-				var unit = $(this).children("span:first").html();
-				var temp = $(this).parent().prev().find("h1").html();
-                if(temp.length == 0) return;
-				if (unit == "C") {
-					unit = "F";
-					temp = convertToF(temp, 0);
-				}
-				else if (unit == "F") {
-					unit = "C";
-					temp = convertToC(temp, 0);
-				}
-				console.log('unit: ' + unit + ' temp: '+ temp);
-				$(this).children("span:first").html(unit);
-				$(this).parent().prev().find("h1").html(temp + '°');
-			});
+            $("label.mdl-icon-toggle").on('click', function (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var unit = $(this).children("span:first").html();
+                var temp = $(this).parent().prev().find("h1").html();
+                if (temp.length == 0) return;
+                if (unit == "C") {
+                    unit = "F";
+                    temp = convertToF(temp, 0);
+                }
+                else if (unit == "F") {
+                    unit = "C";
+                    temp = convertToC(temp, 0);
+                }
+                console.log('unit: ' + unit + ' temp: ' + temp);
+                $(this).children("span:first").html(unit);
+                $(this).parent().prev().find("h1").html(temp + '°');
+            });
 
-            $("#data-container, #alert-container").on('mouseover mouseout', '.mdl-card__title', function(e){
+            $("#data-container, #alert-container").on('mouseover mouseout', '.mdl-card__title', function (e) {
                 // show edit icon on mouse over
-                if(e.type == "mouseover")
+                if (e.type == "mouseover")
                     $(this).children(".edit").show();
                 else
                     $(this).children(".edit").hide();
             });
 
-            $("#status-container").on('mouseover mouseout', '.mdl-card__supporting-text .mdl-cell', function(e) {
+            $("#status-container").on('mouseover mouseout', '.mdl-card__supporting-text .mdl-cell', function (e) {
                 // show edit icon on mouse over
-                if(e.type == "mouseover")
+                if (e.type == "mouseover")
                     $(this).children(".edit").show();
                 else
                     $(this).children(".edit").hide();
             });
 
-            $("#alert-container, #status-container, #data-container").on('click', '.edit', function(event) {
+            $("#alert-container, #status-container, #data-container").off('click', '.edit').on('click', '.edit', function (event) {
                 // show text field
                 var text = $(this).prev().text();
 
@@ -63,23 +63,23 @@ $(function() {
                 $(this).prev().text('').append(input);
                 input.select();
 
-                input.keydown(function() {
-                    var title=$(this).parent().data("title");
-                    var field=this;
+                input.keydown(function () {
+                    var title = $(this).parent().data("title");
+                    var field = this;
                     setTimeout(function () {
-                        if(field.value.indexOf(title) !== 0) {
+                        if (field.value.indexOf(title) !== 0) {
                             $(field).val(title);
                         }
                     }, 1);
                 });
 
-                input.on("change focus blur", function() {
-                    var prefix=$(this).parent().data("title");
+                input.on("change focus blur", function () {
+                    var prefix = $(this).parent().data("title");
                     var text = $(this).val();
                     var oldVal = $(this).data("initial");
                     var titleObj = $(this).parent();
                     var title = "Only alpha, digits, space, underscore, hyphen and dot are allowed.";
-                    if(oldVal == text) {
+                    if (oldVal == text) {
                         $(this).parent().text(text);
                         $(this).remove();
                         return;
@@ -99,13 +99,13 @@ $(function() {
                     // get resource id from different sensor types
                     var resource_id;
                     var sensor_type = "";
-                    if($(this).closest(".demo-card-event").length > 0) {
+                    if ($(this).closest(".demo-card-event").length > 0) {
                         var res_id = $(this).closest(".demo-card-event").attr("id");
                         resource_id = res_id.split('-')[1];
                     }
-                    else if($(this).closest(".status-card").length > 0)
-                        resource_id  = $(this).closest(".mdl-card__supporting-text").find(".mdl-card__menu").attr("data-ID");
-                    else if($(this).closest(".sensor-card").length > 0 ) {
+                    else if ($(this).closest(".status-card").length > 0)
+                        resource_id = $(this).closest(".mdl-card__supporting-text").find(".mdl-card__menu").attr("data-ID");
+                    else if ($(this).closest(".sensor-card").length > 0) {
                         resource_id = $(this).closest(".sensor-card").find("h1").attr("data-ID");
                         sensor_type = $(this).closest(".sensor-card").find("h1").attr("data-type");
                     }
@@ -117,8 +117,8 @@ $(function() {
                 });
             });
 
-            $("#data-container, #alert-container, #status-container").on('click', 'li', function(e) {
-                if($(e.target).text().indexOf('Add Group') > -1 ) {
+            $("#data-container, #alert-container, #status-container").on('click', 'li', function (e) {
+                if ($(e.target).text().indexOf('Add Group') > -1) {
                     showDialog({
                         title: 'Add New Group',
                         content: '<table>\
@@ -139,22 +139,22 @@ $(function() {
                             title: 'Submit',
                             onClick: function () {
                                 var textbox = $("#orrsDiag input:required");
-                                if($("#orrsDiag input:valid").length > 1) {
+                                if ($("#orrsDiag input:valid").length > 1) {
                                     var name = textbox.val();
                                     var color = $("#color-picker").spectrum('get').toHexString();
-                                    if(getCookie('gateway_id')) {
+                                    if (getCookie('gateway_id')) {
                                         var data = {
                                             'name': name,
                                             'color': color,
                                             'gateway_id': parseInt(getCookie('gateway_id')),
                                         };
-                                        $.ajax ({
+                                        $.ajax({
                                             url: "/add_sensor_group",
                                             type: "POST",
                                             data: JSON.stringify(data),
                                             dataType: "json",
                                             contentType: "application/json; charset=utf-8",
-                                            success: function(data) {
+                                            success: function (data) {
                                                 $.sh.now.append_sensor_group(data);
                                                 createSnackbar("Sensor group '" + data.name + "' is added.", 'Dismiss');
                                             }
@@ -167,15 +167,15 @@ $(function() {
                         }
                     });
                     $('#color-picker').spectrum({
-                            showPaletteOnly: true,
-                            showPalette:true,
-                            hideAfterPaletteSelect:true,
-                            color: 'blanchedalmond',
-                            palette: [
-                                ['black', 'white', 'blanchedalmond',
+                        showPaletteOnly: true,
+                        showPalette: true,
+                        hideAfterPaletteSelect: true,
+                        color: 'blanchedalmond',
+                        palette: [
+                            ['black', 'white', 'blanchedalmond',
                                 'rgb(255, 128, 0);', 'hsv 100 70 50'],
-                                ['red', 'yellow', 'green', 'blue', 'violet']
-                            ],
+                            ['red', 'yellow', 'green', 'blue', 'violet']
+                        ],
                     });
                 }
                 else {
@@ -203,19 +203,19 @@ $(function() {
             });
 
             // update brillo rgbled
-            $("#brillo-container").on('change', ".basic", function(e, color){
+            $("#brillo-container").on('change', ".basic", function (e, color) {
                 /* data format :
-                { "rgbValue" : [255,255,255] }
-                */
+                 { "rgbValue" : [255,255,255] }
+                 */
                 var value = {
                     'rgbValue': convertToStr(color)
                 };
                 // console.log("res id:" + $(this).data('id'));
                 // console.log("value: " + value);
-                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                update_sensor_status($(this).data('id'), value, $(this), function (data) {
                     console.log(data);
                     var ret = data.status;
-                    if(ret) {
+                    if (ret) {
                         console.log("Brillo rgbled color is updated.");
                         createSnackbar('Brillo rgbled color is updated.', 'Dismiss');
                     }
@@ -223,34 +223,34 @@ $(function() {
             });
 
             // update brillo playlist
-            $("#brillo-container").on('change', "select", function(){
+            $("#brillo-container").on('change', "select", function () {
                 /* data format :
-                { "select" : 0 }
-                */
+                 { "select" : 0 }
+                 */
                 var value = {
                     "select": parseInt($(this).val())
                 };
                 // console.log("res id:" + $(this).parent().data('id'));
                 // console.log("value: " + value);
-                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                update_sensor_status($(this).data('id'), value, $(this), function (data) {
                     var ret = data.status;
-                    if(ret) {
+                    if (ret) {
                         createSnackbar('Brillo mp3player playlist is updated.', 'Dismiss');
                     }
                 });
             });
 
             // update brillo play/pause
-            $("#brillo-container").on('click', "button", function(){
+            $("#brillo-container").on('click', "button", function () {
                 /* data format :
-                { "state" : "Paused" }
-                */
+                 { "state" : "Paused" }
+                 */
                 var buttonId = $(this).attr('id');
                 var resId = buttonId.split('-').pop();
                 var playlist = $(this).parent().find("select");
                 var value;
-                if(buttonId.indexOf("brillo-pause") == 0){
-                    if(playlist.val()) {
+                if (buttonId.indexOf("brillo-pause") == 0) {
+                    if (playlist.val()) {
                         if ($(this).children("i").html() == "play_arrow")
                             value = {
                                 "state": "Playing"
@@ -260,26 +260,26 @@ $(function() {
                                 "state": "Paused"
                             };
                     }
-                    else{
+                    else {
                         createSnackbar('Brillo mp3player has no song selected.', 'Dismiss');
                         return false;
                     }
                 }
                 else if (buttonId.indexOf("brillo-clear") == 0) {
-                    if(playlist.val()) {
+                    if (playlist.val()) {
                         value = {
                             "state": "Idle"
                         }
                     }
-                    else{
+                    else {
                         createSnackbar('Brillo mp3player is already in Idle state.', 'Dismiss');
                         return false;
                     }
                 }
-                if(value) {
-                    update_sensor_status(parseInt(resId), value, null, function(data){
+                if (value) {
+                    update_sensor_status(parseInt(resId), value, null, function (data) {
                         var ret = data.status;
-                        if(ret) {
+                        if (ret) {
                             createSnackbar('Brillo mp3player state is updated.', 'Dismiss');
                         }
                     });
@@ -287,62 +287,62 @@ $(function() {
             });
 
             // update brillo brightness
-            $("#brillo-container").on('change', ".brightness", function(){
+            $("#brillo-container").on('change', ".brightness", function () {
                 /* data format :
-                { "brightness" : 10 }
-                */
+                 { "brightness" : 10 }
+                 */
                 var value = {
                     "brightness": parseInt($(this).val())
                 };
                 // console.log("res id:" + $(this).parent().data('id'));
                 // console.log("value: " + value);
-                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                update_sensor_status($(this).data('id'), value, $(this), function (data) {
                     var ret = data.status;
-                    if(ret) {
+                    if (ret) {
                         createSnackbar('Brillo mp3player brightness is updated.', 'Dismiss');
                     }
                 });
             });
 
             // update brillo volume
-            $("#brillo-container").on('change', ".volume", function(){
+            $("#brillo-container").on('change', ".volume", function () {
                 /* data format :
-                { "volume" : 10 }
-                */
+                 { "volume" : 10 }
+                 */
                 var value = {
                     "volume": parseInt($(this).val())
                 };
                 // console.log("res id:" + $(this).parent().data('id'));
                 // console.log("value: " + value);
-                update_sensor_status($(this).data('id'), value, $(this), function(data){
+                update_sensor_status($(this).data('id'), value, $(this), function (data) {
                     var ret = data.status;
-                    if(ret) {
+                    if (ret) {
                         createSnackbar('Brillo mp3player volume is updated.', 'Dismiss');
                     }
                 });
             });
 
             // update brillo volume mute
-            $("#brillo-container").on('click', "label", function(e){
+            $("#brillo-container").on('click', "label", function (e) {
                 /* data format :
-                { "mute" : true }
-                */
+                 { "mute" : true }
+                 */
                 var switchIcon = $(this).children("input");
                 var value = {
                     "mute": !switchIcon[0].checked
                 };
                 // console.log("res id:" + $(this).parent().data('id'));
                 // console.log("value: " + value);
-                update_sensor_status(switchIcon.data('id'), value, null, function(data){
+                update_sensor_status(switchIcon.data('id'), value, null, function (data) {
                     var ret = data.status;
-                    if(ret) {
+                    if (ret) {
                         createSnackbar('Brillo mp3player mute status is updated', 'Dismiss');
                     }
                 });
                 return false;
             });
 
-            $("#generic-container").on('click', '.edit', function() {
+            $("#generic-container").on('click', '.edit', function () {
                 // show text field
                 var text = $(this).closest("td").prev().text();
                 var tbody = $(this).closest("tbody");
@@ -351,18 +351,18 @@ $(function() {
 
                 // calculate div top
                 var top = pos.top - tbody.position().top;
-                if(row.index() % 2 !== 0 ){
-                		top = top - row.height();
+                if (row.index() % 2 !== 0) {
+                    top = top - row.height();
                 }
-                if(row.index === tbody.children('tr').length - 1){
-                		top = top - row.height();
+                if (row.index === tbody.children('tr').length - 1) {
+                    top = top - row.height();
                 }
 
                 var div = document.createElement('div');
                 var DATA_TYPE = ['-----', 'int', 'float', 'string', 'bool', 'null', 'array', 'dict'];
                 var options = '';
-                $.each(DATA_TYPE, function(indx, elem){
-                    options += String.format('<option value={0}>{1}</option>',indx, elem);
+                $.each(DATA_TYPE, function (indx, elem) {
+                    options += String.format('<option value={0}>{1}</option>', indx, elem);
                 });
 
                 $(div).addClass("overlay")
@@ -387,7 +387,7 @@ $(function() {
                     e.stopPropagation();
                 });
 
-                $(div).children(".update").click(function(){
+                $(div).children(".update").click(function () {
                     // input validation
                     var text = $(this).parent().find("input").val();
                     var input = $(this).parent().find("input");
@@ -401,23 +401,23 @@ $(function() {
                     input[0].setCustomValidity("");
                     select[0].setCustomValidity("");
 
-                    if(text.length == 0) {
+                    if (text.length == 0) {
                         input[0].setCustomValidity("Value is empty.");
                         input.select();
                         return;
                     }
 
-                    switch(select[0].value){
+                    switch (select[0].value) {
                         case "0":
                             select.select();
                             select[0].setCustomValidity("Data type is empty.");
                             return;
                         case "1":
                             // int
-                            if($.isNumeric(text)){
+                            if ($.isNumeric(text)) {
                                 data[key] = parseInt(text);
                             }
-                            else{
+                            else {
                                 input[0].setCustomValidity("Value and data type mismatches.");
                                 input.select();
                                 return;
@@ -425,7 +425,7 @@ $(function() {
                             break;
                         case "2":
                             // float
-                            if($.isNumeric(text)){
+                            if ($.isNumeric(text)) {
                                 data[key] = parseFloat(text).toFixed(2);
                             }
                             else {
@@ -449,7 +449,7 @@ $(function() {
                         case "4":
                             // bool
                             var bool = JSON.parse(text);
-                            if(bool !== true && bool !== false) {
+                            if (bool !== true && bool !== false) {
                                 input[0].setCustomValidity("Value and data type mismatches.");
                                 input.select();
                                 return;
@@ -460,7 +460,7 @@ $(function() {
                         case "5":
                             // null
                             var nul = JSON.parse(text);
-                            if(nul !== null) {
+                            if (nul !== null) {
                                 input[0].setCustomValidity("Value and data type mismatches.");
                                 input.select();
                                 return;
@@ -483,47 +483,47 @@ $(function() {
                     }
 
                     console.log("the post json data: " + JSON.stringify(data));
-                    update_sensor_status(resource_id, data, null, function(data){
+                    update_sensor_status(resource_id, data, null, function (data) {
                         createSnackbar('Resource ' + resource_id + '\'s property is updated.', 'Dismiss');
                         overlay.remove();
                     });
                 });
 
-                $(div).children(".cancel").click(function(){
+                $(div).children(".cancel").click(function () {
                     $(this).parent().remove();
                 });
 
-                $(div).children("select, input").on("change", function(){
+                $(div).children("select, input").on("change", function () {
                     $(this)[0].setCustomValidity("");
                 });
 
                 $(div).find("input").select();
             });
         },
-        _update_sensor_group: function(value, color, buttonElem) {
+        _update_sensor_group: function (value, color, buttonElem) {
             $.ajax({
                 type: "POST",
                 url: "/update_sensor_attr",
                 contentType: 'application/json',
                 data: JSON.stringify(value),
-                success: function(data) {
+                success: function (data) {
                     var resource_id = data.resource_id;
                     if (resource_id) {
                         buttonElem.css('background', color);
                         createSnackbar('Sensor group for resource ' + resource_id + ' is updated.', 'Dismiss');
                     }
                 }
-            }).done(function() {
-            }).fail(function(jqXHR, textStatus, errorThrown){
+            }).done(function () {
+            }).fail(function (jqXHR, textStatus, errorThrown) {
                 console.error("Failed to update sensor group: " + errorThrown);
                 createSnackbar("Server error: " + errorThrown, 'Dismiss');
             });
         },
-        update_sensor_title: function(resource_id, title, sensor_type, oldVal, titleObj) {
-		    if(sensor_type.length > 0)
-		        sensor_type = sensor_type.toLowerCase();
-		    $.ajax({
-		        type: "POST",
+        update_sensor_title: function (resource_id, title, sensor_type, oldVal, titleObj) {
+            if (sensor_type.length > 0)
+                sensor_type = sensor_type.toLowerCase();
+            $.ajax({
+                type: "POST",
                 url: "/update_sensor_attr",
                 contentType: 'application/json',
                 data: JSON.stringify({
@@ -531,7 +531,7 @@ $(function() {
                     "type": sensor_type.toLowerCase(),
                     "value": {'tag': title},
                 }),
-                success: function(data) {
+                success: function (data) {
                     // console.log(data);
                     // data = JSON.parse(data);
                     var resource_id = data.resource_id;
@@ -539,16 +539,16 @@ $(function() {
                         createSnackbar('Sensor ' + resource_id + ' is updated.', 'Dismiss');
                     }
                 }
-            }).done(function() {
-            }).fail(function(jqXHR, textStatus, errorThrown){
+            }).done(function () {
+            }).fail(function (jqXHR, textStatus, errorThrown) {
                 console.error("Failed to update status " + errorThrown);
                 createSnackbar("Server error: " + errorThrown, 'Dismiss');
                 //change the title back if fail
                 $(titleObj).text(oldVal);
             });
-		},
-        update_sensor_group: function(){
-		    if(dropdown_need_update) {
+        },
+        update_sensor_group: function () {
+            if (dropdown_need_update) {
                 $.getJSON("/get_groups", function (data) {
                     var grps = data.sensor_groups;
                     $(".sensor-card ul, .demo-card-event ul, .status-card ul").each(function () {
@@ -577,12 +577,12 @@ $(function() {
                     });
                     dropdown_need_update = false;
                 }).fail(function (jqXHR, textStatus, errorThrown) {
-                        console.error("Failed to update status " + errorThrown);
+                    console.error("Failed to update status " + errorThrown);
                 });
             }
         },
-        append_sensor_group: function(data) {
-            $(".sensor-card ul, .demo-card-event ul, .status-card ul").each(function() {
+        append_sensor_group: function (data) {
+            $(".sensor-card ul, .demo-card-event ul, .status-card ul").each(function () {
                 var len = $(this).children("li").length;
                 var liElem = $(this).children("li:eq(" + (len - 2) + ")");
                 $('<li/>').addClass('mdl-menu__item')
@@ -592,27 +592,27 @@ $(function() {
                     .insertAfter(liElem);
             });
         },
-        clear_data: function(data) {
-		    var types = ["status", "data"];
-		    var sensor_list = [];
-            types.forEach(function(type) {
+        clear_data: function (data) {
+            var types = ["status", "data"];
+            var sensor_list = [];
+            types.forEach(function (type) {
                 $.each(data[type], function (key, value_list) {
                     value_list.forEach(function (value) {
                         var id = value.resource_id.toString();
-                        if(!sensor_list.includes(id))
+                        if (!sensor_list.includes(id))
                             sensor_list.push(id);
                     });
                 });
             });
             $('.sensor-card h1').each(function () {
-                    var ID = $(this).attr('data-ID');
-                    if (!sensor_list.includes(ID)){
-                        // remove the sensor card
-                        console.log('remove sensor:' + ID);
-                        $(this).closest(".sensor-card").remove();
-                    }
+                var ID = $(this).attr('data-ID');
+                if (!sensor_list.includes(ID)) {
+                    // remove the sensor card
+                    console.log('remove sensor:' + ID);
+                    $(this).closest(".sensor-card").remove();
+                }
             });
-            $('.status-card .mdl-card__menu').each(function (){
+            $('.status-card .mdl-card__menu').each(function () {
                 var ID = $(this).attr('data-ID');
                 if (!sensor_list.includes(ID)) {
                     $(this).closest(".status-card").remove();
@@ -621,70 +621,69 @@ $(function() {
             $.sh.now.clear_brillo_data(data);
             $.sh.now.clear_generic_data(data);
         },
-        clear_brillo_data: function(data) {
-            if(Object.keys(data["brillo"]).length > 0){
+        clear_brillo_data: function (data) {
+            if (Object.keys(data["brillo"]).length > 0) {
                 $('#brillo-container').show();
                 var sensor_list = Object.keys(data["brillo"]);
-                $('#brillo-container .mdl-card__supporting-text').each(function(){
+                $('#brillo-container .mdl-card__supporting-text').each(function () {
                     var ID = $(this).attr('id');
                     if (!sensor_list.includes(ID)) {
                         $(this).parent(".demo-card-data").remove();
                     }
                 });
             }
-            else{
+            else {
                 $('#brillo-container').hide();
             }
         },
-        clear_generic_data:function(data) {
-            if(Object.keys(data["data"]).length > 0)
+        clear_generic_data: function (data) {
+            if (Object.keys(data["data"]).length > 0)
                 $('#data-container').show();
             else
                 $('#data-container').hide();
             var g_list = Object.keys(data["generic"]);
-            $('#generic-container .mdl-card__supporting-text table').each(function(){
-                    var ID = $(this).data('id') + '';
-                    if (!g_list.includes(ID)) {
-                        $(this).closest(".generic").remove();
-                    }
+            $('#generic-container .mdl-card__supporting-text table').each(function () {
+                var ID = $(this).data('id') + '';
+                if (!g_list.includes(ID)) {
+                    $(this).closest(".generic").remove();
+                }
             });
         },
-        dismiss_alert_card: function(obj){
+        dismiss_alert_card: function (obj) {
             dismiss(obj);
             alert_card_number--;
             console.log("number of alert cards " + alert_card_number);
-            if(alert_card_number <= 0)
-            {
+            if (alert_card_number <= 0) {
                 $("#alert-status-title-quiet").show();
                 $("#alert-status-title-alerts").hide();
             }
         },
-		update_car_alert: function(data, show_uuid) {
+        update_car_alert: function (data, show_uuid) {
             var uuid_txt = "";
             var time;
-            if(data.value.length == 0 ) return;
+            if (data.value.length == 0) return;
             time = getTime(data.value, utc_offset, timezone);
-            if(show_uuid)
+            if (show_uuid)
                 uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
             var title = "ELECTRIC CAR ";
             var tag = title;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
             var card_id = "res-" + data.resource_id;
 
-			if($("#" + card_id).length > 0){
-				//find the car card and update time
-                if(time) {
+            if ($("#" + card_id).length > 0) {
+                //find the car card and update time
+                if (time) {
                     var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Charge')");
                     txt.text("Charge car in time for tomorrow " + time);
                 }
                 var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
-			}
-			else {
-					$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
+            }
+            else {
+                $("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
 				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
                     </button>\
@@ -712,34 +711,34 @@ $(function() {
 
                 alert_card_number++;
                 dropdown_need_update = true;
-			}
-		},
-		update_motion_alert: function(data, show_uuid){
+            }
+        },
+        update_motion_alert: function (data, show_uuid) {
             var uuid_txt = "";
             var time;
-            if(data.value.length == 0 ) return;
+            if (data.value.length == 0) return;
             time = getTime(data.value, utc_offset, timezone);
-            if(show_uuid)
+            if (show_uuid)
                 uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
             var title = "MOTION SENSOR";
             var tag = title;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
             var card_id = "res-" + data.resource_id;
 
-			if($("#" + card_id).length > 0){
-				//find the motion card and update time
-                if(time) {
+            if ($("#" + card_id).length > 0) {
+                //find the motion card and update time
+                if (time) {
                     var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Someone')");
                     txt.text("Someone is at the front door " + time);
                 }
                 var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
-			}
-			else {
-					$("#alert-container").append(String.format('<div id ="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
+            }
+            else {
+                $("#alert-container").append(String.format('<div id ="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
 				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
                     </button>\
@@ -766,35 +765,35 @@ $(function() {
 
                 alert_card_number++;
                 dropdown_need_update = true;
-			}
-		},
-		update_gas_alert: function(data, show_uuid){
-		    var uuid_txt = "";
+            }
+        },
+        update_gas_alert: function (data, show_uuid) {
+            var uuid_txt = "";
             var time;
 
-            if(data.value.length == 0 ) return;
+            if (data.value.length == 0) return;
             time = getTime(data.value, utc_offset, timezone);
-            if(show_uuid)
+            if (show_uuid)
                 uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
             var title = "CO2 SENSOR";
             var tag = title;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
             var card_id = "res-" + data.resource_id;
 
-			if($("#" + card_id).length > 0){
-				//find the gas card and update time
-                if(time) {
+            if ($("#" + card_id).length > 0) {
+                //find the gas card and update time
+                if (time) {
                     var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h4:contains('Gas')");
                     txt.text("Gas detected in kitchen area " + time);
                 }
                 var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
-			}
-			else {
-				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp" style="background: #ed0042;">\
+            }
+            else {
+                $("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp" style="background: #ed0042;">\
 				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
 				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
                     </button>\
@@ -822,36 +821,36 @@ $(function() {
 
                 alert_card_number++;
                 dropdown_need_update = true;
-			}
-		},
-		update_buzzer_alert: function(data, show_uuid) {
-		    var uuid_txt = "";
+            }
+        },
+        update_buzzer_alert: function (data, show_uuid) {
+            var uuid_txt = "";
             var time;
 
-            if(data.value.length == 0 ) return;
+            if (data.value.length == 0) return;
             time = getTime(data.value, utc_offset, timezone);
 
-            if(show_uuid)
+            if (show_uuid)
                 uuid_txt = 'ID: ' + data.uuid + ':' + data.path;
 
             var title = "BUZZER";
             var tag = title;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
             var card_id = "resource-" + data.resource_id;
 
-			if($("#" + card_id).length > 0) {
+            if ($("#" + card_id).length > 0) {
                 //find the buzzer card and update time
-                if(time) {
+                if (time) {
                     var txt = $("#" + card_id + " > .mdl-card__supporting-text > .section__circle-container > h1");
                     txt.text(time);
                 }
                 var uid = $("#" + card_id + " > .mdl-card__subtitle-text");
                 uid.text(uuid_txt);
             }
-			else {
-				$("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
+            else {
+                $("#alert-container").append(String.format('<div id="{0}" class="demo-card-event mdl-card mdl-cell mdl-cell--3-col mdl-shadow--2dp">\
 				  <div class="mdl-card__title mdl-card--expand" style="display: flex; flex-flow: row wrap;">\
 				    <button id="{4}-{5}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
                     </button>\
@@ -878,31 +877,31 @@ $(function() {
 
                 alert_card_number++;
                 dropdown_need_update = true;
-			}
-		},
-		update_status: function(type, data, show_uuid) {
-			var color = "gray";
+            }
+        },
+        update_status: function (type, data, show_uuid) {
+            var color = "gray";
             var uuid_cell = "";
-			if (data.value)
-				color = "green";
+            if (data.value)
+                color = "green";
 
-            if(show_uuid)
+            if (show_uuid)
                 uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
             var tag = type;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
             var menu = $(".status-card div[data-ID='" + data.resource_id + "'] i");
 
-            if(menu.length == 0) {
+            if (menu.length == 0) {
                 $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-                      <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;">\
-                            <button id="{4}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="margin-top: 8%; background:{5}" title="{6}">\
+                      <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;display:inline-block;">\
+                            <button id="{4}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{5}" title="{6}">\
                             </button>\
                             <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{2}">\
                             </ul>\
-                            <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+                            <div class="mdl-cell mdl-cell--9-col" style="display: inline-flex;">\
                                 <h6 title="{1}" data-title="{4}">{0}</h6>\
                                 <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
                             </div>\
@@ -926,23 +925,23 @@ $(function() {
         },
         update_switch_status: function (data, title, show_uuid) {
             var uuid_cell = "";
-            if(show_uuid)
+            if (show_uuid)
                 uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
             var tag = title;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
-            var menu = $(".status-card div[data-ID='" + data.resource_id +"'] label");
+            var menu = $(".status-card div[data-ID='" + data.resource_id + "'] label");
 
-            if(menu.length == 0) {
+            if (menu.length == 0) {
                 $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;">\
-                        <button id="{3}-{1}" class="mdl-button mdl-js-button mdl-button--raised" style="margin-top: 8%; background:{4}" title="{5}">\
+				  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%; display: inline-block">\
+                        <button id="{3}-{1}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{4}" title="{5}">\
                         </button>\
                         <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{3}-{1}">\
                         </ul>\
-                        <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+                        <div class="mdl-cell mdl-cell--9-col" style="display: inline-flex;">\
                             <h6 title="{0}" data-title="{3}">{2}</h6>\
                             <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
                         </div>\
@@ -956,16 +955,16 @@ $(function() {
 				</div>', uuid_cell, data.resource_id, tag, title, data.color.color, data.color.name));
                 $("input[id=res-" + data.resource_id + "]").prop('checked', data.value);
                 var len = $(".status-card").length;
-                if(len > 0) {
+                if (len > 0) {
                     var zindex = 100 - len - 1;
                     $(".status-card").last().css("z-index", zindex);
                 }
                 dropdown_need_update = true;
             }
-            else{
+            else {
                 // toggle switch on/off
                 var status = menu.find("input")[0].checked;
-                if(status !== data.value) {
+                if (status !== data.value) {
                     if (status) {
                         menu[0].MaterialSwitch.off();
                     }
@@ -978,30 +977,30 @@ $(function() {
             }
             // Expand all new MDL elements
             componentHandler.upgradeDom();
-		},
-		update_rgb_status: function(data, show_uuid) {
-			var bgcolor = "bg-blue";
+        },
+        update_rgb_status: function (data, show_uuid) {
+            var bgcolor = "bg-blue";
             var uuid_cell = "";
-			if(data.value)
-				bgcolor = "bg-red";
+            if (data.value)
+                bgcolor = "bg-red";
 
-            if(show_uuid)
+            if (show_uuid)
                 uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
             var title = "RGB LED";
             var tag = title;
-            if(data.tag)
+            if (data.tag)
                 tag = tag + data.tag;
 
             var menu = $(".status-card div[data-ID='" + data.resource_id + "'] i");
-            if(menu.length == 0) {
+            if (menu.length == 0) {
                 $("#status-container").append(String.format('<div class="status-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--12-col">\
-                  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;">\
-                        <button id="{4}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="margin-top: 8%; background:{5}" title="{6}">\
+                  <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing" style="margin-left: 4%;display: inline-block">\
+                        <button id="{4}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{5}" title="{6}">\
                         </button>\
                         <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{4}-{2}">\
                         </ul>\
-                        <div class="mdl-cell mdl-cell--9-col" style="display: flex; flex-flow: row wrap;">\
+                        <div class="mdl-cell mdl-cell--9-col" style="display: inline-flex">\
                             <h6 title="{1}" data-title="{4}">{3}</h6>\
                             <i class="material-icons edit" style="display: none; margin-top: 1em; ">edit</i>\
                         </div>\
@@ -1011,7 +1010,7 @@ $(function() {
                   </div>\
                 </div>', bgcolor, uuid_cell, data.resource_id, tag, title, data.color.color, data.color.name));
                 var len = $(".status-card").length;
-                if(len > 0) {
+                if (len > 0) {
                     var zindex = 100 - len - 1;
                     $(".status-card").last().css("z-index", zindex);
                 }
@@ -1022,23 +1021,23 @@ $(function() {
                 var uid = menu.parent().prev().children('h6');
                 uid.attr("title", uuid_cell);
             }
-		},
-        update_sensor_data_without_unit: function(title, data, show_uuid) {
-		    this.update_sensor_data(title, data, '', show_uuid);
         },
-		update_sensor_data: function(title, data, unit, show_uuid) {
-			var uuid_cell = '';
-            if(show_uuid)
+        update_sensor_data_without_unit: function (title, data, show_uuid) {
+            this.update_sensor_data(title, data, '', show_uuid);
+        },
+        update_sensor_data: function (title, data, unit, show_uuid) {
+            var uuid_cell = '';
+            if (show_uuid)
                 uuid_cell = '<span class="mdl-card__subtitle-text" style="font-size: 70%; flex-basis: 100%;">ID: '
                     + data.uuid + ':' + data.path + '</span>';
 
             var value = $(".sensor-card h1[data-ID='" + data.resource_id + "'][data-type='" + title + "']");
 
             var type = title;
-            if(data.tag)
+            if (data.tag)
                 type = type + data.tag;
 
-            if(value.length == 0) {
+            if (value.length == 0) {
                 var html = String.format('<div class="sensor-card mdl-card mdl-cell mdl-shadow--2dp mdl-cell--3-col">\
                     <div class="mdl-card__title" style="display: flex; flex-flow: row wrap;">\
                         <button id="{5}-{2}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{6}" title="{7}">\
@@ -1050,11 +1049,9 @@ $(function() {
 			  	        {1}\
                     </div>\
                     <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">\
-                        <div class="mdl-cell" style="text-align:left; width: auto;">\
-                            <h1 data-ID="{2}" data-type="{0}" style="font-size: 3.8vw;">{3}</h1>\
-                        </div>\
-                        <div class="mdl-cell" style="display: flex; align-items: center;">\
-								<h6 style="font-size: 0.8vw;">{4}</h6>\
+                        <div class="mdl-cell mdl-cell--12-col" style="text-align:left;">\
+                            <h1 data-ID="{2}" data-type="{0}" style="font-size: 3.8vw; display:inline;">{3}</h1>\
+                            <h6 style="font-size: 0.9vw; margin-left: 2%; display:inline;">{4}</h6>\
                         </div>\
                     </div>\
                 </div>', title, uuid_cell, data.resource_id, data.value, unit, type, data.color.color, data.color.name);
@@ -1064,33 +1061,33 @@ $(function() {
                 componentHandler.upgradeDom();
                 dropdown_need_update = true;
             }
-            else{
+            else {
                 value.text(data.value);
                 var subtitle = value.closest(".mdl-card__supporting-text").prev(".mdl-card__title").children("span");
-                if(show_uuid) {
-                    if(subtitle.length == 0)
+                if (show_uuid) {
+                    if (subtitle.length == 0)
                         value.closest(".mdl-card__supporting-text").prev(".mdl-card__title").children("i").after(uuid_cell);
                 }
                 else {
-                    if(subtitle.length > 0)
+                    if (subtitle.length > 0)
                         subtitle.remove();
                 }
             }
-		},
-        update_brillo_data: function(uuid, data, show_uuid){
+        },
+        update_brillo_data: function (uuid, data, show_uuid) {
             // <button id="brillo-{1}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{7}" title="{8}">\
             // </button>\
             // <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{brillo}-{1}">\
             // </ul>\
-            if(!("mp3player" in data) || !("rgb" in data) || !("brightness" in data) || !("audio" in data)) {
+            if (!("mp3player" in data) || !("rgb" in data) || !("brightness" in data) || !("audio" in data)) {
                 console.log("The brillo component is incomplete. ");
                 return;
             }
 
-            var value = $("#"+ uuid);
+            var value = $("#" + uuid);
             var plist = JSON.parse(data['mp3player'].playlist);
 
-            if(value.length == 0) {
+            if (value.length == 0) {
                 var html = String.format('<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp">\
                     <div class="mdl-card__title mdl-card--expand" style="padding-left: 8%">\
                         <h6>Android Things</h6>\
@@ -1160,10 +1157,10 @@ $(function() {
 
                 var data_src = new Array();
                 var selected_index = 0;
-                plist.forEach(function(value, key){
-                   // console.log(value);
-                   data_src.push({'id': key, 'text': value});
-                   if(value == data['mp3player'].title) selected_index = key;
+                plist.forEach(function (value, key) {
+                    // console.log(value);
+                    data_src.push({'id': key, 'text': value});
+                    if (value == data['mp3player'].title) selected_index = key;
                 });
 
                 $('#brillo-mp3-title-' + data['mp3player'].resource_id).select2({
@@ -1172,39 +1169,39 @@ $(function() {
                     width: "100%"
                 });
 
-                if(data['mp3player'].state == "Playing"){
+                if (data['mp3player'].state == "Playing") {
                     $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
                     $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
                     $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
                 }
-                else if(data['mp3player'].state == "Paused"){
+                else if (data['mp3player'].state == "Paused") {
                     $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
                 }
-                else{ // Idle
+                else { // Idle
                     $('#brillo-mp3-title-' + data['mp3player'].resource_id).val('').trigger('change.select2');
                 }
 
-                if(data['audio'].mute === true) {
+                if (data['audio'].mute === true) {
                     $("#brillo-mute-" + data['audio'].resource_id).prop('checked', 'checked');
                     $("#" + uuid + " .slider-bar .volume").attr('disabled', 'disabled');
                 }
 
-                $("#brillo-mute-" + data['audio'].resource_id).on('change', function(){
-                    if($(this).is(':checked')) {
+                $("#brillo-mute-" + data['audio'].resource_id).on('change', function () {
+                    if ($(this).is(':checked')) {
                         $("#" + uuid + " .slider-bar .volume").attr('disabled', 'disabled');
                     }
                     else {
-                         $("#" + uuid + " .slider-bar .volume").removeAttr('disabled');
+                        $("#" + uuid + " .slider-bar .volume").removeAttr('disabled');
                     }
                 });
 
-                if(!(typeof(componentHandler) == 'undefined')) {
+                if (!(typeof(componentHandler) == 'undefined')) {
                     componentHandler.upgradeAllRegistered();
                 }
             }
-            else{
+            else {
                 var title = $('#brillo-mp3-title-' + data['mp3player'].resource_id);
-                if(title.data('lock') == "0" ) {
+                if (title.data('lock') == "0") {
                     var prevStat = title.data("state");
                     if (data['mp3player'].title) {
                         var tIndex = plist.indexOf(data['mp3player'].title);
@@ -1231,8 +1228,8 @@ $(function() {
                     }
                 }
 
-                if(data['rgbled'].rgbvalue){
-                    if($("#" + uuid + " .basic").data("lock") == 0 ) {
+                if (data['rgbled'].rgbvalue) {
+                    if ($("#" + uuid + " .basic").data("lock") == 0) {
                         var rgb = $("#" + uuid + " .basic").spectrum('get').toRgbString();
                         var newRgb = convertToRgb(data['rgbled'].rgbvalue);
                         if (rgb) {
@@ -1249,7 +1246,7 @@ $(function() {
 
                 var newbright = data['brightness'].brightness;
                 var bright = $("#" + uuid + " .slider-bar .brightness");
-                if(bright.data('lock') == 0 ) {
+                if (bright.data('lock') == 0) {
                     if (newbright != bright.val()) {
                         bright[0].MaterialSlider.change(newbright);
                     }
@@ -1258,7 +1255,7 @@ $(function() {
                 var mute = $("#brillo-mute-" + data['audio'].resource_id);
                 var volume = $("#" + uuid + " .slider-bar .volume");
                 var status = mute[0].checked;
-                if(status !== data['audio'].mute) {
+                if (status !== data['audio'].mute) {
                     console.log('*****update mute');
                     if (data['audio'].mute) {
                         mute.parent('label')[0].MaterialSwitch.on();
@@ -1271,7 +1268,7 @@ $(function() {
                 }
 
                 var newVol = data['audio'].volume;
-                if(volume.data('lock') == 0 ) {
+                if (volume.data('lock') == 0) {
                     if (newVol != volume.val()) {
                         console.log('*****update volume');
                         volume[0].MaterialSlider.change(newVol);
@@ -1279,25 +1276,25 @@ $(function() {
                 }
             }
         },
-        update_generic_data: function(resource_id, data, show_uuid){
+        update_generic_data: function (resource_id, data, show_uuid) {
             var uuid_cell = '';
-            if(show_uuid)
+            if (show_uuid)
                 uuid_cell = '<span class="mdl-card__subtitle-text" style="font-size: 70%; flex-basis: 100%;">ID: '
                     + data.uuid + '</span>';
 
             var title = "";
-            if(data.tag){
+            if (data.tag) {
                 title = "(" + data.tag + ")";
             }
 
             var value = $(".generic button[id='generic-" + data.resource_id + "']");
-            if(value.length == 0){
+            if (value.length == 0) {
                 var rows = '';
-                if(data.value){
+                if (data.value) {
                     var jData = JSON.parse(data.value);
-                    $.each(jData, function(key, value){
-                        if($.isArray(value) || value instanceof Object)
-                            value= JSON.stringify(value);
+                    $.each(jData, function (key, value) {
+                        if ($.isArray(value) || value instanceof Object)
+                            value = JSON.stringify(value);
                         rows += String.format('<tr>\
                         <td class="mdl-data-table__cell--non-numeric" title="{0}">{0}</td>\
                         <td title="{1}">{1}</td>\
@@ -1334,24 +1331,26 @@ $(function() {
                 var tb = $(".generic table[data-id='" + data.resource_id + "']");
                 var width = tb.width() - 10;
                 tb.find("th:nth-child(1), tr td:nth-child(1)").css(
-                    {"max-width": width * 0.3,
-                    "min-width": width * 0.3
+                    {
+                        "max-width": width * 0.3,
+                        "min-width": width * 0.3
                     });
                 tb.find("th:nth-child(2), tr td:nth-child(2)").css(
-                    {"max-width": width * 0.45,
-                    "min-width": width * 0.45
+                    {
+                        "max-width": width * 0.45,
+                        "min-width": width * 0.45
                     });
             }
-            else{
+            else {
                 // update table
-                if(data.value) {
+                if (data.value) {
                     var jData = JSON.parse(data.value);
                     var tbody = $(".generic table[data-id='" + data.resource_id + "'] tbody");
                     $.each(tbody.children(), function () {
                         // iterate each table row and update them one by one
-                        if($(this).find("div.overlay").length === 0){
+                        if ($(this).find("div.overlay").length === 0) {
                             var key = $(this).children(':first-child').text();
-                            if(key){
+                            if (key) {
                                 // console.log(jData[key]);
                                 $(this).children(':nth-child(2)').text(jData[key]);
                                 $(this).children(':nth-child(2)').attr('title', jData[key]);
@@ -1362,11 +1361,11 @@ $(function() {
                 // value.parent().next().find("tbody").html(rows);
             }
         },
-        get_temperature_in_timezone: function(value) {
-		    var house_temp = null;
+        get_temperature_in_timezone: function (value) {
+            var house_temp = null;
             var temp_unit = "°";
             //console.log('index: ' + timezone.indexOf("America") + " tz: " + timezone);
-            if(timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
+            if (timezone.indexOf('America') == 0 || timezone.indexOf('US') == 0) {
                 house_temp = convertToF(parseFloat(value), 1);
                 temp_unit += "F";
             }
@@ -1376,16 +1375,16 @@ $(function() {
             }
             return house_temp.toString() + temp_unit;
         },
-        parse_data: function(value_list, callback){
+        parse_data: function (value_list, callback) {
             var show_uuid = false;
-            if(value_list.length > 1)
+            if (value_list.length > 1)
                 show_uuid = true;
-            value_list.forEach(function(data){
+            value_list.forEach(function (data) {
                 callback(data, show_uuid);
             })
         },
-		update_portal: function() {
-			if(window.panel != 1) return;
+        update_portal: function () {
+            if (window.panel != 1) return;
             $.ajax({
                 type: "GET",
                 url: "/get_sensor",
@@ -1393,37 +1392,37 @@ $(function() {
                 headers: {
                     "token": JSON.stringify(alert_token),
                 },
-                success: function(data){
+                success: function (data) {
                     console.log(data);
                     var sensors = data.data;
                     $.sh.now.clear_data(sensors);
                     $.each(sensors['alert'], function (key, value_list) {
                         switch (key) {
                             case 'buzzer':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_buzzer_alert(data, show_uuid);
-                                    if(data.value)
+                                    if (data.value)
                                         alert_token[data.resource_id] = data.value;
                                 });
                                 break;
                             case 'motion':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_motion_alert(data, show_uuid);
-                                    if(data.value)
+                                    if (data.value)
                                         alert_token[data.resource_id] = data.value;
                                 });
                                 break;
                             case 'gas':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_gas_alert(data, show_uuid);
-                                    if(data.value)
+                                    if (data.value)
                                         alert_token[data.resource_id] = data.value;
                                 });
                                 break;
-							case 'button':
-							    $.sh.now.parse_data(value_list, function(data, show_uuid){
+                            case 'button':
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_car_alert(data, show_uuid);
-                                    if(data.value)
+                                    if (data.value)
                                         alert_token[data.resource_id] = data.value;
                                 });
                                 break;
@@ -1431,8 +1430,7 @@ $(function() {
                                 console.error("Unknown alert sensor type: " + key);
                         }
                         // console.log("number of alert cards " + alert_card_number);
-                        if(alert_card_number == 1)
-                        {
+                        if (alert_card_number == 1) {
                             $("#alert-status-title-quiet").hide();
                             $("#alert-status-title-alerts").show();
                         }
@@ -1445,12 +1443,12 @@ $(function() {
                                 });
                                 break;
                             case 'led':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_status('LED', data, show_uuid);
                                 });
                                 break;
                             case 'rgbled':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_rgb_status(data, show_uuid);
                                 });
                                 break;
@@ -1466,40 +1464,40 @@ $(function() {
                     $.each(sensors['data'], function (key, value_list) {
                         switch (key) {
                             case 'temperature':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     data.value = $.sh.now.get_temperature_in_timezone(data.value);
                                     $.sh.now.update_sensor_data_without_unit('TEMPERATURE', data, show_uuid);
                                 });
                                 break;
                             case 'solar':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_sensor_data('SOLAR PANEL TILT', data, '%', show_uuid);
                                 });
                                 break;
                             case 'illuminance':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_sensor_data('AMBIENT LIGHT', data, 'lm', show_uuid);
                                 });
                                 break;
                             case 'power':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
-                                    data.value = data.value/1000;
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
+                                    data.value = data.value / 1000;
                                     $.sh.now.update_sensor_data('CURRENT ENERGY CONSUMPTION', data, 'Watt', show_uuid);
                                 });
                                 break;
                             case 'humidity':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
-                                    data.value = data.value + '%';
-                                    $.sh.now.update_sensor_data_without_unit('HUMIDITY', data, show_uuid);
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
+                                    data.value = data.value;
+                                    $.sh.now.update_sensor_data('HUMIDITY', data, '%', show_uuid);
                                 });
                                 break;
                             case 'pressure':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_sensor_data('PRESSURE', data, 'hPa', show_uuid);
                                 });
                                 break;
                             case 'uv_index':
-                               $.sh.now.parse_data(value_list, function(data, show_uuid){
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
                                     $.sh.now.update_sensor_data_without_unit('UV INDEX', data, show_uuid);
                                 });
                                 break;
@@ -1509,58 +1507,67 @@ $(function() {
                     });
                     $.each(sensors['brillo'], function (key, value) {
                         var show_uuid = false;
-                        if(Object.keys(sensors['brillo']).length > 1)
+                        if (Object.keys(sensors['brillo']).length > 1)
                             show_uuid = true;
                         $.sh.now.update_brillo_data(key, value, show_uuid);
                     });
-                    $.each(sensors['generic'], function(key, value) {
+                    $.each(sensors['generic'], function (key, value) {
                         var show_uuid = true;
                         $.sh.now.update_generic_data(key, value, show_uuid);
                     });
                 }
-            }).done(function() {
-			   //console.log( "second success" );
-			}).fail(function() {
-			    console.log( "getJson data error" );
-			}).always(function() {
-                if(dropdown_need_update)
+            }).done(function () {
+                //console.log( "second success" );
+            }).fail(function () {
+                console.log("getJson data error");
+            }).always(function () {
+                if (dropdown_need_update)
                     $.sh.now.update_sensor_group();
-			})
-		},
-        update_billing: function() {
-            draw_billing_pie_chart('today_container', 'Today\'s usage', [{ name: "Grid Power", value:90},{ name:"Solar Power", value: 210}]);
-            draw_billing_pie_chart('current_container', 'Current bill', [{ name: "Grid Power", value:90},{ name:"Solar Power", value: 110}]);
-            draw_billing_pie_chart('items_container', 'Items', [{ name: "Heater", value:90},{ name:"Oven", value: 110}, { name:"Refrigerator", value: 110}]);
+            })
         },
-		init: function() {
-			console.log("init now page.");
-			window.panel = 1;
+        update_billing: function () {
+            draw_billing_pie_chart('today_container', 'Today\'s usage', [{
+                name: "Grid Power",
+                value: 90
+            }, {name: "Solar Power", value: 210}]);
+            draw_billing_pie_chart('current_container', 'Current bill', [{
+                name: "Grid Power",
+                value: 90
+            }, {name: "Solar Power", value: 110}]);
+            draw_billing_pie_chart('items_container', 'Items', [{name: "Heater", value: 90}, {
+                name: "Oven",
+                value: 110
+            }, {name: "Refrigerator", value: 110}]);
+        },
+        init: function () {
+            console.log("init now page.");
+            window.panel = 1;
             $('#sh-before').hide();
-			$('#sh-future').hide();
+            $('#sh-future').hide();
             $('#sh-now').show();
             $('#alert-status-card').show();
             $("#demo-welcome-message").html("This demo tells you what is <b>happening in your home right now.</b>");
-			$.sh.now.update_portal();
-			$.sh.now.register_actions();
+            $.sh.now.update_portal();
+            $.sh.now.register_actions();
             $.sh.now.update_billing();
             $(window).trigger('resize');
-			// Expand all new MDL elements
-      		//componentHandler.upgradeDom();
-			window.now_timer = setInterval($.sh.now.update_portal, 3000);
+            // Expand all new MDL elements
+            //componentHandler.upgradeDom();
+            window.now_timer = setInterval($.sh.now.update_portal, 3000);
             // update weather every 1 hour
-            window.weather_timer = setInterval(updateWeather(), 3600*1000);
-		}
-	};
+            window.weather_timer = setInterval(updateWeather(), 3600 * 1000);
+        }
+    };
 
-	$("a:contains('NOW')").on('click', function() {
-		clearInterval(window.time_timer);
+    $("a:contains('NOW')").on('click', function () {
+        clearInterval(window.time_timer);
         clearInterval(window.now_timer);
         clearInterval(window.weather_timer);
-		//clearInterval(chart_timer);
-		$.sh.now.init();
-	});
+        //clearInterval(chart_timer);
+        $.sh.now.init();
+    });
 
-    setInterval(function(){
+    setInterval(function () {
         updateWelcomeCardsDateTime(utc_offset, timezone);
     }, 60 * 1000);
 
@@ -1568,18 +1575,20 @@ $(function() {
     $.sh.now.init();
     updateWelcomeCardsDateTime(utc_offset, timezone);
 
-    $( window ).resize(function() {
+    $(window).resize(function () {
         // resize the generic table column width
-        $("#generic-container table").each(function(){
+        $("#generic-container table").each(function () {
             var tb = $(this);
             var width = tb.width() - 10;
             tb.find("th:nth-child(1), tr td:nth-child(1)").css(
-                {"max-width": width * 0.3,
-                "min-width": width * 0.3
+                {
+                    "max-width": width * 0.3,
+                    "min-width": width * 0.3
                 });
             tb.find("th:nth-child(2), tr td:nth-child(2)").css(
-                {"max-width": width * 0.45,
-                "min-width": width * 0.45
+                {
+                    "max-width": width * 0.45,
+                    "min-width": width * 0.45
                 });
         });
     });

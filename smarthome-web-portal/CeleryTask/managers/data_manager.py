@@ -77,7 +77,7 @@ class DataManager(base.BaseTask):
                     'gateway_id': self.gateway_id,
                     'status': True,
                     'path': href,
-                    'tag': self.devices.get(uuid) if self.devices.get(uuid) else None,
+                    'tag': self.devices.get(uuid) if typ == "generic" and self.devices.get(uuid) else None,
                     'observable': obs
                 })
                 self.log.info('Resource {} is added.'.format(str(ret)))

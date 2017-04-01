@@ -363,7 +363,7 @@ def update_sensor():
     except:
         abort(404)
     print "content: " + str(content)
-    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'), username=session.get('username'))
+    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'), gateway_id=session.get('gateway_id'))
     try:
         sts = sensor.update_status(data)
         return jsonify({'status': sts}), 201
