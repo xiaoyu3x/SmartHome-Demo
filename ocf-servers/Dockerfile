@@ -32,9 +32,6 @@ COPY . /opt/SmartHome-Demo/ocf-servers/
 
 RUN npm install
 
-# Forward port
-EXPOSE 8000 8080
-
 # Unset proxy
 ENV http_proxy ""
 ENV https_proxy ""
