@@ -235,15 +235,20 @@ def _get_sensor_data(token_dict):
                 latest_data = util.get_class("DB.api.energy.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
             else:
                 latest_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
+            if typ == 'buzzer':
+                status_data = util.get_class("DB.api.{}.get_latest_by_gateway_uuid".format(typ))(resource_id=resource_id)
             if latest_data is None:
                 continue
             # print latest_data
             if typ in ALERT_GRP:
                 _compose_sensor_data(typ, latest_data, 'created_at', 'alert', ret)
-            elif typ in STATUS_GRP:
+
+            if typ in STATUS_GRP:
                 if typ == "rgbled":
                     val = True if latest_data.get('rgbvalue') == "[255, 0, 0]" else False
                     _compose_sensor_data(typ, latest_data, {'value': val}, 'status', ret)
+                elif typ == 'buzzer':
+                    _compose_sensor_data(typ, status_data, 'status', 'status', ret)
                 else:
                     _compose_sensor_data(typ, latest_data, 'status', 'status', ret)
             elif typ in DATA_GRP:

@@ -839,7 +839,7 @@ $(function() {
             if(data.tag)
                 tag = tag + data.tag;
 
-            var card_id = "res-" + data.resource_id;
+            var card_id = "resource-" + data.resource_id;
 
 			if($("#" + card_id).length > 0) {
                 //find the buzzer card and update time
@@ -923,13 +923,12 @@ $(function() {
                 var uid = menu.parent().prev().children('h6');
                 uid.attr("title", uuid_cell);
             }
-		},
-		update_fan_status: function(data, show_uuid) {
+        },
+        update_switch_status: function (data, title, show_uuid) {
             var uuid_cell = "";
             if(show_uuid)
                 uuid_cell = 'ID: ' + data.uuid + ':' + data.path;
 
-            var title = "FAN";
             var tag = title;
             if(data.tag)
                 tag = tag + data.tag;
@@ -949,7 +948,7 @@ $(function() {
                         </div>\
 					  <div data-ID="{1}" class="mdl-card__menu">\
 						  <label title="switch on/off" class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="res-{1}">\
-      						<input type="checkbox" id="res-{1}" class="mdl-switch__input" onclick="return toggle_status({1}, this);">\
+      						<input type="checkbox" id="res-{1}" class="mdl-switch__input" onclick="return toggle_status({1}, this, \'{3}\');">\
       						<span class="mdl-switch__label"></span>\
     					  </label>\
 					  </div>\
@@ -1441,8 +1440,8 @@ $(function() {
                     $.each(sensors['status'], function (key, value_list) {
                         switch (key) {
                             case 'fan':
-                                $.sh.now.parse_data(value_list, function(data, show_uuid){
-                                    $.sh.now.update_fan_status(data, show_uuid);
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
+                                    $.sh.now.update_switch_status(data, "FAN", show_uuid);
                                 });
                                 break;
                             case 'led':
@@ -1453,6 +1452,11 @@ $(function() {
                             case 'rgbled':
                                 $.sh.now.parse_data(value_list, function(data, show_uuid){
                                     $.sh.now.update_rgb_status(data, show_uuid);
+                                });
+                                break;
+                            case 'buzzer':
+                                $.sh.now.parse_data(value_list, function (data, show_uuid) {
+                                    $.sh.now.update_switch_status(data, "BUZZER", show_uuid);
                                 });
                                 break;
                             default:

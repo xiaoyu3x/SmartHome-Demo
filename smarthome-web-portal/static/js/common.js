@@ -269,31 +269,29 @@ update_sensor_status = function(resource_id, value, target, onSuccess){
     });
 };
 
-toggle_status = function(resource_id, obj) {
+toggle_status = function(resource_id, obj, title) {
     console.log("checked: " + obj.checked);
     var status = obj.checked;
     var status_str = status?'on':'off';
     // var uuid = obj.id;
-    console.log('The fan ' + resource_id + ' will be turned ' + status_str + '.');
+    console.log('The ' + title + ' ' + resource_id + ' will be turned ' + status_str + '.');
 
     $.ajax({
         type: "PUT",
         url: "/update_sensor",
         contentType: 'application/json',
         data: JSON.stringify({
-            // "href": "/a/" + type,
-            // "uuid": uuid,
             "resource_id": resource_id,
             "data": {
-                "value": status,
+                "value": status
             }
         }),
         success: function(data) {
             console.log(data);
             var ret = data.status;
             if(ret) {
-                console.log("Fan status is updated.");
-                createSnackbar('Fan status is updated.', 'Dismiss');
+                console.log(title + " status is updated.");
+                createSnackbar(title + ' status is updated.', 'Dismiss');
             }
             else {
                 console.error('failed');
