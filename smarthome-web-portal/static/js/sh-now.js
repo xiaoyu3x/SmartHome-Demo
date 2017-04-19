@@ -287,7 +287,7 @@ $(function () {
             });
 
             // update brillo brightness
-            $("#brillo-container").on('change', ".brightness", function () {
+            $("#brillo-container").on('mouseup', ".brightness", function () {
                 /* data format :
                  { "brightness" : 10 }
                  */
@@ -305,7 +305,7 @@ $(function () {
             });
 
             // update brillo volume
-            $("#brillo-container").on('change', ".volume", function () {
+            $("#brillo-container").on('mouseup', ".volume", function () {
                 /* data format :
                  { "volume" : 10 }
                  */
@@ -1075,17 +1075,10 @@ $(function () {
             }
         },
         update_brillo_data: function (uuid, data, show_uuid) {
-            // <button id="brillo-{1}" class="mdl-button mdl-js-button mdl-button--raised" style="background:{7}" title="{8}">\
-            // </button>\
-            // <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="{brillo}-{1}">\
-            // </ul>\
-            if (!("mp3player" in data) || !("rgb" in data) || !("brightness" in data) || !("audio" in data)) {
-                console.log("The brillo component is incomplete. ");
-                return;
-            }
-
             var value = $("#" + uuid);
-            var plist = JSON.parse(data['mp3player'].playlist);
+            var plist = null;
+            if('playlist' in data['mp3player'])
+                plist = JSON.parse(data['mp3player'].playlist);
 
             if (value.length == 0) {
                 var html = String.format('<div class="demo-card-data mdl-card mdl-cell mdl-cell--6-col mdl-shadow--2dp">\
@@ -1106,7 +1099,7 @@ $(function () {
                         <div class="mdl-cell mdl-cell--9-col"></div>\
                         <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="padding-left: 75px; height: 47px; margin-bottom: 15px;">\
                             <div class="mdl-chip mdl-cell mdl-cell--9-col" style="background:#ffc75f; height:60%">\
-                                <select id="brillo-mp3-title-{2}" style="font-weight:700; color:#fff;" data-state="{9}" data-id="{2}" data-lock="0"></select>\
+                                <select id="brillo-mp3-title-{2}" style="font-weight:700; color:#fff;" data-id="{2}" data-lock="0"></select>\
                                 <div class="mdl-tooltip" for="brillo-mp3-title-{2}">MP3 title</div>\
                             </div>\
                             <div class="mdl-layout-spacer"></div>\
@@ -1125,7 +1118,7 @@ $(function () {
                         <div class="mdl-cell mdl-cell--9-col"></div>\
                         <div class="mdl-cell mdl-cell--12-col">\
                             <p class="slider-bar">\
-                                <input class="mdl-slider mdl-js-slider brightness" type="range" min="0" max="100" data-id="{3}" value="{5}">\
+                                <input class="mdl-slider mdl-js-slider brightness" name="br" type="range" min="0" max="100" data-id="{3}" value="0" data-lock="0">\
                             </p>\
                         </div>\
                         <div class=" mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\
@@ -1137,63 +1130,103 @@ $(function () {
                         </div>\
                         <div class="mdl-cell mdl-cell--12-col">\
                             <p class="slider-bar">\
-                                <input class="mdl-slider mdl-js-slider volume" type="range" min="0" max="100" value="{6}" data-id="{4}" data-lock="0">\
+                                <input class="mdl-slider mdl-js-slider volume" type="range" min="0" max="100" value="0" data-id="{4}" data-lock="0">\
                             </p>\
                         </div>\
                     </div>\
                 </div>', uuid, data['rgbled'].resource_id, data['mp3player'].resource_id, data['brightness'].resource_id,
-                    data['audio'].resource_id, data['brightness'].brightness, data['audio'].volume,
-                    data['audio'].color.color, data['audio'].color.name, data['mp3player'].state);
+                    data['audio'].resource_id);
                 $("#brillo-container").append(html);
-                // console.log(data['rgbled'].rgbvalue.replace(/^\(+|\)+$/g, ''));
+
+                if (!(typeof(componentHandler) == 'undefined')) {
+                    componentHandler.upgradeAllRegistered();
+                }
 
                 $("#" + uuid + " .basic").spectrum({
                     showInput: true,
                     preferredFormat: "rgb",
                     clickoutFiresChange: true,
                     showButtons: false,
-                    color: convertToRgb(data['rgbled'].rgbvalue)
+                    allowEmpty: true
+                    // color: convertToRgb(data['rgbled'].rgbvalue)
                 });
-
-                var data_src = new Array();
-                var selected_index = 0;
-                plist.forEach(function (value, key) {
-                    // console.log(value);
-                    data_src.push({'id': key, 'text': value});
-                    if (value == data['mp3player'].title) selected_index = key;
-                });
-
-                $('#brillo-mp3-title-' + data['mp3player'].resource_id).select2({
-                    data: data_src,
-                    tags: "true",
-                    width: "100%"
-                });
-
-                if (data['mp3player'].state == "Playing") {
-                    $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
-                    $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
-                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
+                if(data['rgbled'] && 'path' in data['rgbled']){
+                    $("#" + uuid + " .basic").spectrum("set", convertToRgb(data['rgbled'].rgbvalue));
                 }
-                else if (data['mp3player'].state == "Paused") {
-                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
-                }
-                else { // Idle
-                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).val('').trigger('change.select2');
+                else {
+                    // no data for rgbled, disable it
+                    $("#" + uuid + " .basic").spectrum("disable");
                 }
 
-                if (data['audio'].mute === true) {
-                    $("#brillo-mute-" + data['audio'].resource_id).prop('checked', 'checked');
-                    $("#" + uuid + " .slider-bar .volume").attr('disabled', 'disabled');
-                }
+                if(plist) {
+                    var data_src = new Array();
+                    var selected_index = 0;
+                    plist.forEach(function (value, key) {
+                        // console.log(value);
+                        data_src.push({'id': key, 'text': value});
+                        if (value == data['mp3player'].title) selected_index = key;
+                    });
 
-                $("#brillo-mute-" + data['audio'].resource_id).on('change', function () {
-                    if ($(this).is(':checked')) {
-                        $("#" + uuid + " .slider-bar .volume").attr('disabled', 'disabled');
+                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).select2({
+                        data: data_src,
+                        tags: "true",
+                        width: "100%"
+                    });
+
+                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).data('state', data['mp3player'].state);
+                    if (data['mp3player'].state == "Playing") {
+                        $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
+                        $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
+                        $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
                     }
-                    else {
-                        $("#" + uuid + " .slider-bar .volume").removeAttr('disabled');
+                    else if (data['mp3player'].state == "Paused") {
+                        $('#brillo-mp3-title-' + data['mp3player'].resource_id).val(selected_index).trigger('change.select2');
                     }
-                });
+                    else { // Idle
+                        $('#brillo-mp3-title-' + data['mp3player'].resource_id).val('').trigger('change.select2');
+                    }
+                }
+                else{
+                    // no data for mp3player, disable it
+                    $('#brillo-mp3-title-' + data['mp3player'].resource_id).select2({
+                        data: null,
+                        tags: "true",
+                        width: "100%"
+                    });
+                }
+
+                if(data['audio'] && 'mute' in data['audio']) {
+                    if (data['audio'].mute === false) {
+                        $("#brillo-mute-" + data['audio'].resource_id).parent('label')[0].MaterialSwitch.on();
+                        $("#" + uuid + " .slider-bar .volume")[0].MaterialSlider.change(data['audio'].volume);
+                    }
+                    else{
+                        $("#" + uuid + " .slider-bar .volume").attr('disabled', true);
+                    }
+
+                    $("#brillo-mute-" + data['audio'].resource_id).on('change', function () {
+                        if ($(this).is(':checked')) {
+                            $("#" + uuid + " .slider-bar .volume").removeAttr('disabled');
+                        }
+                        else {
+                            $("#" + uuid + " .slider-bar .volume").attr('disabled', true);
+                        }
+                    });
+                }
+                else{
+                    // no data for audio, disable it
+                    $("#" + uuid + " .slider-bar .volume").attr('disabled', true);
+                    $("#brillo-mute-" + data['audio'].resource_id).attr('disabled', true);
+                }
+
+                var bright = $("#" + uuid + " .slider-bar .brightness");
+                if(data['brightness'] && 'brightness' in data['brightness']){
+                    bright[0].MaterialSlider.change(data['brightness'].brightness);
+                }
+                else{
+                    // no data for brightness, disable it
+                    bright.attr('disabled', true);
+                }
 
                 if (!(typeof(componentHandler) == 'undefined')) {
                     componentHandler.upgradeAllRegistered();
@@ -1201,78 +1234,121 @@ $(function () {
             }
             else {
                 var title = $('#brillo-mp3-title-' + data['mp3player'].resource_id);
-                if (title.data('lock') == "0") {
-                    var prevStat = title.data("state");
-                    if (data['mp3player'].title) {
-                        var tIndex = plist.indexOf(data['mp3player'].title);
-                        if (tIndex > -1 && tIndex != title.val()) {
-                            console.log('*****update title');
-                            title.val(tIndex).trigger('change.select2');
+                if(plist) {
+                    if (title.data('lock') == "0") {
+                        if (plist.length != title.find("option").length) {
+                            var data_src = new Array();
+                            var selected_index = 0;
+                            plist.forEach(function (value, key) {
+                                data_src.push({'id': key, 'text': value});
+                                if (value == data['mp3player'].title) selected_index = key;
+                            });
+                            title.html('').select2({
+                                data:data_src,
+                                tags: "true",
+                                width: "100%"
+                            });
+                            if(data['mp3player'].state == 'Idle')
+                                title.val('').trigger('change.select2');
+                            else
+                                title.val(selected_index).trigger('change.select2');
                         }
-                    }
-                    if (prevStat !== data['mp3player'].state) {
-                        if (data['mp3player'].state == "Idle") {
-                            title.val('').trigger('change.select2');
-                            $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
-                            $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Play');
+                        var prevStat = title.data("state");
+                        if (data['mp3player'].title) {
+                            var tIndex = plist.indexOf(data['mp3player'].title);
+                            if (tIndex > -1 && tIndex != title.val()) {
+                                console.log('*****update title');
+                                title.val(tIndex).trigger('change.select2');
+                            }
                         }
-                        else if (data['mp3player'].state == "Playing") {
-                            $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
-                            $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
+                        if (prevStat !== data['mp3player'].state) {
+                            if (data['mp3player'].state == "Idle") {
+                                title.val('').trigger('change.select2');
+                                $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
+                                $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Play');
+                            }
+                            else if (data['mp3player'].state == "Playing") {
+                                $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('pause');
+                                $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Pause');
+                            }
+                            else if (data['mp3player'].state == "Paused") {
+                                $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
+                                $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Play');
+                            }
+                            title.data('state', data['mp3player'].state);
                         }
-                        else if (data['mp3player'].state == "Paused") {
-                            $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
-                            $("#brillo-pause-" + data['mp3player'].resource_id).next(".mdl-tooltip").html('Play');
-                        }
-                        title.data('state', data['mp3player'].state);
                     }
                 }
+                else {
+                    title.html('').select2({data: null, width: "100%", tags: "true"});
+                    $("#brillo-pause-" + data['mp3player'].resource_id + " i").html('play_arrow');
+                }
 
-                if (data['rgbled'].rgbvalue) {
+                if (data['rgbled'] && 'rgbvalue' in data['rgbled']) {
+                    $("#" + uuid + " .basic").spectrum("enable");
                     if ($("#" + uuid + " .basic").data("lock") == 0) {
-                        var rgb = $("#" + uuid + " .basic").spectrum('get').toRgbString();
-                        var newRgb = convertToRgb(data['rgbled'].rgbvalue);
-                        if (rgb) {
-                            // trim whitespaces
-                            rgb = rgb.replace(/\s+/g, '');
-                            newRgb = rgb.replace(/\s+/g, '');
-                            if (newRgb !== rgb) {
-                                console.log('*****update rgbled');
-                                $("#" + uuid + " .basic").spectrum("set", newRgb);
+                        // if the color picker panel is open, skip the update
+                        if($(".sp-hidden").length > 0) {
+                            var rgb = $("#" + uuid + " .basic").spectrum('get').toRgbString();
+                            var newRgb = convertToRgb(data['rgbled'].rgbvalue);
+                            if (rgb) {
+                                // trim whitespaces
+                                rgb = rgb.replace(/\s+/g, '');
+                                newRgb = newRgb.replace(/\s+/g, '');
+                                if (newRgb !== rgb) {
+                                    console.log('*****update rgbled');
+                                    $("#" + uuid + " .basic").spectrum("set", newRgb);
+                                }
                             }
                         }
                     }
                 }
+                else{
+                    $("#" + uuid + " .basic").spectrum("disable");
+                }
 
-                var newbright = data['brightness'].brightness;
                 var bright = $("#" + uuid + " .slider-bar .brightness");
-                if (bright.data('lock') == 0) {
-                    if (newbright != bright.val()) {
-                        bright[0].MaterialSlider.change(newbright);
+                if(data['brightness'] && 'brightness' in data['brightness']) {
+                    var newbright = data['brightness'].brightness;
+                    if (bright.data('lock') == 0) {
+                        bright.attr('disabled', false);
+                        if (newbright != bright.val()) {
+                            bright[0].MaterialSlider.change(newbright);
+                        }
                     }
+                }
+                else {
+                    bright.attr('disabled', true);
                 }
 
                 var mute = $("#brillo-mute-" + data['audio'].resource_id);
                 var volume = $("#" + uuid + " .slider-bar .volume");
-                var status = mute[0].checked;
-                if (status !== data['audio'].mute) {
-                    console.log('*****update mute');
-                    if (data['audio'].mute) {
-                        mute.parent('label')[0].MaterialSwitch.on();
-                        volume.attr('disabled', 'disabled');
-                    }
-                    else {
-                        mute.parent('label')[0].MaterialSwitch.off();
-                        volume.removeAttr('disabled');
+                if(data['audio'] && 'mute' in data['audio']) {
+                    var status = !mute[0].checked;
+                    if (status !== data['audio'].mute) {
+                        mute.attr('disabled', false);
+                        console.log('*****update mute');
+                        if (data['audio'].mute) {
+                            mute.parent('label')[0].MaterialSwitch.off();
+                            volume.attr('disabled', true);
+                        }
+                        else {
+                            mute.parent('label')[0].MaterialSwitch.on();
+                            volume.removeAttr('disabled');
+                            var newVol = data['audio'].volume;
+                            if (volume.data('lock') == 0) {
+                                volume.attr('disabled', false);
+                                if (newVol != volume.val()) {
+                                    console.log('*****update volume');
+                                    volume[0].MaterialSlider.change(newVol);
+                                }
+                            }
+                        }
                     }
                 }
-
-                var newVol = data['audio'].volume;
-                if (volume.data('lock') == 0) {
-                    if (newVol != volume.val()) {
-                        console.log('*****update volume');
-                        volume[0].MaterialSlider.change(newVol);
-                    }
+                else{
+                    volume.attr('disabled', true);
+                    mute.attr('disabled', true);
                 }
             }
         },

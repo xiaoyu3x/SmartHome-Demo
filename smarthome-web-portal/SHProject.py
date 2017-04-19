@@ -263,6 +263,11 @@ def _get_sensor_data(token_dict):
                 resource_id=resource_id)
             # print latest_data
             if latest_data is None:
+                uuid = sensor.get('uuid')
+                if ret['brillo'].get(uuid) is None:
+                    ret['brillo'].update({uuid: {typ: {'resource_id': resource_id}}})
+                else:
+                    ret['brillo'][uuid].update({typ: {'resource_id': resource_id}})
                 continue
             if typ in BRILLO_GRP:
                 if typ in ['brightness']:
