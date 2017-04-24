@@ -36,6 +36,16 @@ $(function() {
                $("#daily_price_3").html(price_3.toFixed(2));
             });
 
+            $("#img_gs").mousemove(function(e){
+                var img_src = $(this).attr('src');
+                if(img_src){
+                    var parentOffset = $(this).parent().offset();
+                    var relX = e.pageX - parentOffset.left;
+                    var relY = e.pageY - parentOffset.top;
+                    $("#div_gs").css({top:(relY + 0) + 'px', left: (relX + 0) + 'px'});
+                }
+            });
+
         },
 	     init: function() {
 			console.log("init future page.");

@@ -911,16 +911,13 @@ body {
 #div_gs {
     width:250px;
     height:140px;
-	float:left;
-    margin-left:20px;
     position:absolute;
-    right:0px;
-    top:0px;
     z-index:99999;
     opacity: 0;
     background-color:rgba(255,234,82,.3);
     -webkit-transition: opacity .25s;
     transition: opacity .25s;
+    display:none;
 }
 
 #img_gs {
@@ -930,6 +927,8 @@ body {
 }
 
 #img_gs:hover + #div_gs {
+    display:block;
+    overflow:hidden;
     opacity: 1;
 }
 
@@ -1001,3 +1000,6 @@ body {
     margin-left: 2%;
     cursor: pointer;
 }
+
+
+

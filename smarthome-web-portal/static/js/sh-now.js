@@ -329,7 +329,7 @@ $(function () {
                  */
                 var switchIcon = $(this).children("input");
                 var value = {
-                    "mute": !switchIcon[0].checked
+                    "mute": switchIcon[0].checked
                 };
                 // console.log("res id:" + $(this).parent().data('id'));
                 // console.log("value: " + value);
