@@ -5,6 +5,7 @@ CRUD operation for historical weather model
 from DB.api import database
 from DB.models import HisWeather
 from DB.api import dbutils as utils
+from sqlalchemy import func
 
 
 RESP_FIELDS = ['id', 'region_id', 'temperature', 'humidity', 'weather', 'publish_date']
@@ -32,6 +33,14 @@ def get_weather_by_date(session, start_time, end_time, **kwargs):
     date_range = {'ge': str(start_time), 'le': str(end_time)}
     return utils.list_db_objects(session, HisWeather, publish_date=date_range, **kwargs)
 
+
+@database.run_in_session()
+def get_max_date(session, gateway_id, **kwargs):
+    return utils.list_db_objects_by_group(session, HisWeather,
+                                          select=[func.max(HisWeather.created_at).label("create_time")],
+                                          group_by=None,
+                                          region_id=gateway_id,
+                                          **kwargs)
 
 if __name__ == "__main__":
     print get_weather_by_date('2017-01-08', '2017-01-10', order_by=[('publish_date', False)])

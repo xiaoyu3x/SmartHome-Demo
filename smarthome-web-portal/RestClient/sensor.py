@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Sensor(object):
     _client = None
 
-    def __init__(self, uuid, path, username):
+    def __init__(self, uuid, path, gateway_id):
         self.path = path
         self.id = uuid
         # self.resource_type = resource_type.strip() if resource_type else None
@@ -23,20 +23,14 @@ class Sensor(object):
         # self._object_map = Sensor.get_sensor_types_map()
         # if self.resource_type not in self._object_map:
         #     raise Exception("(Sensor): Unsupported resource type: {}. ". format(self.path))
-        self.connect(username)
+        self.connect(gateway_id)
 
-    # @staticmethod
-    # def get_sensor_types_map():
-    #     types = sensor_type.get_all_types()
-    #     mapping = [t_dict['type'] for t_dict in types]
-    #     return mapping
-
-    def connect(self, username):
+    def connect(self, gateway_id):
         """
         Connect to IoT web service
         """
         if self._client is None:
-            self._client = IoTClient(username, proxies=config.get_all_proxy())
+            self._client = IoTClient(gateway_id, proxies=config.get_all_proxy())
 
     def get_data(self, stream=False, callback=None, **kargs):
         data = {'obs': 1} if stream else {}

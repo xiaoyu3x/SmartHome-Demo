@@ -41,7 +41,7 @@
                         </div>
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                             <label for="input_password" class="mdl-textfield__label">Password</label>
-                            <input type="password" name="password" pattern="[a-zA-Z\d!#$%&?.]*" class="mdl-textfield__input"
+                            <input type="password" name="password" pattern="^(?=.*[A-Za-z])(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$" class="mdl-textfield__input"
                                    id="input_password" />
                             <span class="mdl-textfield__error">Digits, letters and some special characters only</span>
                         </div>

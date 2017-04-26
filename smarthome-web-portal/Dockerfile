@@ -25,12 +25,12 @@ libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-d
 
 WORKDIR /usr/src
 
-#COPY Python-2.7.10.tgz .
-RUN ["wget", "--no-check-certificate", "https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz"]
+#COPY Python-2.7.12.tgz .
+RUN ["wget", "--no-check-certificate", "https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz"]
 
-RUN tar zxvf Python-2.7.10.tgz
+RUN tar zxvf Python-2.7.12.tgz
 
-WORKDIR Python-2.7.10
+WORKDIR Python-2.7.12
 
 RUN ./configure && make altinstall
 

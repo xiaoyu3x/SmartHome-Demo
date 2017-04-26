@@ -7,7 +7,7 @@ from DB.api import dbutils as utils
 from DB.api import database
 
 RESP_FIELDS = ['id', 'uuid', 'sensor_type', 'path', 'status', 'tag', 'gateway_id', 'sensor_group', 'sensor_type_id',
-               'sensor_group_id', 'created_at']
+               'sensor_group_id', 'created_at', 'observable']
 SRC_EXISTED_FIELD = {
     'uuid': 'uuid',
     'sensor_type_id': 'sensor_type_id',
@@ -16,7 +16,8 @@ SRC_EXISTED_FIELD = {
     'path': 'path',
     'tag': 'tag',
     'gateway_id': 'gateway_id',
-    'created_at': 'created_at',
+    'observable': 'observable',
+    'created_at': 'created_at'
 }
 
 

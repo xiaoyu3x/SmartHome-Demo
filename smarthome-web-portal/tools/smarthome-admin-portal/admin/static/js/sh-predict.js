@@ -27,8 +27,8 @@ $(function(){
     
 	//----------select model-------------------------
 	$("#choose, #model_name").on('click', function(){
-	     $("#predict_dialog").show()
-		  var data={}
+	     $("#predict_dialog").show();
+		  var data={};
           data['file_name']='shanghai_2013.csv';
 	      data['title'] ='shanghai_2013';
         getRequest('/training','GET', data, onSuccess, onFailure);        

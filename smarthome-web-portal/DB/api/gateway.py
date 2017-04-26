@@ -32,8 +32,8 @@ def _get_gateway(session, gateway_id, exception_when_missing=True):
 
 
 @database.run_in_session()
-@utils.wrap_to_dict(['latitude', 'longitude', 'id'])
-def get_geo(session, gateway_id):
+@utils.wrap_to_dict(['latitude', 'longitude', 'url', 'id'])
+def get_gateway(session, gateway_id):
     return _get_gateway(session, gateway_id)
 
 

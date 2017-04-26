@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 class Resource(object):
     _client = None
 
-    def __init__(self, username):
-        self.connect(username)
+    def __init__(self, gateway_id):
+        self.connect(gateway_id)
 
-    def connect(self, username):
+    def connect(self, gateway_id):
         """
         Connect to IoT web service
         """
         if self._client is None:
-            self._client = IoTClient(username, proxies=config.get_all_proxy())
+            self._client = IoTClient(gateway_id, proxies=config.get_all_proxy())
 
     def list_resource(self):
         """
@@ -40,7 +40,11 @@ class Resource(object):
                       {
                         "href": "/a/fan",
                         "rt": "oic.r.fan",
-                        "if": "o"
+                        "if": "o",
+                        "p": {
+                            "bm": 3,
+                            "secure": false
+                        }
                       }
                     ]
                   }
@@ -49,9 +53,22 @@ class Resource(object):
                 try:
                     href = str(item['links'][0]['href'])
                     rt = str(item['links'][0]['rt'])
+
+                    # by default, obs is True
+                    observable = True
+                    # check whether policy param is supported
+                    if item['links'][0].get('p'):
+                        bm = item['links'][0]['p']['bm']
+                        secure = item['links'][0]['p']['secure']
+
+                        if bm == 1 and not secure:
+                            observable = False
+                        elif bm == 3 and not secure:
+                            observable = True
+
                     if rt and not rt.startswith("oic.wk") and href \
                             and (href.startswith("/a/") or href.startswith("/brillo/")):
-                        sensors.append((item['di'], href, rt))
+                        sensors.append((item['di'], href, rt, observable))
                     else:
                         # ignore the wrong or unregistered json types
                         pass

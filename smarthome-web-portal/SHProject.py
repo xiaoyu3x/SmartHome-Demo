@@ -7,7 +7,7 @@ import json
 import logging
 import hashlib
 import functools
-import time
+from pprint import pprint
 import datetime
 from flask import redirect, url_for, abort
 from flask import request, session, make_response
@@ -17,7 +17,8 @@ from decimal import Decimal
 from utils import logsettings
 from utils import util
 from utils.config import config
-from DB.api import resource, user, gateway, sensor_group, actual_weather, actual_power, his_weather, predicted_power
+from DB.api import resource, user, gateway, sensor_group, actual_weather, actual_power, his_weather, predicted_power, \
+    gateway_model
 from RestClient.sensor import Sensor
 from RestClient.api import ApiClient
 from RestClient.api.iotError import IoTRequestError
@@ -68,11 +69,6 @@ def authenticated_only(f):
     return wrapped
 
 
-# @socketio.on('my event', namespace='/index')
-# def test_message(message):
-#     emit('my response', {'data': message['data']})
-
-
 def _get_historical_data(sensor, start_time, end_time, res_list=[]):
     try:
         if not res_list:
@@ -105,11 +101,6 @@ def get_historical_data(message):
 
     print res_id, data
     emit('my ' + sensor, {'data': data})
-
-
-# @socketio.on('my broadcast event', namespace='/index')
-# def test_message(message):
-#     emit('my response', {'data': message['data']}, broadcast=True)
 
 
 @socketio.on('connect', namespace='/index')
@@ -272,6 +263,11 @@ def _get_sensor_data(token_dict):
                 resource_id=resource_id)
             # print latest_data
             if latest_data is None:
+                uuid = sensor.get('uuid')
+                if ret['brillo'].get(uuid) is None:
+                    ret['brillo'].update({uuid: {typ: {'resource_id': resource_id}}})
+                else:
+                    ret['brillo'][uuid].update({typ: {'resource_id': resource_id}})
                 continue
             if typ in BRILLO_GRP:
                 if typ in ['brightness']:
@@ -346,7 +342,9 @@ def update_sensor_attr():
 @login_required
 def get_geo_location():
     """Get the Geolocation of the current account"""
-    location = gateway.get_geo(gateway_id=session.get('gateway_id'))
+    location = gateway.get_gateway(gateway_id=session.get('gateway_id'))
+    # remove unnecessary keys
+    location.pop('url', None)
     return jsonify({'geo': location}), 201
 
 
@@ -370,7 +368,7 @@ def update_sensor():
     except:
         abort(404)
     print "content: " + str(content)
-    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'), username=session.get('username'))
+    sensor = Sensor(uuid=res.get('uuid'), path=res.get('path'), gateway_id=session.get('gateway_id'))
     try:
         sts = sensor.update_status(data)
         return jsonify({'status': sts}), 201
@@ -493,7 +491,9 @@ def list_sensor_groups():
 @app.route('/get_gateways')
 def list_gateways():
     # todo: need some security mechanism to protect the data
-    gateways = gateway.list_gateways(status=True)
+    # list all registered gateways
+    gateways = gateway.list_gateways()
+
     keyword = config.get_map_keyword()
     types = config.get_map_types()
     return jsonify({'gateways': gateways,
@@ -534,8 +534,6 @@ def logout():
 
 @socketio.on('my temp', namespace='/index')
 def get_temp(message):
-    typ = message.get('type')
-    region = message.get('region')
     today_date_str = message.get('today_date')
     data, error = None, None
     print today_date_str
@@ -549,30 +547,30 @@ def get_temp(message):
     end_date = today_date + timedelta(days=3)
     print start_date, end_date
 
-    if typ == "forecast":
-        actual = temp_actual(region, start_date, end_date)
-        future = temp_future(region, start_date, end_date)
-        if not actual or not future:
-            error = "Incomplete data"
-        else:
-            data = {
-                "actual": actual,
-                "future": future
-            }
-    elif typ == "today":
-        data = temp_today(region, start_date, end_date)
+    actual = temp_actual(start_date, today_date)
+    future = temp_future(today_date, end_date)
+    if not actual or not future:
+        error = "Incomplete data. Plz load weather data in admin portal."
     else:
-        error = "Invalid request type: " + typ
+        data = {
+            "actual": actual,
+            "future": future
+        }
 
     if data:
-        emit('my temp {}'.format(typ), {'data': data})
+        emit('my temp resp', {'data': data})
     else:
-        emit('my temp {}'.format(typ), {'error': error})
+        emit('my temp resp', {'error': error})
 
 
-def temp_actual(region, start, end):
-    print "######temp_actual"
-    his_weather_info = his_weather.get_weather_by_date(start, end, region_id=1, order_by=[('publish_date', False)])
+def temp_actual(start, end):
+    print "######temp_actual#######"
+    max_date = his_weather.get_max_date(gateway_id=session.get('gateway_id'), publish_date=str(end))
+    if not max_date:
+        return []
+    his_weather_info = his_weather.get_weather_by_date(start, end, region_id=session.get('gateway_id'),
+                                                       created_at={'ge': str(max_date[0][0])},
+                                                       order_by=[('publish_date', False)])
     print his_weather_info
 
     # convert the date object to string
@@ -581,9 +579,14 @@ def temp_actual(region, start, end):
     return his_weather_info
 
 
-def temp_future(region, start, end):
-    print "######temp_future"
-    actual_weather_info = actual_weather.get_weather_by_date(start, end, region_id=1, order_by=[('publish_date', False)])
+def temp_future(start, end):
+    print "######temp_future#######"
+    max_date = actual_weather.get_max_date(gateway_id=session.get('gateway_id'), publish_date=str(start))
+    if not max_date:
+        return []
+    actual_weather_info = actual_weather.get_weather_by_date(start, end, region_id=session.get('gateway_id'),
+                                                             created_at={'ge': str(max_date[0][0])},
+                                                             order_by=[('publish_date', False)])
     print actual_weather_info
     for info in actual_weather_info:
         info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
@@ -591,9 +594,13 @@ def temp_future(region, start, end):
     return actual_weather_info
 
 
-def temp_today(region, start, end):
-    print "######temp_today"
-    actual_weather_info = actual_weather.get_weather_by_date(start, end, order=0, region_id=1,
+def temp_today(start, end):
+    print "######temp_today#####"
+    max_date = actual_weather.get_max_date(gateway_id=session.get('gateway_id'), publish_date=str(start))
+    if not max_date:
+        return []
+    actual_weather_info = actual_weather.get_weather_by_date(start, end, order=0, region_id=session.get('gateway_id'),
+                                                             created_at={'ge': str(max_date[0][0])},
                                                              order_by=[('publish_date', False)])
     print actual_weather_info
     for info in actual_weather_info:
@@ -604,7 +611,6 @@ def temp_today(region, start, end):
 
 @socketio.on('my power', namespace='/index')
 def get_power(message):
-    region = message.get('region')
     today_date_str = message.get('today_date')
     data, error = None, None
     print today_date_str
@@ -618,54 +624,67 @@ def get_power(message):
     end_date = today_date + timedelta(days=3)
     print start_date, end_date
 
-    actual = power_actual(region, start_date, end_date)
-    predict_his = power_predict_his(region, start_date, end_date)
-    future = power_future(region, today_date)
-    if not actual or not future or not predict_his:
-        error = "Incomplete data"
+    actual = power_actual(start_date, today_date)
+    predict = power_predict_his(start_date, end_date, today_date)
+    # future = power_future(today_date, end_date)
+    if not actual or not predict:
+        error = "Incomplete data. Plz load data in admin portal. "
     else:
         data = {
             "actual": actual,
-            "future": future,
-            'predict_his': predict_his
+            "future": predict[3:],
+            'predict_his': predict[:4]
         }
-
     if data:
         emit('my power resp', {'data': data})
     else:
         emit('my power resp', {'error': error})
 
 
-def power_actual(region, start_date, end_date):
-    print "######power_actual"
-
-    actual_power_info = actual_power.get_power_by_date(start_date, end_date, region_id=1, order_by=[('collect_date', False)])
+def power_actual(start_date, end_date):
+    print "######power_actual#######"
+    max_date = actual_power.get_max_date(gateway_id=session.get('gateway_id'), collect_date=str(end_date))
+    if not max_date:
+        return []
+    actual_power_info = actual_power.get_power_by_date(start_date, end_date, region_id=session.get('gateway_id'),
+                                                       created_at={'ge': str(max_date[0][0])},
+                                                       order_by=[('collect_date', False)])
     for info in actual_power_info:
-        info['collect_date']=info['collect_date'].strftime('%Y-%m-%d')
-    print actual_power_info
-
+        info['collect_date'] = info['collect_date'].strftime('%Y-%m-%d')
+    pprint(actual_power_info)
     return actual_power_info
 
 
-def power_predict_his(region, start_date, end_date):
-    print "#########power_predict_his"
-
-    predict_power_info = predicted_power.get_power_by_date(start_date, end_date, order=0, region_id=1,
+def power_predict_his(start_date, end_date, today_date):
+    print "#########power_predict#########"
+    max_date = predicted_power.get_max_date(gateway_id=session.get('gateway_id'), publish_date=str(today_date))
+    if not max_date:
+        return []
+    predict_power_info = predicted_power.get_power_by_date(start_date, end_date, order=0,
+                                                           region_id=session.get('gateway_id'),
+                                                           created_at={'ge': str(max_date[0][0])},
                                                            order_by=[('publish_date', False)])
     for info in predict_power_info:
         info['publish_date'] = info['publish_date'].strftime('%Y-%m-%d')
-    print predict_power_info
     return predict_power_info
 
 
-def power_future(region, today_date):
-    print "#########power_future"
-
-    predict_power_info = predicted_power.get_power(publish_date=today_date, order_by=[('publish_date', False)])
-    for info in predict_power_info:
-        info['publish_date']=info['publish_date'].strftime('%Y-%m-%d')
-    print predict_power_info
-    return predict_power_info
+@socketio.on('my model', namespace='/index')
+def get_data_model():
+    data_model = gateway_model.get_gateway_model(session.get("gateway_id"))
+    admin_uri = None
+    env_str = os.getenv("VCAP_APPLICATION", "")
+    if data_model:
+        if env_str:
+            env_dict = json.loads(env_str)
+            uris = env_dict.get("application_uris", None)
+            if uris:
+                admin_uri = uris[0].split(".")
+                admin_uri[0] = "smarthome-adminportal"
+                admin_uri = ".".join(admin_uri)
+        else:
+            admin_uri = "localhost:4000"
+    emit('my model resp', "http://" + admin_uri + "/images/model/" + data_model['data_model']['name'] + ".png" if data_model and admin_uri else data_model)
 
 
 if __name__ == '__main__':

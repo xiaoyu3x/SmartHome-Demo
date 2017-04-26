@@ -65,3 +65,21 @@ function getRequest(url,type,data,successCallback,failCallback){
         error: failCallback,
     });    
 }
+
+function hashPassword(aForm){
+    var inputPassword = aForm['password'];
+    var inputPassword2 = aForm['password2'];
+
+    //Hashing the values before submitting
+    inputPassword.value = sha256_hash(inputPassword.value);
+    inputPassword2.value = inputPassword.value;
+
+    //Submitting
+    return true;
+}
+
+function sha256_hash(pwd){
+    var sha256 = new jsSHA('SHA-256', 'TEXT');
+    sha256.update(pwd);
+    return sha256.getHash("HEX");
+}

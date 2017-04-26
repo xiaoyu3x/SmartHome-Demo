@@ -544,6 +544,7 @@ class Resource(Base, HelperMixin, DefaultMixin):
     gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     path = Column(VARCHAR(60), nullable=False)
     tag = Column(VARCHAR(200), nullable=True)
+    observable = Column(Boolean)
     sensor_type = relationship('SensorType', backref='resource', lazy=False)
     sensor_group = relationship('SensorGroup', backref='resource', lazy=False)
 
@@ -591,16 +592,15 @@ class SensorGroup(Base, HelperMixin, DefaultMixin):
 
 
 class ActualWeather(Base, HelperMixin, DefaultMixin):
-    __tablename__='actual_weather'
+    __tablename__ = 'actual_weather'
 
     publish_date = Column(DATE)
-    # region_id = Column(Integer, ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    region_id = Column(Integer, nullable=False)
+    region_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     forecast_date = Column(DATE)
     order = Column(Integer)
     temperature = Column(FLOAT)
     humidity = Column(FLOAT)
-    weather=Column(VARCHAR(45))
+    weather = Column(VARCHAR(45))
 
     def __init__(self, publish_date=None, region_id=None, forecast_data=None, order=None, temperature=None,
                  humidity=None, weather=None):
@@ -623,12 +623,11 @@ class ActualWeather(Base, HelperMixin, DefaultMixin):
 class HisWeather(Base, HelperMixin, DefaultMixin):
     __tablename__='his_weather'
 
-    publish_date =Column(DATE)
-    # region_id = Column(Integer,ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    region_id = Column(Integer, nullable=False)
-    temperature =Column(FLOAT)
+    publish_date = Column(DATE)
+    region_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    temperature = Column(FLOAT)
     humidity = Column(FLOAT)
-    weather=Column(VARCHAR(45))
+    weather = Column(VARCHAR(45))
 
     def __init__(self, publish_date=None, region_id=None, temperature=None, humidity=None, weather=None):
         self.publish_date = publish_date
@@ -644,16 +643,15 @@ class HisWeather(Base, HelperMixin, DefaultMixin):
 
 
 class PredictedPower(Base, HelperMixin, DefaultMixin):
-    __tablename__='predicted_power'
+    __tablename__ = 'predicted_power'
 
-    # region_id = Column(Integer, ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    region_id = Column(Integer, nullable=False)
+    region_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     predict_date = Column(DATE)
     publish_date = Column(DATE)
     order = Column(Integer)
-    power=Column(FLOAT)
+    power = Column(FLOAT)
 
-    def __init__(self,region_id=None, predict_date=None, publish_date=None, order=None, power=None):
+    def __init__(self, region_id=None, predict_date=None, publish_date=None, order=None, power=None):
         self.region_id = region_id
         self.predict_date = predict_date
         self.publish_date = publish_date
@@ -667,11 +665,10 @@ class PredictedPower(Base, HelperMixin, DefaultMixin):
 
 
 class ActualPower(Base, HelperMixin, DefaultMixin):
-    __tablename__='actual_power'
+    __tablename__ = 'actual_power'
 
     collect_date = Column(DATE)
-    # region_id = Column(Integer, ForeignKey('region.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
-    region_id = Column(Integer, nullable=False)
+    region_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     power = Column(FLOAT)
 
     def __init__(self, collect_date=None, region_id=None, power=None):
@@ -718,13 +715,11 @@ class DataSet(Base, HelperMixin, DefaultMixin):
 class DataModel(Base, HelperMixin, DefaultMixin):
     __tablename__ = 'data_model'
 
-    id = Column(Integer, primary_key=True)
     dataset_id = Column(Integer, ForeignKey('dataset.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
     name = Column(VARCHAR(100))
     algorithm_type = Column(VARCHAR(50))
     serialization = Column(Integer)
     description = Column(VARCHAR(200))
-    created_at = Column(DateTime)
     status = Column(VARCHAR(1))
     dataset = relationship('DataSet', backref='data_model', lazy=False)
 
@@ -743,5 +738,21 @@ class DataModel(Base, HelperMixin, DefaultMixin):
                "created_at='%s',status='%s')>" % (str(self.id), str(self.dataset_id), self.name, self.algorithm_type,
                                                   self.serialization, self.description, str(self.created_at),
                                                   str(self.status))
-# if __name__ == '__main__':
-#    initial_db()
+
+
+class GatewayModel(Base, HelperMixin, DefaultMixin):
+    __tablename__ = 'gateway_model'
+
+    gateway_id = Column(Integer, ForeignKey('gateway.id', ondelete='CASCADE', onupdate='CASCADE'),
+                        unique=True, index=True, nullable=False)
+    model_id = Column(Integer, ForeignKey('data_model.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    gateway = relationship('Gateway', backref='gateway_model', lazy=False)
+    data_model = relationship('DataModel', backref='gateway_model', lazy=False)
+
+    def __init__(self, gateway_id=None, model_id=None):
+        self.gateway_id = gateway_id
+        self.model_id = model_id
+
+    def __repr__(self):
+        return "<GatewayModel(id='%s',gateway_id='%s',model_id='%s',created_at='%s')>" % (
+            str(self.id), str(self.gateway_id), str(self.model_id), str(self.created_at))
