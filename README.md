@@ -6,7 +6,7 @@ This repository provides source code that allows to set-up and demonstrate an Io
 ## Source code and repository layout
 The repository is organised as follows:
 * `gateway`: code running on the Home Gateway
-* `ocf-servers`: OCF server implementations in JavaScript (located in `js-servers`).
+* `ocf-servers`: OCF server implementations in JavaScript (located in `js-servers` and `zjs-servers`).
    * Generic documentation on how to set them up is available [here](ocf-servers/js-servers/README.md)
    * The specifications for the OCF servers is availabe in the `ocf-servers/doc/` folder
 * `ostro-config`: a collection of `systemd` service files that can help automatically start the Home GW software (on the Home Gateway) and OCF servers (on the OCF server hardware). (*note:* these require manual adaptation and not all OCF servers have an associated service file available)
