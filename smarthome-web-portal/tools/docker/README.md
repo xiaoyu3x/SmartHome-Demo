@@ -52,7 +52,7 @@ Here are the steps to run the Smart Home Web Portal in a Docker container.
       ![admin portal](../../screenshots/smarthome-adminportal.PNG)
    * Restart the container (Refer to step 6 on how to get the container id)
       `docker restart <container id>`
-   * Login to the Home portal thru `http://<host-ip-addr>:3030` (login credentials: ostro/ostro)
+   * Login to the Home portal thru `http://<host-ip-addr>:3030` (login credentials are: OTC/!otivity and dev/P@ssw0rd
 
 6. Troubleshooting the container
     * `$ docker ps -a`    
