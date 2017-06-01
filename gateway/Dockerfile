@@ -31,8 +31,7 @@ WORKDIR /opt/SmartHome-Demo/gateway/
 
 RUN npm install
 
-# Install the certificates needed when using HTTPS
-RUN /bin/bash /opt/SmartHome-Demo/gateway/node_modules/iot-rest-api-server/config/generate-key-and-cert.sh
+VOLUME ["/opt/security-files/"]
 
 # Forward port
 EXPOSE 8000 8080

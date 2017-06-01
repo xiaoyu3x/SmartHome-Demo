@@ -12,11 +12,35 @@ This README.md only covers options 1. and 3. Deploying the SmartHome Gateway via
 
 In order to make deploying the SmartHome Gateway easy, a [Docker] container has been created and is available on [Docker Hub](https://hub.docker.com). It is called [smarthome2cloud/smarthome-gateway](https://hub.docker.com/r/smarthome2cloud/smarthome-gateway/). You will find more detailed instructions on how to pull it and run it in the [top-level README.md](../README.md).
 
+### User manual
+
+There is some generic information on how to create and run the different [Docker] containers that are part of this set-up in the top-level [README.d](../README.me) file. We won't repeat much of the same information here and we will instead give a concrete example of how you can quickly get the Home Gateway function up and running using [Docker].
+
+The starting point is a host machine that has [Docker] installed in it. From that point on, follow these simple steps:
+```
+$ sudo docker pull smarthome2cloud/smarthome-gateway
+$ sudo docker run --net host smarthome2cloud/smarthome-gateway
+```
+And that's it! You can verify that the Home Gateway function is up and running by checking http://localhost:8000/api/system from your favourite browser. The page should display information about your system.
+
+By default, the Home Gateway uses HTTP and port 8000, you can actually change that by passing command-line arguments to the container. It will accept all command-line arguments that the [IoT REST API Server] accepts.
+
+Should you wish to use HTTPS instead of HTTP, you can use the `-s` command-line argument. It is **highly** recommended in such case that you also provide a private key (`private.key`) and certificate (`certificate.pem`) from a known certificate authority. If you don't, a key and certificate will be auto-generated but should be used for testing only. You will get warnings when using them. Assuming you have a valid key and certificate, here is how you can pass them on to the [Docker] container:
+1. Create a folder on your host and place both `certificate.pem` and `private.key` in it (you **must** use these exact filenames).
+2. Start the [Docker] container exposing this folder to the `/opt/security-files` folder inside the container.
+Here is a concrete example, using HTTPS and port 9000:
+```
+$ sudo docker run -v /path/to/host/folder:/opt/security-files --net host smarthome2cloud/smarthome-gateway -p 9000 -s
+```
+Go to https://localhost:9000/api/system to verify that the Home Gateway is indeed up and running.
+
+### Technical description
+
 Internally, this [Docker] container uses the [`start-gateway-in-docker.sh`](./start-gateway-in-docker.sh) script to start the following couple of services:
 * Home Gateway SW: the core is provided by the content of this folder and started by the [`gateway-server.js`](./gateway-server.js) script
 * [IoT REST API Server]: this is the service that exposes the OIC (OCF) API over HTTP(S)
 
-The [IoT REST API Server] can take a number of command-line arguments that tweak its behaviour, by default it starts on port 8000 using 'http'. Should you want to change any of these, you can pass any of the [IoT REST API Server] command-line arguments to the [Docker] container and they will be used. The command-line arguments that are available today are:
+The [IoT REST API Server] can take a number of command-line arguments that tweak its behaviour, by default it starts on port 8000 using HTTP. Should you want to change any of these, you can pass any of the [IoT REST API Server] command-line arguments to the [Docker] container and they will be used. The command-line arguments that are available today are:
 ```
 usage: node index.js [options]
 options:
@@ -44,7 +68,7 @@ Node.js dependencies can be installed using `npm install <node_module>` (you nee
 * [WebSocket](https://www.npmjs.com/package/websocket)
 * [mraa](https://www.npmjs.com/package/mraa): this is only needed if you want to use the Smart Power Meter with a serial line connection. See this [README.md](../sensors//DC_power_meter/README.md) for more details on the Smart Power Meter.
 
-## How to start the Home GW SW
+### How to start the Home GW SW
 
 1. Transfer the content of this repo to your Home Gateway (e.g. `git clone https://github/01org/SmartHome-Demo`)
 2. Install all `node.js` dependencies (see above)

@@ -98,9 +98,11 @@ In this case, you can check that the virtual Home Gateway is running by checking
 
 The advantage of running with the `--network host` parameter is that the virtual gateway should see other OCF servers available on your local network (not just the ones from your container environment).
 
-*Note:* this uses plain HTTP. It is possible to use HTTPS by modifying the [startup script](gateway/start-smarthome-in-docker.sh) and passing the `-s` parameter to the `iot-rest-api-server` startup script.
+*Note:* this uses plain HTTP by default. It is possible to use HTTPS by giving the container the `-s` command-line argument; we can only **strongly** advise that you also provide a valid `certificate.pem` and `private.key` when doing so. Please check this [README.md](gateway/README.md) file for more details on how to do that.
 
-By default, the [startup script](ocf-servers/start-ocf-servers-in-docker.sh) starts all the OCF servers. In order to selectively start some of the OCF servers, follow the steps below:
+*Note2:* similarly to what's described in the note above, you can tweak the behaviour of the `iot-rest-api-server` (e.g. changing the default port) by passing command-line arguments to the container, these are passed on as-is to the [IoT REST API Server] service.
+
+By default, the [startup script](ocf-servers/start-ocf-servers-in-docker.sh) in the `smarthome-sensors` Docker container starts all the OCF servers in `ocf-servers/js-servers/`. In order to selectively start some of the OCF servers, or start multiple instances of some, follow the steps below:
 1. Make a copy of the `ocf-servers/ocf-server.conf.template` file and rename it to `ocf-servers/ocf-server.conf`
 2. Configure `ocf-servers/ocf-server.conf` adhering to the format as shown in the template. Put the OCF server name in the 1st column and the total number of the specified server type in the 2nd column. If the configuration file format is not compliant or it does not exist in the same directory as the script file, the [startup script](ocf-servers/start-ocf-servers-in-docker.sh) skips parsing and starts all OCF servers instead.
 3. Share the configuration file on the host with the container process    
