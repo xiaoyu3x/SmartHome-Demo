@@ -12,15 +12,15 @@ Here are the steps to run the Smart Home Web Portal in a Docker container.
     * Get in the `smarthome-web-portal` portal: `$ cd SmartHome-Demo/smarthome-web-portal`
 
 2. Configurations
-    * Update the preferred source in source.list    
+    * Update the preferred source in source.list
       eg. change `archive.ubuntu.com` to `hk.archive.ubuntu.com`
 
 3. Getting the Docker image
    There are two options (described in step 3.1 and 3.2 respectively) to get the Docker image. We recommend using option 3.1 as it is simpler and quicker.
 
 + 3.1 Pre-built Docker image
-    * Download the pre-built image hosted on DockerHub (https://hub.docker.com/r/smarthome2cloud/smarthome-demo/) by running the command below.    
-    `$ docker pull smarthome2cloud/smarthome-demo`
+    * Download the pre-built image hosted on DockerHub (https://hub.docker.com/r/smarthome2cloud/smarthome-gateway/) by running the command below.
+    `$ docker pull smarthome2cloud/smarthome-gateway`
 
 + 3.2 Build the image
     * Under the `smarthome-web-portal` folder, run the command below to build the image. *smarthome2cloud* is the image name and *v1* is the tag of the image.    

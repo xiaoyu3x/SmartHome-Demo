@@ -11,7 +11,9 @@ export NODE_PATH=/opt/SmartHome-Demo/gateway/node_modules/
 sleep 0.2
 
 # Start IoT REST API server
-/usr/bin/node /opt/SmartHome-Demo/gateway/node_modules/iot-rest-api-server/index.js &
+echo "Starting the IoT REST API Server..."
+# We blindly pass all container command-line arguments to the IoT REST API Server
+/usr/bin/node /opt/SmartHome-Demo/gateway/node_modules/iot-rest-api-server/index.js "$@" &
 
 keepgoing=true
 

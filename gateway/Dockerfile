@@ -31,6 +31,9 @@ WORKDIR /opt/SmartHome-Demo/gateway/
 
 RUN npm install
 
+# Install the certificates needed when using HTTPS
+RUN /bin/bash /opt/SmartHome-Demo/gateway/node_modules/iot-rest-api-server/config/generate-key-and-cert.sh
+
 # Forward port
 EXPOSE 8000 8080
 
@@ -39,5 +42,5 @@ ENV http_proxy ""
 ENV https_proxy ""
 
 # Start Home Gateway
-CMD ["/opt/SmartHome-Demo/gateway/start-gateway-in-docker.sh"]
+ENTRYPOINT ["/opt/SmartHome-Demo/gateway/start-gateway-in-docker.sh"]
 
