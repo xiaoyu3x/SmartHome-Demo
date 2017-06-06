@@ -3,7 +3,9 @@
 This folder contains JavaScript implementation of various OCF servers written in [OCF API](https://github.com/01org/zephyr.js/blob/master/docs/ocf.md) of the [JavaScript runtime for Zephyr OS (ZJS)](https://github.com/01org/zephyr.js), which leverage iotivity-constrained for devices with less memory, such as [Arduino 101](https://www.arduino.cc/en/Main/ArduinoBoard101), to communicate with the connected gateway using the OCF networking protocol over Bluetooth 6LoWPAN.
 
 ## Setup ZJS Build Environment
-Follow the [ZJS Getting Started](https://github.com/01org/zephyr.js#getting-started) guide for setting up the ZJS development environment except the version of the [ZJS repository](https://github.com/01org/zephyr.js) to be checked out. The ZJS OCF API has been extended to support multiple resource registrations, ZJS version 0.3 and below won’t work with the scripts in this folder, you should remain on the master branch after cloning the ZJS source code repo, or checkout the branch for version 0.4 or above once it’s available.
+Follow the [ZJS Getting Started](https://github.com/01org/zephyr.js#getting-started) guide for setting up the ZJS development environment<sup><b>*1</b></sup> except the version of the [ZJS repository](https://github.com/01org/zephyr.js) to be checked out. The ZJS OCF API has been extended to support multiple resource registrations with [this commit](https://github.com/01org/zephyr.js/commit/5d1674a724ba202bf966a4b2b66d50f80a0acb78), ZJS version 0.3 and below won't work with the scripts in this folder, you should remain on the master branch after cloning the ZJS source code repo, or checkout the branch for version 0.4 or above once it’s available.
+
+*Note 1. The scripts in this folder have been validated against the [Zephyr SDK 0.9](https://www.zephyrproject.org/downloads/zephyr-project-software-development-kit-sdk-09)*
 ​
 ## Build and Flash the OCF Servers
 The ZJS development environment designs with a comprehensive Makefile for building both x86 and ARC images from the given JavaScript code, and for flashing the images to an Arduino 101 board. For example, to build the multi-server OCF server images:
@@ -38,14 +40,18 @@ The OCF server communicates with the OCF client or gateway over BLE through 6LoW
 # ifconfig  ##You should see bt0 interface, if everything was okay
 ```
 
-| ZJS OCF server | Port on Grove base shield | Sensor |
-|----------------|---------------------------|--------|
-| led.js         | n/a | onboard LED |
-| temperature.js | n/a | onboard temperature sensor |
-| multiserver.js | D2  | [Grove PIR motion sensor](http://wiki.seeed.cc/Grove-PIR_Motion_Sensor/) |
-|                | D4  | [Grove button](http://wiki.seeed.cc/Grove-Button/) |
-|                | D7  | [Grove buzzer](http://wiki.seeed.cc/Grove-Buzzer/) |
-|                | D8  | [Grove mini fan](http://wiki.seeed.cc/Grove-Mini_Fan/) |
-|                | A0<sup>*1</sup>  | [Grove light sensor](http://wiki.seeed.cc/Grove-Light_Sensor/) |
+| ZJS OCF server | Sensor | Port on Grove base shield | 
+|----------------|--------|---------------------------|
+| led.js | onboard LED | n/a |
+| temperature.js | onboard temperature sensor | n/a |
+| multiserver.js | onboard temperature sensor | n/a |
+|                | [Grove PIR motion sensor](http://wiki.seeed.cc/Grove-PIR_Motion_Sensor/) | D2 |
+|                | [Grove button](http://wiki.seeed.cc/Grove-Button/) | D4 |
+|                | [Grove buzzer](http://wiki.seeed.cc/Grove-Buzzer/) | D7 |
+|                | [Grove mini fan](http://wiki.seeed.cc/Grove-Mini_Fan/) | D8 |
+|                | [Grove light sensor](http://wiki.seeed.cc/Grove-Light_Sensor/) | A0<sup>*1</sup>  |
+| multiserver2.js | onboard LED | n/a |
+|                 | Solar panel | PWM0(D3) |
+|                 | [Grove Temperature & Humidity sensor](http://wiki.seeed.cc/Grove-TemptureAndHumidity_Sensor-High-Accuracy_AndMini-v1.0/) | I2C |
 
 <sup>*1 The illuminance sensor values are converted from the onchip ADC, which is sensitive to the analog voltage input (AREF). The Grove base shield doesn't drive the AREF input while selecting 3.3V as Vcc through the power switch. It's recommended to turn the switch to 5V position to get correct ADC values.</sup>
