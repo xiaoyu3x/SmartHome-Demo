@@ -8,7 +8,7 @@ Follow the [ZJS Getting Started](https://github.com/01org/zephyr.js#getting-star
 ## Build and Flash the OCF Servers
 The ZJS development environment designs with a comprehensive Makefile for building both x86 and ARC images from the given JavaScript code, and for flashing the images to an Arduino 101 board. For example, to build the multi-server OCF server images:
 ```
-$ cd $ZEPHYR_BASE
+$ cd $ZJS_BASE
 ~/zephyr.js $ make ROM=256 JS=<Path to SmartHome-Demo repo>/ocf-servers/zjs-servers/multiserver.js
 ```
 The `ROM=256` parameter in the above command instructs the linker to allocate 256KB for x86 as the default partition size is not sufficient. Reference the [Getting more space on your Arduino 101](https://github.com/01org/zephyr.js#getting-more-space-on-your-arduino-101) section in the ZJS project for more information.
