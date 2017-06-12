@@ -64,17 +64,21 @@ There are a few ways you can run the containers, one critical aspect is to get t
 
 **Option 1:** Running the containers within the `docker0` bridge network
 When running both `smarthome-sensors` and `smarthome-gateway` containers on the bridge network, we recommend publishing port 8000 to a local port (e.g. 8001). 
+When running `smarthome-cloud` container, we recommend publishing port 3000 and 4000 to a local port (eg. 3030 and 3031).
 
-Example, using locally built containers:
+Example, using locally built containers. `smarthome2cloud` is  the username or organization name registered in Docker hub which is optional if the image is only for local use. You may replace it with your Docker hub account or ignore it by removing the slash before the repository name:
 ```
-$ sudo docker run smarthome-sensors:v1
-$ sudo docker run -p 8001:8000 smarthome-gateway:v1
+$ sudo docker run smarthome2cloud/smarthome-sensors:v1
+$ sudo docker run -p 8001:8000 smarthome2cloud/smarthome-gateway:v1
+$ sudo docker run -d --name portal -p 3030:3000 -p 3031:4000 smarthome2cloud/smarthome-cloud:v1
 ```
 Alternatively, if you pulled the containers from Docker Hub, use:
 ```
 $ sudo docker run smarthome2cloud/smarthome-sensors:latest
 $ sudo docker run -p 8001:8000 smarthome2cloud/smarthome-gateway:latest
+$ sudo docker run -d --name portal -p 3030:3000 -p 3031:4000 smarthome2cloud/smarthome-cloud:latest
 ```
+
 To verify that the virtual Home Gateway is available and that the OCF servers are seen, open you browser and go to http://localhost:8001/api/oic/res.
 
 We recommend using a browser for this and if you are using Google Chrome, we would recommend that you install the [JSON Viewer](https://chrome.google.com/webstore/detail/json-viewer/gbmdgpbipfallnflgajpaliibnhdgobh) extension (or similar tool) to make the output look more human-friendly.
@@ -83,16 +87,20 @@ We recommend using a browser for this and if you are using Google Chrome, we wou
 
 You can also use `curl` if you are familiar with it, e.g. `curl http://localhost:8001/api/oic/res`.
 
+To verify, configure and troubleshoot the Home Cloud, go to the [README.md](smarthome-web-portal/tools/docker/README.md) file for details.
+
 **Option 2:** Running the containers directly on the host network
-If you built the containers locally:
+If you built the containers locally. `smarthome2cloud` is  the username or organization name registered in Docker hub which is optional if the image is only for local use. You may replace it with your Docker hub account or ignore it by removing the slash before the repository name:
 ```
-$ sudo docker run --network host smarthome-sensors:v1
-$ sudo docker run --network host smarthome-gateway:v1
+$ sudo docker run --network host smarthome2cloud/smarthome-sensors:v1
+$ sudo docker run --network host smarthome2cloud/smarthome-gateway:v1
+$ sudo docker run --network host -d --name <container-name> smarthome2cloud/smarthome-cloud:v1
 ```
 Alternatively, if you pulled the containers from Docker Hub, use:
 ```
 $ sudo docker run --network host smarthome2cloud/smarthome-sensors:latest
 $ sudo docker run --network host smarthome2cloud/smarthome-gateway:latest
+$ sudo docker run --network host -d --name <container-name> smarthome2cloud/smarthome-cloud:latest
 ```
 In this case, you can check that the virtual Home Gateway is running by checking http://localhost:8000/api/oic/res. This should also list all the OCF servers running in the `smarthome-sensors` container.
 
@@ -110,6 +118,8 @@ By default, the [startup script](ocf-servers/start-ocf-servers-in-docker.sh) in 
 $ sudo docker run -v <path/to/ocf-server.conf/on/host>:/opt/SmartHome-Demo/ocf-servers/ocf-server.conf smarthome-sensors:v1
 ```
 *Note*: Use the absolute path instead of relative path to point to the configuration file on the host server. 
+
+To verify, configure and troubleshoot the Home Cloud, go to the [README.md](smarthome-web-portal/tools/docker/README.md) file for details.
 
 [IoT REST API Server]: https://github.com/01org/iot-rest-api-server/
 [OCF]: https://openconnectivity.org/
