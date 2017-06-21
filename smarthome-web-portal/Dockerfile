@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 
 ARG http_proxy
 
@@ -12,43 +12,32 @@ RUN echo $https_proxy
 
 RUN echo $http_proxy
 
-# update apt source.list
-COPY tools/docker/sources.list /etc/apt
-
-RUN rm /var/lib/apt/lists/* -vf
+# Uncomment the two lines below if you wish to use an Ubuntu mirror repository
+# that is closer to you (and hence faster). The 'sources.list' file inside the
+# 'tools/docker/' folder is set to use one of Ubuntu's official mirror in Taiwan.
+# You should update this file based on your own location. For a list of official
+# Ubuntu mirror repositories, check out: https://launchpad.net/ubuntu/+archivemirrors
+#COPY tools/docker/sources.list /etc/apt
+#RUN rm /var/lib/apt/lists/* -vf
 
 RUN apt-get clean && apt-get update
 
-# install python dependencies
-RUN apt-get -y install gcc build-essential checkinstall libreadline-gplv2-dev \
-libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev wget
-
-WORKDIR /usr/src
-
-#COPY Python-2.7.12.tgz .
-RUN ["wget", "--no-check-certificate", "https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz"]
-
-RUN tar zxvf Python-2.7.12.tgz
-
-WORKDIR Python-2.7.12
-
-RUN ./configure && make altinstall
+# install python2 and common tools
+RUN apt-get -y install vim wget netcat python
 
 # forward port
 EXPOSE 3000 4000
 
-RUN echo "alias python='/usr/local/bin/python2.7'" > ~/.bash_aliases
-
-RUN . ~/.bash_aliases
-
 # Install MySQL Server in a Non-Interactive mode. Default root password will be "intel123"
-RUN apt-get install -y debconf-utils libmysqlclient-dev \
-    && echo "mysql-server-5.6 mysql-server/root_password password intel123" | debconf-set-selections \
-    && echo "mysql-server-5.6 mysql-server/root_password_again password intel123" | debconf-set-selections \
-    && apt-get -y install mysql-server-5.6 \
-    && sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+RUN apt-get install -y debconf-utils \
+    && echo "mysql-server mysql-server/root_password password intel123" | debconf-set-selections \
+    && echo "mysql-server mysql-server/root_password_again password intel123" | debconf-set-selections \
+    && apt-get -y install mysql-server \
+    && sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf \
+    && mkdir -p /var/run/mysqld \
+    && chown mysql:mysql /var/run/mysqld
 
-# Install rabbitmq
+# Install rabbitmq supervisor and python deps for data analytics
 RUN apt-get install -y rabbitmq-server git python-pip python-dev ca-certificates git-core ssh supervisor python-scipy python-numpy python-matplotlib
 
 # Install source code
