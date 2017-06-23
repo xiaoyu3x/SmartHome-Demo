@@ -92,9 +92,11 @@ Here are the steps to run the Smart Home Web Portal in a Docker container.
       ```
    * Login to the Home portal through `http://<host-ip-addr>:3030` (login credentials: OTC/!otivity)
 
-6. Refer to the [wiki page](https://github.com/01org/SmartHome-Demo/wiki/How-to-load-weather-and-power-prediction-data-automatically%3F) on how to load the power and temperature prediction data automatically
+6. The Cloud portal supports multiple gateways for multiple users. If you want to add more users/gateways, refer to the [wiki](https://github.com/01org/SmartHome-Demo/wiki/How-to-manage-users-and-gateways-in-the-admin-portal) on how to manage users and gateways in the admin portal
 
-7. Troubleshooting the container
+7. Load analytics data in the admin portal, refer to the [wiki](https://github.com/01org/SmartHome-Demo/wiki/How-to-load-weather-and-power-prediction-data-automatically%3F) on how to load the power and temperature prediction data automatically
+
+8. Troubleshooting the container
     * `$ sudo docker ps -a`    
     Checks all the running containers and get the id and status of the containers. The output looks like this:
     ```
