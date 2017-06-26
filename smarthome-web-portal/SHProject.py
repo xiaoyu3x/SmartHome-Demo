@@ -644,9 +644,11 @@ def get_data_model():
                 admin_uri = uris[0].split(".")
                 admin_uri[0] = "smarthome-adminportal"
                 admin_uri = ".".join(admin_uri)
+        elif os.path.isfile('/.dockerenv'):
+            admin_uri = "image/model/"
         else:
-            admin_uri = "localhost:4000"
-    emit('my model resp', "http://" + admin_uri + "/images/model/" + data_model['data_model']['name'] + ".png" if data_model and admin_uri else data_model)
+            admin_uri = "http://localhost:4000/images/model/"
+    emit('my model resp', admin_uri + data_model['data_model']['name'] + ".png" if data_model and admin_uri else data_model)
 
 
 if __name__ == '__main__':

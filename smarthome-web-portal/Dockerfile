@@ -66,7 +66,9 @@ WORKDIR /opt/SmartHome-Demo/smarthome-web-portal
 
 # install portal dependencies
 RUN pip install -r requirements.txt
-RUN pip install Flask-SQLAlchemy==2.1
+
+# create symbolic link to admin portal's model images from the home portal
+RUN ln -sf /opt/SmartHome-Demo/smarthome-web-portal/tools/smarthome-admin-portal/admin/static/images/model /opt/SmartHome-Demo/smarthome-web-portal/static/image/model 
 
 # configure portal settings
 COPY tools/docker/SHProject.conf utils/SHProject.conf
