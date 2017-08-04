@@ -52,8 +52,8 @@ function getLedOcRepresentation(request) {
 }
 
 function setLedOcRepresentation(request) {
-    if (request.resource.properties) {
-        var state = request.resource.properties.value? true : false;
+    if (request.data.properties) {
+        var state = request.data.properties.value? true : false;
         console.log('Set LED state: ' + state);
         led.write(ledProperties.value = state);
     }
@@ -101,8 +101,8 @@ function setActuatorTiltPosition(percentage) {
 }
 
 function setSolarOcRepresentation(request) {
-    if (request.resource.properties) {
-        var simulationMode = request.resource.properties.simulationMode? true : false;
+    if (request.data.properties) {
+        var simulationMode = request.data.properties.simulationMode? true : false;
         console.log('Solar panel simulation ' + (simulationMode? 'On' : 'Off'));
         solarProperties.simulationMode = simulationMode;
         if (simulationMode) {
@@ -123,7 +123,7 @@ function setSolarOcRepresentation(request) {
                 clearInterval(timerSolarSimulation);
                 timerSolarSimulation = null;
             }
-            setActuatorTiltPosition(solarProperties.tiltPercentage = request.resource.properties.tiltPercentage);
+            setActuatorTiltPosition(solarProperties.tiltPercentage = request.data.properties.tiltPercentage);
         }
     }
     request.respond(solarProperties);
