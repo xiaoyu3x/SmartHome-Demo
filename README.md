@@ -6,7 +6,7 @@ This repository provides source code that allows to set-up and demonstrate an Io
 ## Source code and repository layout
 The repository is organised as follows:
 * `gateway`: code running on the Home Gateway
-* `ocf-servers`: OCF server implementations in JavaScript (located in `js-servers` and `zjs-servers`).
+* `ocf-servers`: OCF server implementations in JavaScript (located in `js-servers`).
    * Generic documentation on how to set them up is available [here](ocf-servers/js-servers/README.md)
    * The specifications for the OCF servers is availabe in the `ocf-servers/doc/` folder
 * `sensors`: source code for the various Smart Devices that are based on the [Zephyr Project](https://www.zephyrproject.org/)

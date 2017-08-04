@@ -1,6 +1,7 @@
 # The Smart Devices (aka OCF servers)
 ## JavaScript OCF servers
-A number of JavaScript-based OCF servers are provided in the [`js-servers`](./js-servers/) and [`zjs-servers`](./zjs-servers/) folders for `node.js` and [`zephyr.js`](https://github.com/01org/zephyr.js) respectively. The `node.js` dependencies (that can be installed using `npm`) are:
+A number of JavaScript-based OCF servers are provided in the [`js-servers`](./js-servers/)
+folder for `node.js`. The `node.js` dependencies (that can be installed using `npm`) are:
 * [IoTivity-node](https://www.npmjs.com/package/iotivity-node)
 * [mraa](https://www.npmjs.com/package/mraa)
 * [noble](https://www.npmjs.com/package/noble) (only for some)
