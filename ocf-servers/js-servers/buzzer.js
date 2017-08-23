@@ -38,7 +38,7 @@ args.forEach(function(entry) {
 
 // Create appropriate ACLs when security is enabled
 if (secureMode) {
-    dbuglog('Running in secure mode');
+    debuglog('Running in secure mode');
     require('./config/json-to-cbor')(__filename, [{
         href: resourceInterfaceName,
         rel: '',
