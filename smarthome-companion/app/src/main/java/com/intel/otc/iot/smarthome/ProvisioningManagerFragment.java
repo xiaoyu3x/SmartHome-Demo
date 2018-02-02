@@ -136,13 +136,17 @@ public class ProvisioningManagerFragment extends BaseFragment {
         }
 
         private void markLinkedDevices(OcSecureResource dev, boolean linked) {
-            List<String> linkedUUIDs = dev.getLinkedDevices();
-            for (String uuid : linkedUUIDs) {
-                DeviceView v = mDeviceViews.get(uuid);
-                if (v != null) {
-                    v.chkSelect.setEnabled(!linked);
-                    v.chkSelect.setChecked(linked);
+            try {
+                List<String> linkedUUIDs = dev.getLinkedDevices();
+                for (String uuid : linkedUUIDs) {
+                    DeviceView v = mDeviceViews.get(uuid);
+                    if (v != null) {
+                        v.chkSelect.setEnabled(!linked);
+                        v.chkSelect.setChecked(linked);
+                    }
                 }
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
             }
         }
     }

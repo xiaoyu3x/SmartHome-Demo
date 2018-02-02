@@ -9,8 +9,8 @@ You could build the companion app with the Android Studio, or build the app in a
 #### Build with Android Studio
 1. The companion app requires Android Studio to build. Follow the [installation guide](https://developer.android.com/studio/index.html) to setup the Android Stduio before building the companion app.
 2. Reference the [Android build instructions](https://wiki.iotivity.org/android_build_instructions) provided in the IoTivity project to build the IoTivity base library for Android in `.AAR` archive. Note that the `TARGET_ARCH` command-line build argument must match the processor architecture of your target Android device.
-3. Install the above IoTivity base library for Android archive to local maven repository with the following command.
-<pre>$ mvn install:install-file -Dfile=iotivity-base-release.aar -DgroupId=org.iotivity -DartifactId=base -Dversion=1.3.0-secured -Dpackaging=aar
+3. The above IoTivity build instructions for Android imports the generated `.AAR` library as a dependency module for the current Android Studio project. To make the library available to all Android Studio projects, install the above IoTivity base library for Android archive to local maven repository with the following command.
+<pre>$ mvn install:install-file -Dfile=iotivity-base-x86-release.aar -DgroupId=org.iotivity -DartifactId=base -Dversion=1.3.1-secured -Dpackaging=aar
 </pre>
 4. Clone the source code of the [IoT to Cloud Smart Home demo repo], and open the project Gradle file `build.gradle` in the Android Studio to create the project for the companion app. The Gradle wrapper may need to be set up while import the project first time, then click <b>Build &gt; Make Module 'app'</b> to build the companion app using Gradle, or click the <b>Run</b> action button to build and deploy the app to the connected Android device.
 <img src=".screenshots/peroject-import.png" />

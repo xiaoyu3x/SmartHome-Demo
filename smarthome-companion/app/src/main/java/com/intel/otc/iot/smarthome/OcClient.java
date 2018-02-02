@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static android.os.Environment.getExternalStorageDirectory;
-
 public class OcClient implements OcPlatform.OnResourceFoundListener {
     private static final String TAG = OcClient.class.getSimpleName();
     private static final String SVR_DB_NAME = "oic_svr_db.dat";
@@ -41,9 +39,7 @@ public class OcClient implements OcPlatform.OnResourceFoundListener {
     private Map<OcResourceIdentifier, OcResource> mResourceFound = new HashMap<>();
 
     public OcClient(Context context, OnResourceFound listener) {
-        // TODO: store files in package installed folder in /data with getFilesDir()
-        dbPath = getExternalStorageDirectory().getAbsolutePath() + File.separator
-               + context.getPackageName() + File.separator;
+        dbPath = context.getFilesDir().getPath() + File.separator;
         File dbDir = new File(dbPath);
         if (!(dbDir.isDirectory())) {
             // Create the folder if not exist
