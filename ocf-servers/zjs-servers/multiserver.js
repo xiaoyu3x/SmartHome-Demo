@@ -26,7 +26,6 @@
  *     +----------------------------+------+
  */
 var gpio   = require('gpio');
-var board  = require('arduino101_pins');
 var ocf    = require('ocf');
 var server = ocf.server;
 
@@ -124,7 +123,7 @@ var fan = gpio.open({ pin: 8, mode: 'out', activeLow: false }),
 
 // Light sensor
 var lightSensor = new AmbientLightSensor({
-        pin: board.A0
+        pin: 'A0'
     }),
     resPathIlluminance = '/a/illuminance',
     resTypeIlluminance = 'oic.r.sensor.illuminance',

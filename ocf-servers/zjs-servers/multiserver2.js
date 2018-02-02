@@ -24,7 +24,6 @@
 var gpio   = require('gpio');
 var pwm    = require('pwm');
 var i2c    = require('i2c');
-var board  = require('arduino101_pins');
 var ocf    = require('ocf');
 var server = ocf.server;
 
@@ -39,9 +38,9 @@ var led = gpio.open({ pin: 'LED2', mode: 'out', activeLow: false }),
         value: (led.read() != 0)? true : false
     },
     ledResourceInit = {
-        resourcePath : '/a/led',
-        resourceTypes: [ resPathLed ],
-        interfaces   : [ resTypeLed ],
+        resourcePath : [ resPathLed ],
+        resourceTypes: [ resTypeLed ],
+        interfaces   : [ 'oic.if.baseline' ],
         discoverable : true,
         observable   : false,
         properties   : ledProperties
@@ -70,9 +69,7 @@ server.register(ledResourceInit).then(function(resource) {
 // Solar panel driven by Actuonix linear actuator control board
 // http://www.robotshop.com/media/files/pdf2/actuonix_lac_datasheet.pdf
 var actuatorPwmPeriodInMsec = 20,
-    actuatorPin = pwm.open({
-        channel: board.IO3, period: actuatorPwmPeriodInMsec, pulseWidth: 1, polarity: 'normal'
-    }),
+    actuatorPin = pwm.open({ pin: 'IO3' }),
     resPathSolar = '/a/solar',
     resTypeSolar = 'oic.r.solar',
     solarResource = null,
