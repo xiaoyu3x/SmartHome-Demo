@@ -38,7 +38,7 @@ var led = gpio.open({ pin: 'LED2', mode: 'out', activeLow: false }),
         value: (led.read() != 0)? true : false
     },
     ledResourceInit = {
-        resourcePath : [ resPathLed ],
+        resourcePath : resPathLed,
         resourceTypes: [ resTypeLed ],
         interfaces   : [ 'oic.if.baseline' ],
         discoverable : true,
